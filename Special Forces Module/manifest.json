@@ -1,0 +1,18 @@
+{
+  "name": "Special Forces",
+  "version": "0.2.0",
+  "namespace": "Special_Forces_Module",
+  "package": "Special Forces Module.dll",
+  "manifest_version": 1,
+
+  "description": "This module helps you maximize your effectiveness.",
+  "dependencies": {
+    "bh.blishhud": ">=0.4.2"
+  },
+  "url": "https://github.com/TybaIt/SpecialForcesTraining",
+  "author": {
+    "name": "Andrew 'Nekres.1038' Gardener",
+    "username": "Nekres.1038"
+  },
+  "directories": ["specialforces"]
+}
