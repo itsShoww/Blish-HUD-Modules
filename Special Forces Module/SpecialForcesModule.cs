@@ -1,16 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Runtime.Remoting.Messaging;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Content;
 using Blish_HUD.Controls;
 using Blish_HUD.Controls.Extern;
@@ -20,7 +8,6 @@ using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
 using Flurl.Http;
-using Flurl.Util;
 using Gw2Sharp;
 using Gw2Sharp.Models;
 using Gw2Sharp.WebApi.V2.Models;
@@ -31,6 +18,17 @@ using Newtonsoft.Json.Linq;
 using Special_Forces_Module.Controls;
 using Special_Forces_Module.Persistance;
 using Special_Forces_Module.Player;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using Control = Blish_HUD.Controls.Control;
 using Keyb = Blish_HUD.Controls.Intern.Keyboard;
 using Keys = Microsoft.Xna.Framework.Input.Keys;
@@ -123,9 +121,8 @@ namespace Special_Forces_Module
             DisplayedTemplates = new List<TemplateButton>();
             SurrenderButton = SurrenderButtonEnabled.Value ? BuildSurrenderButton() : null;
 
-            SurrenderBinding.Value.Activated += delegate { SendToChat("/gg"); };
+            SurrenderBinding.Value.Activated += delegate { GameService.GameIntegration.Chat.Send("/gg"); };
         }
-
         protected override async Task LoadAsync()
         {
             ProfessionRepository = await LoadProfessions();
@@ -180,26 +177,6 @@ namespace Special_Forces_Module
             // All static members must be manually unset
             ModuleInstance = null;
         }
-
-        private void SendToChat(string message)
-        {
-            var save = Clipboard.GetDataObject();
-            Clipboard.SetText(message);
-            Task.Run(() =>
-            {
-                Keyb.Press(VirtualKeyShort.RETURN, true);
-                Keyb.Release(VirtualKeyShort.RETURN, true);
-                Keyb.Press(VirtualKeyShort.LCONTROL, true);
-                Keyb.Press(VirtualKeyShort.KEY_V, true);
-                Thread.Sleep(50);
-                Keyb.Release(VirtualKeyShort.LCONTROL, true);
-                Keyb.Release(VirtualKeyShort.KEY_V, true);
-                Keyb.Press(VirtualKeyShort.RETURN, true);
-                Keyb.Release(VirtualKeyShort.RETURN, true);
-                if (save != null) Clipboard.SetDataObject(save);
-            });
-        }
-
         private Image BuildSurrenderButton()
         {
             var tooltip_texture = ContentsManager.GetTexture("surrender_tooltip.png");
@@ -208,12 +185,11 @@ namespace Special_Forces_Module
             {
                 Size = tooltip_size
             };
-            var surrenderButtonTooltipImage = new Image(tooltip_texture)
+            surrenderButtonTooltip.AddChild(new Image(tooltip_texture)
             {
-                Parent = surrenderButtonTooltip,
                 Location = new Point(0, 0),
                 Visible = surrenderButtonTooltip.Visible
-            };
+            });
             var surrenderButton = new Image
             {
                 Parent = GameService.Graphics.SpriteScreen,
@@ -241,8 +217,9 @@ namespace Special_Forces_Module
             {
                 surrenderButton.Size = new Point(45, 45);
                 surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag.png");
-                SendToChat("/gg");
+                GameService.GameIntegration.Chat.Send("/gg");
             };
+            GameService.Animation.Tweener.Tween(surrenderButton, new {Opacity = 1.0f}, 0.35f);
             return surrenderButton;
         }
 
@@ -689,8 +666,12 @@ namespace Special_Forces_Module
                 }
                 else
                 {
-                    SurrenderButton.Dispose();
-                    SurrenderButton = null;
+                    GameService.Animation.Tweener.Tween(SurrenderButton, new { Opacity = 0.0f }, 0.2f)
+                        .OnComplete(() =>
+                        {
+                            SurrenderButton.Dispose();
+                            SurrenderButton = null;
+                        });
                 }
             };
             var bindingsPanel = new FlowPanel

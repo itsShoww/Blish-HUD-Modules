@@ -69,7 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Blish HUD">
-      <HintPath>..\..\..\Blish-HUD\Blish HUD\bin\x64\Debug\net472\Blish HUD.exe</HintPath>
+      <HintPath>..\..\Blish-HUD\Blish HUD\bin\x64\Debug\net472\Blish HUD.exe</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MonoGame.Extended, Version=3.7.0.0, Culture=neutral, processorArchitecture=MSIL">

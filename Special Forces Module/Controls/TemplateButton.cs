@@ -58,7 +58,7 @@ namespace Special_Forces_Module.Controls
                              SpecialForcesModule.ModuleInstance.ContentsManager.GetTexture("glow_play.png");
             BackgroundSprite = BackgroundSprite ?? ContentService.Textures.Pixel;
             DividerSprite = DividerSprite ?? GameService.Content.GetTexture("157218");
-            IconBoxSprite = IconBoxSprite ?? GameService.Content.GetTexture(@"controls\detailsbutton\605003");
+            IconBoxSprite = IconBoxSprite ?? GameService.Content.GetTexture("controls/detailsbutton/605003");
             MouseMoved += TemplateButton_MouseMoved;
             MouseLeft += TemplateButton_MouseLeft;
             LeftMouseButtonPressed += TemplateButton_LeftMouseButtonClicked;
