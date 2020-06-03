@@ -41,9 +41,9 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill2, (209, 24, 0)},
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
-                {GuildWarsControls.ProfessionSkill1, (-316, 104, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-267, 104, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-218, 104, 48)},
+                {GuildWarsControls.ProfessionSkill1, (-223, 90, 48)},
+                {GuildWarsControls.ProfessionSkill2, (-175, 90, 48)},
+                {GuildWarsControls.ProfessionSkill3, (-127, 90, 48)},
                 {GuildWarsControls.ProfessionSkill4, (-168, 104, 48)},
                 {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
@@ -63,9 +63,9 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill2, (209, 24, 0)},
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
-                {GuildWarsControls.ProfessionSkill1, (-316, 104, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-267, 104, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-218, 104, 48)},
+                {GuildWarsControls.ProfessionSkill1, (-333, 91, 43)},
+                {GuildWarsControls.ProfessionSkill2, (-289, 91, 43)},
+                {GuildWarsControls.ProfessionSkill3, (-247, 91, 43)},
                 {GuildWarsControls.ProfessionSkill4, (-168, 104, 48)},
                 {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
@@ -93,6 +93,7 @@ namespace Special_Forces_Module.Professions
         {
             var transform = (0, 0, 0);
 
+            layout.TryGetValue(skill, out transform);
 
             return transform;
         }

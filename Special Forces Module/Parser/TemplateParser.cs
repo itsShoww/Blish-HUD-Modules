@@ -11,7 +11,7 @@ namespace Special_Forces_Module.Parser
             IProfession obj;
 
             var profession = template.GetProfession().ToLowerInvariant();
-            var specialization = template.GetEliteSpecialization();
+            var specialization = template.GetEliteSpecialization().ToLowerInvariant();
 
             switch (profession)
             {
