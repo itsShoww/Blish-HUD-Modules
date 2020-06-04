@@ -12,6 +12,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Blish_HUD.Input;
+using Microsoft.Xna.Framework.Input;
+using Screenshot_Manager_Module.Controls;
 using Color = Microsoft.Xna.Framework.Color;
 using Image = Blish_HUD.Controls.Image;
 using Module = Blish_HUD.Modules.Module;
@@ -36,17 +39,18 @@ namespace Screenshot_Manager_Module
 
 
         private Texture2D _icon64;
-        private Texture2D _icon128;
-        private Texture2D _portaitModeIcon128;
-        private Texture2D _portaitModeIcon512;
+        //private Texture2D _icon128;
+        //private Texture2D _portaitModeIcon128;
+       // private Texture2D _portaitModeIcon512;
         private Texture2D _trashcanClosedIcon64;
         private Texture2D _trashcanOpenIcon64;
-        private Texture2D _trashcanClosedIcon128;
-        private Texture2D _trashcanOpenIcon128;
-        private Texture2D _inspectIcon;
+        //private Texture2D _trashcanClosedIcon128;
+        //private Texture2D _trashcanOpenIcon128;
+        internal Texture2D _inspectIcon;
         private Texture2D _incompleteHeartIcon;
         private Texture2D _completeHeartIcon;
         private Texture2D _deleteSearchBoxContentIcon;
+        internal Texture2D _notificationBackroundTexture;
 
         private readonly string[] _imageFilters = { "*.bmp", "*.jpg", "*.png" };
         private const int WindowWidth = 1024;
@@ -62,6 +66,7 @@ namespace Screenshot_Manager_Module
         private string ReasonFileInUse = "The image is in use by another process.";
         private string ReasonFileNotExisting = "The image doesn't exist anymore!";
         private string ReasonDublicateFileName = "A duplicate image name was specified!";
+        private string ReasonEmptyFileName = "Image name cannot be empty.";
         private string ReasonInvalidFileName = "The image name contains invalid characters.";
         private string PromptChangeFileName = "Please enter a different image name.";
         private string InvalidFileNameCharactersHint = "The following characters are not allowed:";
@@ -71,12 +76,14 @@ namespace Screenshot_Manager_Module
         private string SearchBoxPlaceHolder = "Search...";
         private string FavoriteMarkerTooltip = "Favourite";
         private string UnfavoriteMarkerTooltip = "Unfavourite";
+        private string ScreenshotCreated = "Screenshot created!";
         #endregion
 
         private CornerIcon moduleCornerIcon;
         private WindowTab moduleTab;
-        private Panel modulePanel;
+        internal Panel modulePanel;
         private List<FileSystemWatcher> screensPathWatchers;
+        private KeyBinding printScreenKey;
 
         private FlowPanel thumbnailFlowPanel;
         private Dictionary<string, Panel> displayedThumbnails;
@@ -101,7 +108,7 @@ namespace Screenshot_Manager_Module
             _icon64 = ContentsManager.GetTexture("screenshots_icon_64x64.png");
             //_icon128 = ContentsManager.GetTexture("screenshots_icon_128x128.png");
             _inspectIcon = ContentsManager.GetTexture("inspect.png");
-            _portaitModeIcon128 = ContentsManager.GetTexture("portaitMode_icon_128x128.png");
+            //_portaitModeIcon128 = ContentsManager.GetTexture("portaitMode_icon_128x128.png");
             //_portaitModeIcon512 = ContentsManager.GetTexture("portaitMode_icon_128x128.png");
             _trashcanClosedIcon64 = ContentsManager.GetTexture("trashcanClosed_icon_64x64.png");
             _trashcanOpenIcon64 = ContentsManager.GetTexture("trashcanOpen_icon_64x64.png");
@@ -110,11 +117,24 @@ namespace Screenshot_Manager_Module
             _incompleteHeartIcon = ContentsManager.GetTexture("incomplete_heart.png");
             _completeHeartIcon = ContentsManager.GetTexture("complete_heart.png");
             _deleteSearchBoxContentIcon = ContentsManager.GetTexture("784262.png");
+            _notificationBackroundTexture = ContentsManager.GetTexture("ns-button.png");
         }
 
+        private void ScreenshotNotify(object sender, EventArgs e)
+        {
+            var directory = new DirectoryInfo(DirectoryUtil.ScreensPath);
+            var screenshot = directory.GetFiles()
+                .OrderByDescending(f => f.LastWriteTime)
+                .First();
+            ScreenshotNotification.ShowNotification(GetScreenshot(screenshot.FullName), ScreenshotCreated, 5.0f);
+        }
         protected override void Initialize()
         {
             LoadTextures();
+
+            printScreenKey = new KeyBinding(Keys.PrintScreen);
+            printScreenKey.Activated += ScreenshotNotify;
+            printScreenKey.Enabled = true;
             screensPathWatchers = new List<FileSystemWatcher>();
             displayedThumbnails = new Dictionary<string, Panel>();
             foreach (string f in _imageFilters) {
@@ -150,30 +170,23 @@ namespace Screenshot_Manager_Module
             foreach (var fsw in screensPathWatchers)
                 fsw.EnableRaisingEvents = GameService.GameIntegration.Gw2HasFocus;
         }
-        private void AddThumbnail(string filePath)
+
+        private Texture2D GetScreenshot(string filePath)
         {
-            if (modulePanel == null || displayedThumbnails.ContainsKey(filePath)) return;
             Texture2D texture = null;
-            Point textureSize = Point.Zero;
             var completed = false;
             var timeout = DateTime.Now.AddMilliseconds(FileTimeOutMilliseconds);
-            while (!completed)
-            {
-                if (!File.Exists(filePath)) return;
-                try
-                {
-                    using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-                    {
-                        using (var originalImage = System.Drawing.Image.FromStream(fs))
-                        {
-                            using (var textureStream = new MemoryStream())
-                            {
+            while (!completed) {
+                if (!File.Exists(filePath)) return null;
+                try {
+                    using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
+                        using (var originalImage = System.Drawing.Image.FromStream(fs)) {
+                            using (var textureStream = new MemoryStream()) {
                                 originalImage.Save(textureStream, originalImage.RawFormat);
                                 var buffer = new byte[textureStream.Length];
                                 textureStream.Position = 0;
                                 textureStream.Read(buffer, 0, buffer.Length);
                                 texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
-                                textureSize = new Point(texture.Width, texture.Height);
                                 textureStream.Close();
                             }
                             originalImage.Dispose();
@@ -184,11 +197,50 @@ namespace Screenshot_Manager_Module
                 } catch (IOException e) {
                     if (DateTime.Now < timeout) continue;
                     Logger.Error(e.Message + e.StackTrace);
-                    return;
+                    return null;
                 }
             }
+            return texture;
+        }
+        internal Panel CreateInspectionPanel(Texture2D texture)
+        {
+            var maxWidth = GameService.Graphics.Resolution.X - 100;
+            var maxHeight = GameService.Graphics.Resolution.Y - 100;
+            var inspectScale = PointExtensions.ResizeKeepAspect(GameService.Graphics.Resolution, maxWidth,
+                maxHeight);
+            var inspectPanel = new Panel() {
+                Parent = GameService.Graphics.SpriteScreen,
+                Size = new Point(inspectScale.X + 10, inspectScale.Y + 10),
+                Location = new Point((GameService.Graphics.SpriteScreen.Width / 2) - (inspectScale.X / 2), (GameService.Graphics.SpriteScreen.Height / 2) - (inspectScale.Y / 2)),
+                BackgroundColor = Color.Black,
+                ZIndex = 9999,
+                ShowBorder = true,
+                ShowTint = true,
+                Opacity = 0.0f
+            };
+            var inspImage = new Blish_HUD.Controls.Image() {
+                Parent = inspectPanel,
+                Location = new Point(5, 5),
+                Size = inspectScale,
+                Texture = texture
+            };
+            GameService.Animation.Tweener.Tween(inspectPanel, new { Opacity = 1.0f }, 0.35f);
+            inspImage.Click += delegate { GameService.Animation.Tweener.Tween(inspectPanel, new { Opacity = 0.0f }, 0.15f).OnComplete(() => inspectPanel?.Dispose()); };
+            return inspectPanel;
+        }
 
-            var thumbnailScale = PointExtensions.ResizeKeepAspect(textureSize, 300, 300);
+        internal Point GetThumbnailSize(Texture2D texture)
+        {
+            var textureSize = new Point(texture.Width, texture.Height);
+            return PointExtensions.ResizeKeepAspect(textureSize, 300, 300);
+        }
+        private void AddThumbnail(string filePath)
+        {
+            if (modulePanel == null || displayedThumbnails.ContainsKey(filePath)) return;
+
+            var texture = GetScreenshot(filePath);
+            if (texture == null) return;
+            var thumbnailScale = GetThumbnailSize(texture);
             var thumbnail = new Panel
             {
                 Parent = thumbnailFlowPanel,
@@ -316,7 +368,7 @@ namespace Screenshot_Manager_Module
                 var newFileName = fileNameTextBox.Text.Trim();
                 if (newFileName.Equals(String.Empty))
                 {
-
+                    ScreenNotification.ShowNotification(ReasonEmptyFileName, ScreenNotification.NotificationType.Error);
                 } else if (_invalidFileNameCharacters.Any(x => newFileName.Contains(x)))
                 {
                     ScreenNotification.ShowNotification(ReasonInvalidFileName
@@ -394,30 +446,10 @@ namespace Screenshot_Manager_Module
                 GameService.Animation.Tweener.Tween(tImage, new { Opacity = 0.8f }, 0.45f);
             };
             Panel inspectPanel = null;
-            deleteLabel.Click += delegate {
+            deleteLabel.Click += delegate
+            {
                 inspectPanel?.Dispose();
-                var maxWidth = GameService.Graphics.Resolution.X - 100;
-                var maxHeight = GameService.Graphics.Resolution.Y - 100;
-                var inspectScale = PointExtensions.ResizeKeepAspect(GameService.Graphics.Resolution, maxWidth,
-                    maxHeight);
-                inspectPanel = new Panel() {
-                    Parent = GameService.Graphics.SpriteScreen,
-                    Size = new Point(inspectScale.X + 10, inspectScale.Y + 10),
-                    Location = new Point((GameService.Graphics.SpriteScreen.Width / 2) - (inspectScale.X / 2), (GameService.Graphics.SpriteScreen.Height / 2) - (inspectScale.Y / 2)),
-                    BackgroundColor = Color.Black,
-                    ZIndex = 9999,
-                    ShowBorder = true,
-                    ShowTint = true,
-                    Opacity = 0.0f
-                };
-                var inspImage = new Blish_HUD.Controls.Image() {
-                    Parent = inspectPanel,
-                    Location = new Point(5, 5),
-                    Size = inspectScale,
-                    Texture = texture
-                };
-                GameService.Animation.Tweener.Tween(inspectPanel, new { Opacity = 1.0f }, 0.35f);
-                inspImage.Click += delegate { GameService.Animation.Tweener.Tween(inspectPanel, new { Opacity = 0.0f }, 0.15f).OnComplete(() => inspectPanel?.Dispose()); };
+                inspectPanel = CreateInspectionPanel(texture);
             };
             var deleteButton = new Image()
             {
@@ -623,7 +655,7 @@ namespace Screenshot_Manager_Module
                 if (Directory.Exists(DirectoryUtil.ScreensPath))
                 {
                     foreach (var fileName in Directory.EnumerateFiles(DirectoryUtil.ScreensPath)
-                        .Where(s => s.EndsWith(".bmp") || s.EndsWith(".jpg") || s.EndsWith(".png")))
+                        .Where(s => _imageFilters.Contains('*' + Path.GetExtension(s))))
                     {
                         AddThumbnail(Path.Combine(DirectoryUtil.ScreensPath, fileName));
                     }
@@ -640,9 +672,23 @@ namespace Screenshot_Manager_Module
 
         protected override void Update(GameTime gameTime){ /* NOOP */ }
 
+        private void CleanFavorites()
+        {
+            var copy = new List<string>(favorites.Value);
+            foreach (string path in copy)
+            {
+                if (File.Exists(path)) continue;
+                copy.Remove(path);
+            }
+            favorites.Value = copy;
+        }
         /// <inheritdoc />
         protected override void Unload() {
             // Unload
+            CleanFavorites();
+            printScreenKey.Enabled = false;
+            printScreenKey.Activated -= ScreenshotNotify;
+            printScreenKey = null;
             modulePanel.Hidden -= ToggleFileSystemWatchers;
             modulePanel.Shown -= ToggleFileSystemWatchers;
             modulePanel.Shown -= LoadImages;

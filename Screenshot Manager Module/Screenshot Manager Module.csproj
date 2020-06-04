@@ -66,6 +66,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\ScreenshotNotification.cs" />
     <Compile Include="ScreenshotManagerModule.cs" />
   </ItemGroup>
   <ItemGroup>
