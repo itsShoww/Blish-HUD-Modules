@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Color = Microsoft.Xna.Framework.Color;
 using Image = Blish_HUD.Controls.Image;
@@ -45,6 +46,7 @@ namespace Screenshot_Manager_Module
         private Texture2D _inspectIcon;
         private Texture2D _incompleteHeartIcon;
         private Texture2D _completeHeartIcon;
+        private Texture2D _deleteSearchBoxContentIcon;
 
         private readonly string[] _imageFilters = { "*.bmp", "*.jpg", "*.png" };
         private const int WindowWidth = 1024;
@@ -65,8 +67,10 @@ namespace Screenshot_Manager_Module
         private string InvalidFileNameCharactersHint = "The following characters are not allowed:";
         private string FileDeletionPrompt = "Delete Image?";
         private string RenameFileTooltipText = "Rename Image";
-        private string DeleteFileTooltipText = "Delete Image";
         private string ZoomInThumbnailTooltipText = "Click To Zoom";
+        private string SearchBoxPlaceHolder = "Search...";
+        private string FavoriteMarkerTooltip = "Favourite";
+        private string UnfavoriteMarkerTooltip = "Unfavourite";
         #endregion
 
         private CornerIcon moduleCornerIcon;
@@ -77,6 +81,9 @@ namespace Screenshot_Manager_Module
         private FlowPanel thumbnailFlowPanel;
         private Dictionary<string, Panel> displayedThumbnails;
 
+        #region Settings
+        private SettingEntry<List<string>> favorites;
+        #endregion
         [ImportingConstructor]
         public ScreenshotManagerModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(
             moduleParameters)
@@ -86,7 +93,7 @@ namespace Screenshot_Manager_Module
         }
 
         protected override void DefineSettings(SettingCollection settings) {
-
+            favorites = settings.DefineSetting("favorites", new List<string>());
         }
 
         protected void LoadTextures()
@@ -102,6 +109,7 @@ namespace Screenshot_Manager_Module
             //_trashcanOpenIcon128 = ContentsManager.GetTexture("trashcanOpen_icon_128x128.png");
             _incompleteHeartIcon = ContentsManager.GetTexture("incomplete_heart.png");
             _completeHeartIcon = ContentsManager.GetTexture("complete_heart.png");
+            _deleteSearchBoxContentIcon = ContentsManager.GetTexture("784262.png");
         }
 
         protected override void Initialize()
@@ -119,6 +127,7 @@ namespace Screenshot_Manager_Module
                 };
                 w.Created += OnScreenshotCreated;
                 w.Deleted += OnScreenshotDeleted;
+                w.Renamed += OnScreenshotRenamed;
                 screensPathWatchers.Add(w);
             }
             modulePanel = BuildModulePanel(GameService.Overlay.BlishHudWindow);
@@ -184,7 +193,8 @@ namespace Screenshot_Manager_Module
             {
                 Parent = thumbnailFlowPanel,
                 Size = new Point(thumbnailScale.X + 6, thumbnailScale.Y + 6),
-                BackgroundColor = Color.Black
+                BackgroundColor = Color.Black,
+                BasicTooltipText = filePath
             };
 
             var tImage = new Blish_HUD.Controls.Image {
@@ -201,7 +211,7 @@ namespace Screenshot_Manager_Module
                 Location = new Point((thumbnail.Width / 2) - 32, (thumbnail.Height / 2) - 32),
                 Opacity = 0.0f
             };
-            var deleteBackgroundTint = new Panel()
+            var deleteBackgroundTint = new Panel
             {
                 Parent = thumbnail,
                 Size = thumbnail.Size,
@@ -215,11 +225,61 @@ namespace Screenshot_Manager_Module
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Middle,
                 Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size24, ContentService.FontStyle.Regular), 
-                Text = DeleteFileTooltipText,
+                Text = FileDeletionPrompt,
                 BasicTooltipText = ZoomInThumbnailTooltipText,
                 StrokeText = true,
                 ShowShadow = true,
                 Opacity = 0.0f,
+            };
+            var favoriteMarker = new Image
+            {
+                Parent = thumbnail,
+                Location = new Point(thumbnail.Size.X - 30 - PanelMargin, PanelMargin),
+                Size = new Point(30,30),
+                BasicTooltipText = favorites.Value.Contains(filePath) ? UnfavoriteMarkerTooltip : FavoriteMarkerTooltip,
+                Texture = favorites.Value.Contains(filePath) ? _completeHeartIcon : _incompleteHeartIcon,
+                Opacity = 0.5f
+            };
+            favoriteMarker.Click += delegate
+            {
+                var currentFilePath = thumbnail.BasicTooltipText;
+                if (favorites.Value.Contains(currentFilePath))
+                {
+                    var copy = new List<string>(favorites.Value);
+                    copy.Remove(currentFilePath);
+                    favorites.Value = copy;
+                    favoriteMarker.Texture = _incompleteHeartIcon;
+                    favoriteMarker.BasicTooltipText = FavoriteMarkerTooltip;
+                }
+                else
+                {
+                    var copy = new List<string>(favorites.Value) 
+                        {currentFilePath};
+                    favorites.Value = copy;
+                    favoriteMarker.Texture = _completeHeartIcon;
+                    favoriteMarker.BasicTooltipText = UnfavoriteMarkerTooltip;
+                }
+                SortThumbnails();
+            };
+            favoriteMarker.MouseEntered += delegate
+            {
+                GameService.Animation.Tweener.Tween(favoriteMarker, new { Opacity = 1.0f }, 0.2f);
+            };
+            favoriteMarker.MouseLeft += delegate
+            {
+                GameService.Animation.Tweener.Tween(favoriteMarker, new {Opacity = 0.5f}, 0.2f);
+                favoriteMarker.Location = new Point(thumbnail.Size.X - 30 - PanelMargin, PanelMargin);
+                favoriteMarker.Size = new Point(30, 30);
+            };
+            favoriteMarker.LeftMouseButtonPressed += delegate
+            {
+                favoriteMarker.Width -= 2;
+                favoriteMarker.Height -= 2;
+                favoriteMarker.Location = new Point(favoriteMarker.Location.X + 2, favoriteMarker.Location.Y + 2);
+            };
+            favoriteMarker.LeftMouseButtonReleased += delegate {
+                favoriteMarker.Location = new Point(thumbnail.Size.X - 30 - PanelMargin, PanelMargin);
+                favoriteMarker.Size = new Point(30, 30);
             };
             var fileNameTextBox = new TextBox {
                 Parent = thumbnail,
@@ -252,6 +312,7 @@ namespace Screenshot_Manager_Module
             fileNameTextBox.EnterPressed += delegate
             {
                 enterPressed = true;
+                var oldFilePath = thumbnail.BasicTooltipText;
                 var newFileName = fileNameTextBox.Text.Trim();
                 if (newFileName.Equals(String.Empty))
                 {
@@ -266,16 +327,16 @@ namespace Screenshot_Manager_Module
                 }
                 else
                 {
-                    var newPath = Path.Combine(Directory.GetParent(Path.GetFullPath(filePath)).FullName,
-                        newFileName + Path.GetExtension(filePath));
-                    if (newPath.Equals(filePath, StringComparison.InvariantCultureIgnoreCase)) { }
+                    var newPath = Path.Combine(Directory.GetParent(Path.GetFullPath(oldFilePath)).FullName,
+                        newFileName + Path.GetExtension(oldFilePath));
+                    if (newPath.Equals(oldFilePath, StringComparison.InvariantCultureIgnoreCase)) { }
                     else if (File.Exists(newPath))
                     {
                         ScreenNotification.ShowNotification(
                             FailedToRenameFileNotification + " " + ReasonDublicateFileName,
                             ScreenNotification.NotificationType.Error);
                     }
-                    else if (!File.Exists(filePath))
+                    else if (!File.Exists(oldFilePath))
                     {
                         ScreenNotification.ShowNotification(
                             FailedToRenameFileNotification + " " + ReasonFileNotExisting,
@@ -290,12 +351,7 @@ namespace Screenshot_Manager_Module
                         {
                             try
                             {
-                                File.Move(filePath, newPath);
-                                displayedThumbnails.Remove(filePath);
-                                displayedThumbnails.Add(newPath, thumbnail);
-                                fileNameTextBox.PlaceholderText = Path.GetFileNameWithoutExtension(newPath);
-                                fileNameTextBox.BasicTooltipText = Path.GetFileNameWithoutExtension(newPath);
-                                filePath = newPath;
+                                File.Move(oldFilePath, newPath);
                                 renameCompleted = true;
                             }
                             catch (IOException e)
@@ -373,7 +429,6 @@ namespace Screenshot_Manager_Module
             };
             deleteButton.MouseEntered += delegate
             {
-                deleteLabel.Text = FileDeletionPrompt;
                 deleteButton.Texture = _trashcanOpenIcon64;
                 GameService.Animation.Tweener.Tween(deleteButton, new { Opacity = 1.0f }, 0.2f);
                 GameService.Animation.Tweener.Tween(deleteLabel, new { Opacity = 1.0f }, 0.2f);
@@ -389,7 +444,8 @@ namespace Screenshot_Manager_Module
             };
             deleteButton.LeftMouseButtonReleased += delegate
             {
-                if (!File.Exists(filePath)) {
+                var oldFilePath = thumbnail.BasicTooltipText;
+                if (!File.Exists(oldFilePath)) {
                     thumbnail?.Dispose();
                 } else {
                     var deletionCompleted = false;
@@ -398,7 +454,7 @@ namespace Screenshot_Manager_Module
                         try
                         {
                             fileNameTextBox.Text = "";
-                            File.Delete(filePath);
+                            File.Delete(oldFilePath);
                             deletionCompleted = true;
                         }
                         catch (IOException e)
@@ -412,10 +468,41 @@ namespace Screenshot_Manager_Module
             };
             thumbnail.Disposed += delegate
             {
-                if (displayedThumbnails.ContainsKey(filePath)) 
-                    displayedThumbnails.Remove(filePath);
+                var oldFilePath = thumbnail.BasicTooltipText;
+                if (displayedThumbnails.ContainsKey(oldFilePath)) 
+                    displayedThumbnails.Remove(oldFilePath);
+
+                if (!favorites.Value.Contains(oldFilePath)) return;
+                var copy = new List<string>(favorites.Value);
+                copy.Remove(oldFilePath);
+                favorites.Value = copy;
             };
-            displayedThumbnails.Add(filePath, thumbnail);
+            try {
+                displayedThumbnails.Add(filePath, thumbnail);
+                SortThumbnails();
+
+            } catch (ArgumentException e) {
+                Logger.Error(e.Message + e.StackTrace);
+                thumbnail.Dispose();
+            }
+        }
+
+        private void SortThumbnails()
+        {
+            thumbnailFlowPanel.SortChildren(delegate (Panel x, Panel y)
+            {
+                var favMarkerX = (Image)x.Children.FirstOrDefault(m => m.BasicTooltipText != null && (m.BasicTooltipText.Equals(FavoriteMarkerTooltip) || m.BasicTooltipText.Equals(UnfavoriteMarkerTooltip)));
+                var favMarkerY = (Image)y.Children.FirstOrDefault(m => m.BasicTooltipText != null && (m.BasicTooltipText.Equals(FavoriteMarkerTooltip) || m.BasicTooltipText.Equals(UnfavoriteMarkerTooltip)));
+                if (favMarkerX != null && favMarkerY != null)
+                {
+                    var favorite = string.Compare(favMarkerY.BasicTooltipText, favMarkerX.BasicTooltipText,
+                        StringComparison.InvariantCultureIgnoreCase);
+                    if (favorite != 0)
+                        return favorite;
+                }
+                return string.Compare(Path.GetFileNameWithoutExtension(x.BasicTooltipText), Path.GetFileNameWithoutExtension(y.BasicTooltipText),
+                    StringComparison.InvariantCultureIgnoreCase);
+            });
         }
         private void OnScreenshotCreated(object sender, FileSystemEventArgs e)
         {
@@ -426,13 +513,27 @@ namespace Screenshot_Manager_Module
             if (displayedThumbnails.ContainsKey(e.FullPath))
                 displayedThumbnails[e.FullPath].Dispose();
         }
+
+        private void OnScreenshotRenamed(object sender, RenamedEventArgs e)
+        {
+            if (!displayedThumbnails.ContainsKey(e.OldFullPath)) return;
+            var thumbnail = displayedThumbnails.FirstOrDefault(x => x.Value.BasicTooltipText.Equals(e.OldFullPath)).Value;
+            displayedThumbnails.Remove(e.OldFullPath);
+            if (!displayedThumbnails.ContainsKey(e.FullPath))
+                displayedThumbnails.Add(e.FullPath, thumbnail);
+
+            if (thumbnail == null) return;
+            var fileNameTextBox = (TextBox)thumbnail.Children.First(x => x.GetType() == typeof(TextBox));
+            fileNameTextBox.PlaceholderText = Path.GetFileNameWithoutExtension(e.FullPath);
+            fileNameTextBox.BasicTooltipText = Path.GetFileNameWithoutExtension(e.FullPath);
+            thumbnail.BasicTooltipText = e.FullPath;
+        }
         private Panel BuildModulePanel(WindowBase wnd)
         {
             var homePanel = new Panel()
             {
                 Parent = wnd,
-                Size = new Point(WindowWidth, WindowHeight),
-                Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - WindowWidth / 2, GameService.Graphics.SpriteScreen.Height / 2 - WindowHeight / 2),
+                Size = new Point(WindowWidth, WindowHeight)
             };
             homePanel.Hidden += delegate {
                 homePanel.Dispose();
@@ -440,8 +541,8 @@ namespace Screenshot_Manager_Module
             thumbnailFlowPanel = new FlowPanel()
             {
                 Parent = homePanel,
-                Size = homePanel.ContentRegion.Size,
-                Location = new Point(0,0),
+                Size = new Point(homePanel.ContentRegion.Size.X - 70, homePanel.ContentRegion.Size.Y - 130),
+                Location = new Point(70,50),
                 FlowDirection = ControlFlowDirection.LeftToRight,
                 ControlPadding = new Vector2(5, 5),
                 CanCollapse = false,
@@ -449,6 +550,65 @@ namespace Screenshot_Manager_Module
                 Collapsed = false,
                 ShowTint = true,
                 ShowBorder = true
+            };
+            var searchBox = new TextBox()
+            {
+                Parent = homePanel,
+                Location = new Point(thumbnailFlowPanel.Location.X, thumbnailFlowPanel.Location.Y - 40),
+                Size = new Point(200, 40),
+                PlaceholderText = SearchBoxPlaceHolder
+            };
+            var deleteSearchBoxContentButton = new Image
+            {
+                Parent = homePanel,
+                Location = new Point(searchBox.Right - 20 - PanelMargin, searchBox.Location.Y + PanelMargin),
+                Size = new Point(20,20),
+                Texture = _deleteSearchBoxContentIcon,
+                Visible = false
+            };
+            deleteSearchBoxContentButton.Click += delegate
+            {
+                searchBox.Text = "";
+                deleteSearchBoxContentButton.Hide();
+            };
+            deleteSearchBoxContentButton.MouseEntered += delegate
+            {
+                if (deleteSearchBoxContentButton.Visible)
+                    GameService.Animation.Tweener.Tween(deleteSearchBoxContentButton, new {Opacity = 1.0f}, 0.2f);
+            };
+            deleteSearchBoxContentButton.MouseLeft += delegate {
+                if (deleteSearchBoxContentButton.Visible)
+                    GameService.Animation.Tweener.Tween(deleteSearchBoxContentButton, new { Opacity = 0.8f }, 0.2f);
+
+                deleteSearchBoxContentButton.Size = new Point(20,20);
+                deleteSearchBoxContentButton.Location = new Point(searchBox.Right - 20 - PanelMargin, searchBox.Location.Y + PanelMargin);
+            };
+            deleteSearchBoxContentButton.LeftMouseButtonPressed += delegate
+            {
+                deleteSearchBoxContentButton.Width -= 2;
+                deleteSearchBoxContentButton.Height -= 2;
+                deleteSearchBoxContentButton.Location = new Point(deleteSearchBoxContentButton.Location.X + 2, deleteSearchBoxContentButton.Location.Y + 2);
+            };
+            searchBox.InputFocusChanged += delegate { SortThumbnails(); };
+            searchBox.TextChanged += delegate
+            {
+                deleteSearchBoxContentButton.Visible = !searchBox.Text.Equals(string.Empty); 
+                thumbnailFlowPanel.SortChildren(delegate(Panel x, Panel y)
+                {
+                    var fileNameX = Path.GetFileNameWithoutExtension(x.BasicTooltipText);
+                    var fileNameY = Path.GetFileNameWithoutExtension(y.BasicTooltipText);
+                    x.Visible = fileNameX.Contains(searchBox.Text);
+                    y.Visible = fileNameY.Contains(searchBox.Text);
+                    var favMarkerX = (Image)x.Children.FirstOrDefault(m => m.BasicTooltipText != null && (m.BasicTooltipText.Equals(FavoriteMarkerTooltip) || m.BasicTooltipText.Equals(UnfavoriteMarkerTooltip)));
+                    var favMarkerY = (Image)y.Children.FirstOrDefault(m => m.BasicTooltipText != null && (m.BasicTooltipText.Equals(FavoriteMarkerTooltip) || m.BasicTooltipText.Equals(UnfavoriteMarkerTooltip)));
+                    if (favMarkerX != null && favMarkerY != null) {
+                        var favorite = string.Compare(favMarkerY.BasicTooltipText, favMarkerX.BasicTooltipText,
+                            StringComparison.InvariantCultureIgnoreCase);
+                        if (favorite != 0)
+                            return favorite;
+                    }
+                    return string.Compare(fileNameX, fileNameY, StringComparison.InvariantCultureIgnoreCase);
+                });
             };
             homePanel.Hidden += ToggleFileSystemWatchers;
             homePanel.Hidden += ToggleFileSystemWatchers;
@@ -470,9 +630,7 @@ namespace Screenshot_Manager_Module
                 }
             });
         }
-        protected override async Task LoadAsync() {
-
-        }
+        protected override async Task LoadAsync() { /* NOOP */ }
 
         protected override void OnModuleLoaded(EventArgs e) {
 
@@ -486,7 +644,7 @@ namespace Screenshot_Manager_Module
         protected override void Unload() {
             // Unload
             modulePanel.Hidden -= ToggleFileSystemWatchers;
-            modulePanel.Hidden -= ToggleFileSystemWatchers;
+            modulePanel.Shown -= ToggleFileSystemWatchers;
             modulePanel.Shown -= LoadImages;
             GameService.Overlay.BlishHudWindow.RemoveTab(moduleTab);
             moduleTab = null;
@@ -499,6 +657,7 @@ namespace Screenshot_Manager_Module
                 if (screensPathWatchers[i] == null) continue;
                 screensPathWatchers[i].Created -= OnScreenshotCreated;
                 screensPathWatchers[i].Deleted -= OnScreenshotDeleted;
+                screensPathWatchers[i].Renamed -= OnScreenshotRenamed;
                 screensPathWatchers[i].Dispose();
                 screensPathWatchers[i] = null;
             }
