@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using Blish_HUD;
 using Blish_HUD.Controls;
@@ -14,6 +15,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Screenshot_Manager_Module.Controls;
+using Screenshot_Manager_Module.Properties;
 using Image = System.Drawing.Image;
 
 namespace Screenshot_Manager_Module
@@ -125,7 +127,8 @@ namespace Screenshot_Manager_Module
         protected override void Initialize()
         {
             LoadTextures();
-
+            GameService.Overlay.UserLocaleChanged += ChangeLocalization;
+            ChangeLocalization(null, null);
             printScreenKey = new KeyBinding(Keys.PrintScreen);
             printScreenKey.Activated += ScreenshotNotify;
             printScreenKey.Enabled = true;
@@ -145,9 +148,6 @@ namespace Screenshot_Manager_Module
                 w.Renamed += OnScreenshotRenamed;
                 screensPathWatchers.Add(w);
             }
-
-            modulePanel = BuildModulePanel(GameService.Overlay.BlishHudWindow);
-            moduleTab = GameService.Overlay.BlishHudWindow.AddTab(Name, _icon64, modulePanel, 0);
             moduleCornerIcon = new CornerIcon
             {
                 IconName = Name,
@@ -164,6 +164,7 @@ namespace Screenshot_Manager_Module
 
         private void ToggleFileSystemWatchers(object sender, EventArgs e)
         {
+            if (screensPathWatchers == null) return;
             foreach (var fsw in screensPathWatchers)
                 fsw.EnableRaisingEvents = GameService.GameIntegration.Gw2HasFocus;
         }
@@ -754,6 +755,7 @@ namespace Screenshot_Manager_Module
         {
             // Unload
             CleanFavorites();
+            GameService.Overlay.UserLocaleChanged -= ChangeLocalization;
             printScreenKey.Enabled = false;
             printScreenKey.Activated -= ScreenshotNotify;
             printScreenKey = null;
@@ -793,23 +795,51 @@ namespace Screenshot_Manager_Module
 
         #region Localization Strings
 
-        private readonly string FailedToDeleteFileNotification = "Failed to delete image.";
-        private readonly string FailedToRenameFileNotification = "Unable to rename image:";
-        private readonly string ReasonFileInUse = "The image is in use by another process.";
-        private readonly string ReasonFileNotExisting = "The image doesn't exist anymore!";
-        private readonly string ReasonDublicateFileName = "A duplicate image name was specified!";
-        private readonly string ReasonEmptyFileName = "Image name cannot be empty.";
-        private readonly string ReasonInvalidFileName = "The image name contains invalid characters.";
-        private readonly string PromptChangeFileName = "Please enter a different image name.";
-        private readonly string InvalidFileNameCharactersHint = "The following characters are not allowed:";
-        private readonly string FileDeletionPrompt = "Delete Image?";
-        private string RenameFileTooltipText = "Rename Image";
-        private readonly string ZoomInThumbnailTooltipText = "Click To Zoom";
-        private readonly string SearchBoxPlaceHolder = "Search...";
-        private readonly string FavoriteMarkerTooltip = "Favourite";
-        private readonly string UnfavoriteMarkerTooltip = "Unfavourite";
-        private readonly string ScreenshotCreated = "Screenshot created!";
+        private string FailedToDeleteFileNotification;
+        private string FailedToRenameFileNotification;
+        private string ReasonFileInUse;
+        private string ReasonFileNotExisting;
+        private string ReasonDublicateFileName;
+        private string ReasonEmptyFileName;
+        private string ReasonInvalidFileName;
+        private string PromptChangeFileName;
+        private string InvalidFileNameCharactersHint;
+        private string FileDeletionPrompt;
+        private string RenameFileTooltipText;
+        private string ZoomInThumbnailTooltipText;
+        private string SearchBoxPlaceHolder;
+        private string FavoriteMarkerTooltip;
+        private string UnfavoriteMarkerTooltip;
+        private string ScreenshotCreated;
 
-        #endregion
+        private void ChangeLocalization(object sender, EventArgs e)
+        {
+            FailedToDeleteFileNotification = Resources.Failed_to_delete_image___0_;
+            FailedToRenameFileNotification = Resources.Unable_to_rename_image___0_;
+            ReasonFileInUse = Resources.The_image_file_is_in_use_by_another_process_;
+            ReasonFileNotExisting = Resources.The_image_file_doesn_t_exist_anymore_;
+            ReasonDublicateFileName = Resources.A_duplicate_image_name_was_specified_;
+            ReasonEmptyFileName = Resources.Image_name_cannot_be_empty_;
+            ReasonInvalidFileName = Resources.The_image_name_contains_invalid_characters_;
+            PromptChangeFileName = Resources.Please_enter_a_different_image_name_;
+            InvalidFileNameCharactersHint = Resources.The_following_characters_are_not_allowed___0_;
+            FileDeletionPrompt = Resources.Delete_Image_;
+            RenameFileTooltipText = Resources.Rename_Image;
+            ZoomInThumbnailTooltipText = Resources.Click_To_Zoom;
+            SearchBoxPlaceHolder = Resources.Search___;
+            FavoriteMarkerTooltip = Resources.Favourite;
+            UnfavoriteMarkerTooltip = Resources.Unfavourite;
+            ScreenshotCreated = Resources.Screenshot_Created_;
+
+            modulePanel?.Dispose();
+            modulePanel = BuildModulePanel(GameService.Overlay.BlishHudWindow);
+
+            if (moduleTab != null)
+                GameService.Overlay.BlishHudWindow.RemoveTab(moduleTab);
+
+            moduleTab = GameService.Overlay.BlishHudWindow.AddTab(Name, _icon64, modulePanel, 0);
+        }
+
+    #endregion
     }
 }
