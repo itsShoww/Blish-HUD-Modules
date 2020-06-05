@@ -831,6 +831,7 @@ namespace Screenshot_Manager_Module
             UnfavoriteMarkerTooltip = Resources.Unfavourite;
             ScreenshotCreated = Resources.Screenshot_Created_;
 
+            //TODO: Implement as View so UI reloads automatically.
             modulePanel?.Dispose();
             modulePanel = BuildModulePanel(GameService.Overlay.BlishHudWindow);
 
