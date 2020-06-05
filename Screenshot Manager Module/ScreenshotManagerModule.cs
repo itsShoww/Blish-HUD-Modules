@@ -714,10 +714,10 @@ namespace Screenshot_Manager_Module
         {
             await Task.Run(() =>
             {
-                if (Directory.Exists(DirectoryUtil.ScreensPath))
-                    foreach (var fileName in Directory.EnumerateFiles(DirectoryUtil.ScreensPath)
-                        .Where(s => _imageFilters.Contains('*' + Path.GetExtension(s))))
-                        AddThumbnail(Path.Combine(DirectoryUtil.ScreensPath, fileName));
+                if (!Directory.Exists(DirectoryUtil.ScreensPath)) return;
+                foreach (var fileName in Directory.EnumerateFiles(DirectoryUtil.ScreensPath)
+                    .Where(s => Array.Exists(_imageFilters,filter => filter.Equals('*' + Path.GetExtension(s), StringComparison.InvariantCultureIgnoreCase))))
+                    AddThumbnail(Path.Combine(DirectoryUtil.ScreensPath, fileName));
             });
         }
 
