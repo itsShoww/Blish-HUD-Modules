@@ -38,7 +38,7 @@ namespace Screenshot_Manager_Module
         private readonly IEnumerable<char> _invalidFileNameCharacters;
         private Texture2D _completeHeartIcon;
         private Texture2D _deleteSearchBoxContentIcon;
-
+        internal Point _thumbnailSize = new Point(306, 175);
 
         private Texture2D _icon64;
 
@@ -250,23 +250,17 @@ namespace Screenshot_Manager_Module
             return inspectPanel;
         }
 
-        internal Point GetThumbnailSize(Texture2D texture)
-        {
-            var textureSize = new Point(texture.Width, texture.Height);
-            return PointExtensions.ResizeKeepAspect(textureSize, 300, 300);
-        }
-
         private void AddThumbnail(string filePath)
         {
             if (modulePanel == null || displayedThumbnails.ContainsKey(filePath)) return;
 
             var texture = GetScreenshot(filePath);
             if (texture == null) return;
-            var thumbnailScale = GetThumbnailSize(texture);
+
             var thumbnail = new Panel
             {
                 Parent = thumbnailFlowPanel,
-                Size = new Point(thumbnailScale.X + 6, thumbnailScale.Y + 6),
+                Size = new Point(_thumbnailSize.X + 6, _thumbnailSize.Y + 6),
                 BackgroundColor = Color.Black,
                 BasicTooltipText = filePath
             };
@@ -275,7 +269,7 @@ namespace Screenshot_Manager_Module
             {
                 Parent = thumbnail,
                 Location = new Point(3, 3),
-                Size = thumbnailScale,
+                Size = _thumbnailSize,
                 Texture = texture,
                 Opacity = 0.8f
             };
@@ -746,7 +740,7 @@ namespace Screenshot_Manager_Module
         private void CleanFavorites()
         {
             var copy = new List<string>(favorites.Value);
-            foreach (var path in copy)
+            foreach (var path in favorites.Value)
             {
                 if (File.Exists(path)) continue;
                 copy.Remove(path);

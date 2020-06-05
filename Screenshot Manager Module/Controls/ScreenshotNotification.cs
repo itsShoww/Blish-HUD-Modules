@@ -25,7 +25,7 @@ namespace Screenshot_Manager_Module.Controls
         private ScreenshotNotification(AsyncTexture2D thumbnail, string message)
         {
             _thumbnail = thumbnail;
-            _thumbnailSize = ScreenshotManagerModule.ModuleInstance.GetThumbnailSize(_thumbnail);
+            _thumbnailSize = ScreenshotManagerModule.ModuleInstance._thumbnailSize;
             _inspectIcon = ScreenshotManagerModule.ModuleInstance._inspectIcon;
 
             Opacity = 0f;
