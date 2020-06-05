@@ -27,6 +27,7 @@ namespace Screenshot_Manager_Module
         private const int WindowHeight = 780;
         private const int PanelMargin = 5;
         private const int FileTimeOutMilliseconds = 10000;
+        private const int NewFileNotificationDelay = 300;
         private const int MaxFileNameLength = 50;
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(ScreenshotManagerModule));
@@ -100,28 +101,32 @@ namespace Screenshot_Manager_Module
             _notificationBackroundTexture = ContentsManager.GetTexture("ns-button.png");
         }
 
-        private void ScreenshotNotify(object sender, EventArgs e)
+        private async void ScreenshotNotify(object sender, EventArgs e)
         {
-            FileInfo screenshot = null;
-            var completed = false;
-            var timeout = DateTime.Now.AddMilliseconds(FileTimeOutMilliseconds);
-            while (!completed)
-                try
-                {
-                    var directory = new DirectoryInfo(DirectoryUtil.ScreensPath);
-                    screenshot = directory.GetFiles()
-                        .OrderByDescending(f => f.LastWriteTime)
-                        .First();
-                    completed = true;
-                }
-                catch (InvalidOperationException ex)
-                {
-                    if (DateTime.Now < timeout) continue;
-                    Logger.Error(ex.Message + ex.StackTrace);
-                    return;
-                }
+            // Delaying so created file handle is closed (write completed) before we look at the directory for its newest file.
+            await Task.Delay(NewFileNotificationDelay).ContinueWith(delegate
+            {
+                FileInfo screenshot = null;
+                var completed = false;
+                var timeout = DateTime.Now.AddMilliseconds(FileTimeOutMilliseconds);
+                while (!completed)
+                    try
+                    {
+                        var directory = new DirectoryInfo(DirectoryUtil.ScreensPath);
+                        screenshot = directory.GetFiles()
+                            .OrderByDescending(f => f.LastWriteTime)
+                            .First();
+                        completed = true;
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        if (DateTime.Now < timeout) continue;
+                        Logger.Error(ex.Message + ex.StackTrace);
+                        return;
+                    }
 
-            ScreenshotNotification.ShowNotification(GetScreenshot(screenshot.FullName), ScreenshotCreated, 5.0f);
+                ScreenshotNotification.ShowNotification(GetScreenshot(screenshot.FullName), ScreenshotCreated, 5.0f);
+            });
         }
 
         protected override void Initialize()
