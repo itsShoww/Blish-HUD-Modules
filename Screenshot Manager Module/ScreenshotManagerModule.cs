@@ -231,18 +231,20 @@ namespace Screenshot_Manager_Module
                 try {
                     using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
                         using (var source = Image.FromStream(fs)) {
-                            using (var graphic = Graphics.FromImage(source)) {
-                                graphic.CompositingQuality = CompositingQuality.HighSpeed;
-                                graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                graphic.SmoothingMode = SmoothingMode.HighSpeed;
-                                graphic.DrawImage(source, 0, 0, _thumbnailSize.X, _thumbnailSize.Y);
-                            }
-                            using (var textureStream = new MemoryStream()) {
-                                source.Save(textureStream, ImageFormat.Jpeg);
-                                var buffer = new byte[textureStream.Length];
-                                textureStream.Position = 0;
-                                textureStream.Read(buffer, 0, buffer.Length);
-                                texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
+                            using (var target = new Bitmap(source, _thumbnailSize.X, _thumbnailSize.Y)) {
+                                using (var graphic = Graphics.FromImage(source)) {
+                                    graphic.CompositingQuality = CompositingQuality.HighSpeed;
+                                    graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                    graphic.SmoothingMode = SmoothingMode.HighSpeed;
+                                    graphic.DrawImage(target, 0, 0, _thumbnailSize.X, _thumbnailSize.Y);
+                                }
+                                using (var textureStream = new MemoryStream()) {
+                                    target.Save(textureStream, ImageFormat.Jpeg);
+                                    var buffer = new byte[textureStream.Length];
+                                    textureStream.Position = 0;
+                                    textureStream.Read(buffer, 0, buffer.Length);
+                                    texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
+                                }
                             }
                         }
                     }
