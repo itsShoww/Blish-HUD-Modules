@@ -16,15 +16,17 @@ namespace Screenshot_Manager_Module.Controls
         private readonly Texture2D _inspectIcon;
 
         private readonly AsyncTexture2D _thumbnail;
+        private readonly string _filePath;
 
         private readonly Point _thumbnailSize;
         private Rectangle _layoutInspectIconBounds;
 
         private Rectangle _layoutThumbnailBounds;
 
-        private ScreenshotNotification(AsyncTexture2D thumbnail, string message)
+        private ScreenshotNotification(string filePath, string message)
         {
-            _thumbnail = thumbnail;
+            _filePath = filePath;
+            _thumbnail = ScreenshotManagerModule.ModuleInstance.GetThumbnail(_filePath);
             _thumbnailSize = ScreenshotManagerModule.ModuleInstance._thumbnailSize;
             _inspectIcon = ScreenshotManagerModule.ModuleInstance._inspectIcon;
 
@@ -60,7 +62,7 @@ namespace Screenshot_Manager_Module.Controls
             _visibleNotifications++;
             Click += delegate
             {
-                ScreenshotManagerModule.ModuleInstance.CreateInspectionPanel(_thumbnail);
+                ScreenshotManagerModule.ModuleInstance.CreateInspectionPanel(_filePath);
                 GameService.Overlay.BlishHudWindow.Show();
                 GameService.Overlay.BlishHudWindow.Navigate(ScreenshotManagerModule.ModuleInstance.modulePanel);
                 Dispose();
@@ -111,9 +113,9 @@ namespace Screenshot_Manager_Module.Controls
                 .OnComplete(Dispose);
         }
 
-        public static void ShowNotification(AsyncTexture2D icon, string message, float duration)
+        public static void ShowNotification(string filePath, string message, float duration)
         {
-            var notif = new ScreenshotNotification(icon, message)
+            var notif = new ScreenshotNotification(filePath, message)
             {
                 Parent = Graphics.SpriteScreen
             };

@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.IO;
-using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using System.Threading.Tasks;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Blish_HUD.Input;
 using Blish_HUD.Modules;
@@ -16,7 +9,18 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Screenshot_Manager_Module.Controls;
 using Screenshot_Manager_Module.Properties;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Color = Microsoft.Xna.Framework.Color;
 using Image = System.Drawing.Image;
+using Point = Microsoft.Xna.Framework.Point;
 
 namespace Screenshot_Manager_Module
 {
@@ -68,6 +72,7 @@ namespace Screenshot_Manager_Module
         private WindowTab moduleTab;
         private KeyBinding printScreenKey;
         private List<FileSystemWatcher> screensPathWatchers;
+        private bool isLoadingThumbnails;
 
         private FlowPanel thumbnailFlowPanel;
 
@@ -125,7 +130,7 @@ namespace Screenshot_Manager_Module
                         return;
                     }
 
-                ScreenshotNotification.ShowNotification(GetScreenshot(screenshot.FullName), ScreenshotCreated, 5.0f);
+                ScreenshotNotification.ShowNotification(screenshot.FullName,ScreenshotCreated, 5.0f);
             });
         }
 
@@ -184,26 +189,35 @@ namespace Screenshot_Manager_Module
                 if (!File.Exists(filePath)) return null;
                 try
                 {
-                    using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-                    {
-                        using (var originalImage = Image.FromStream(fs))
-                        {
-                            using (var textureStream = new MemoryStream())
-                            {
-                                originalImage.Save(textureStream, originalImage.RawFormat);
-                                var buffer = new byte[textureStream.Length];
-                                textureStream.Position = 0;
-                                textureStream.Read(buffer, 0, buffer.Length);
-                                texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
-                                textureStream.Close();
-                            }
-
-                            originalImage.Dispose();
+                    using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
+                        var source = Image.FromStream(fs);
+                        var maxWidth = GameService.Graphics.Resolution.X - 100;
+                        var maxHeight = GameService.Graphics.Resolution.Y - 100;
+                        var (width, height) = PointExtensions.ResizeKeepAspect(new Point(source.Width, source.Height), maxWidth,
+                            maxHeight);
+                        var target = new Bitmap(source, width, height);
+                        source.Dispose();
+                        using (var graphic = Graphics.FromImage(target)) {
+                            graphic.CompositingQuality = CompositingQuality.HighSpeed;
+                            graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            graphic.SmoothingMode = SmoothingMode.HighSpeed;
+                            graphic.DrawImage(target, 0, 0, width, height);
+                            graphic.Dispose();
                         }
-
+                        using (var textureStream = new MemoryStream()) {
+                            target.Save(textureStream, ImageFormat.Jpeg);
+                            target.Dispose();
+                            var buffer = new byte[textureStream.Length];
+                            textureStream.Position = 0;
+                            textureStream.Read(buffer, 0, buffer.Length);
+                            texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
+                            textureStream.Close();
+                            textureStream.Dispose();
+                        }
                         fs.Close();
-                        completed = true;
+                        fs.Dispose();
                     }
+                    completed = true;
                 }
                 catch (IOException e)
                 {
@@ -215,19 +229,57 @@ namespace Screenshot_Manager_Module
 
             return texture;
         }
+        internal Texture2D GetThumbnail(string filePath) {
+            Texture2D texture = null;
+            var completed = false;
+            var timeout = DateTime.Now.AddMilliseconds(FileTimeOutMilliseconds);
+            while (!completed) {
+                if (!File.Exists(filePath)) return null;
+                try {
+                    using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                    {
+                        var source = Image.FromStream(fs);
+                        using (var graphic = Graphics.FromImage(source))
+                        {
+                            graphic.CompositingQuality = CompositingQuality.HighSpeed;
+                            graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            graphic.SmoothingMode = SmoothingMode.HighSpeed;
+                            graphic.DrawImage(source, 0, 0, _thumbnailSize.X, _thumbnailSize.Y);
+                            graphic.Dispose();
+                        }
+                        using (var textureStream = new MemoryStream())
+                        {
+                            source.Save(textureStream, ImageFormat.Jpeg);
+                            source.Dispose();
+                            var buffer = new byte[textureStream.Length];
+                            textureStream.Position = 0;
+                            textureStream.Read(buffer, 0, buffer.Length);
+                            texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
+                            textureStream.Close();
+                            textureStream.Dispose();
+                        }
+                        fs.Close();
+                        fs.Dispose();
+                    }
+                    completed = true;
+                } catch (IOException e) {
+                    if (DateTime.Now < timeout) continue;
+                    Logger.Error(e.Message + e.StackTrace);
+                    return null;
+                }
+            }
 
-        internal Panel CreateInspectionPanel(Texture2D texture)
+            return texture;
+        }
+        internal Panel CreateInspectionPanel(string filePath)
         {
-            var maxWidth = GameService.Graphics.Resolution.X - 100;
-            var maxHeight = GameService.Graphics.Resolution.Y - 100;
-            var inspectScale = PointExtensions.ResizeKeepAspect(GameService.Graphics.Resolution, maxWidth,
-                maxHeight);
+            var texture = GetScreenshot(filePath);
             var inspectPanel = new Panel
             {
                 Parent = GameService.Graphics.SpriteScreen,
-                Size = new Point(inspectScale.X + 10, inspectScale.Y + 10),
-                Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - inspectScale.X / 2,
-                    GameService.Graphics.SpriteScreen.Height / 2 - inspectScale.Y / 2),
+                Size = new Point(texture.Width + 10, texture.Height + 10),
+                Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - texture.Width / 2,
+                    GameService.Graphics.SpriteScreen.Height / 2 - texture.Height / 2),
                 BackgroundColor = Color.Black,
                 ZIndex = 9999,
                 ShowBorder = true,
@@ -238,7 +290,7 @@ namespace Screenshot_Manager_Module
             {
                 Parent = inspectPanel,
                 Location = new Point(5, 5),
-                Size = inspectScale,
+                Size = new Point(texture.Width, texture.Height),
                 Texture = texture
             };
             GameService.Animation.Tweener.Tween(inspectPanel, new {Opacity = 1.0f}, 0.35f);
@@ -254,7 +306,7 @@ namespace Screenshot_Manager_Module
         {
             if (modulePanel == null || displayedThumbnails.ContainsKey(filePath)) return;
 
-            var texture = GetScreenshot(filePath);
+            var texture = GetThumbnail(filePath);
             if (texture == null) return;
 
             var thumbnail = new Panel
@@ -487,7 +539,7 @@ namespace Screenshot_Manager_Module
             deleteLabel.Click += delegate
             {
                 inspectPanel?.Dispose();
-                inspectPanel = CreateInspectionPanel(texture);
+                inspectPanel = CreateInspectionPanel(filePath);
             };
             var deleteButton = new Blish_HUD.Controls.Image
             {
@@ -707,17 +759,34 @@ namespace Screenshot_Manager_Module
             homePanel.Hidden += ToggleFileSystemWatchers;
             homePanel.Hidden += ToggleFileSystemWatchers;
             homePanel.Shown += LoadImages;
+            homePanel.Hidden += DisposeDisplayedThumbnails;
             return homePanel;
         }
-
+        private void DisposeDisplayedThumbnails(object sender, EventArgs e)
+        {
+            if (isLoadingThumbnails || displayedThumbnails == null || displayedThumbnails.Count == 0) return;
+            var filePaths = new List<string>(displayedThumbnails.Keys);
+            foreach (var path in filePaths) {
+                displayedThumbnails.Remove(path);
+            }
+            filePaths.Clear();
+        }
         private async void LoadImages(object sender, EventArgs e)
         {
-            await Task.Run(() =>
+            if (isLoadingThumbnails || !Directory.Exists(DirectoryUtil.ScreensPath)) return;
+            isLoadingThumbnails = true;
+            isLoadingThumbnails = await Task.Run(() =>
             {
-                if (!Directory.Exists(DirectoryUtil.ScreensPath)) return;
                 foreach (var fileName in Directory.EnumerateFiles(DirectoryUtil.ScreensPath)
-                    .Where(s => Array.Exists(_imageFilters,filter => filter.Equals('*' + Path.GetExtension(s), StringComparison.InvariantCultureIgnoreCase))))
+                    .Where(s => Array.Exists(_imageFilters,
+                        filter => filter.Equals('*' + Path.GetExtension(s),
+                            StringComparison.InvariantCultureIgnoreCase))))
                     AddThumbnail(Path.Combine(DirectoryUtil.ScreensPath, fileName));
+            }).ContinueWith(delegate
+            {
+                if (!modulePanel.Visible)
+                    DisposeDisplayedThumbnails(null, null);
+                return false;
             });
         }
 
