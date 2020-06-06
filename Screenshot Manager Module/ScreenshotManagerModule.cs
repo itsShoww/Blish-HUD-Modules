@@ -73,6 +73,7 @@ namespace Screenshot_Manager_Module
         private KeyBinding printScreenKey;
         private List<FileSystemWatcher> screensPathWatchers;
         private bool isLoadingThumbnails;
+        private bool isDisposingThumbnails;
 
         private FlowPanel thumbnailFlowPanel;
 
@@ -746,15 +747,22 @@ namespace Screenshot_Manager_Module
             homePanel.Hidden += DisposeDisplayedThumbnails;
             return homePanel;
         }
-        private void DisposeDisplayedThumbnails(object sender, EventArgs e)
+        private async void DisposeDisplayedThumbnails(object sender, EventArgs e)
         {
             if (isLoadingThumbnails || displayedThumbnails == null || displayedThumbnails.Count == 0) return;
-            var filePaths = new List<string>(displayedThumbnails.Keys);
-            foreach (var path in filePaths) {
-                displayedThumbnails[path]?.Dispose();
-                displayedThumbnails.Remove(path);
-            }
-            filePaths.Clear();
+            isDisposingThumbnails = true;
+            isDisposingThumbnails = await Task.Run(() =>
+            {
+                var filePaths = new List<string>(displayedThumbnails.Keys);
+                foreach (var path in filePaths)
+                {
+                    if (isLoadingThumbnails) break;
+                    displayedThumbnails[path]?.Dispose();
+                    displayedThumbnails.Remove(path);
+                }
+                filePaths.Clear();
+                return false;
+            });
         }
         private async void LoadImages(object sender, EventArgs e)
         {
