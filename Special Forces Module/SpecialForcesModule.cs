@@ -99,8 +99,10 @@ namespace Special_Forces_Module
                     settings.DefineSetting(skill.ToString(), new KeyBinding(Keys.None) {Enabled = true}, friendlyName,
                         "Your key binding for " + friendlyName));
             }
-
-            ;
+            InteractionBinding = settings.DefineSetting("InteractionKey", new KeyBinding(Keys.F) {Enabled = true},
+                "Interact", "General context-sensitive interact prompt. Used for\ninteracting with the environment, including Talk,\nLoot Revive, etc.");
+            DodgeBinding = settings.DefineSetting("DodgeKey", new KeyBinding(Keys.V) {Enabled = true},
+                "Dodge", "Do an evasive dodge roll, negating damage, in the\ndirection your character is moving (backward if\nstationary).");
         }
 
         protected override void Initialize()
@@ -238,9 +240,10 @@ namespace Special_Forces_Module
         private SettingEntry<KeyBinding> SurrenderBinding;
         private SettingEntry<bool> LibraryShowAll;
 
-        public Dictionary<GuildWarsControls, SettingEntry<KeyBinding>> SkillBindings =
+        internal Dictionary<GuildWarsControls, SettingEntry<KeyBinding>> SkillBindings =
             new Dictionary<GuildWarsControls, SettingEntry<KeyBinding>>();
-
+        internal SettingEntry<KeyBinding> InteractionBinding;
+        internal SettingEntry<KeyBinding> DodgeBinding;
         #endregion
         private async Task<T> GetJsonResponse<T>(string request) {
             try {
@@ -677,9 +680,9 @@ namespace Special_Forces_Module
             var bindingsPanel = new FlowPanel
             {
                 Parent = settingsPanel,
-                Size = new Point(settingsPanel.Size.X - 100, settingsPanel.Size.Y / 2),
+                Size = new Point(settingsPanel.Size.X - 100, settingsPanel.Size.Y - 50),
                 Location = new Point(settingsPanel.Size.X / 2 - (settingsPanel.Size.X - 100) / 2,
-                    settingsPanel.Size.Y / 2),
+                    50),
                 ControlPadding = new Vector2(2, 2),
                 Title = "",
                 CanScroll = true
@@ -697,7 +700,7 @@ namespace Special_Forces_Module
             var skillsBindings = new FlowPanel
             {
                 Parent = bindingsPanel,
-                Size = new Point(bindingsPanel.ContentRegion.Size.X - 24, bindingsPanel.ContentRegion.Size.Y),
+                Size = new Point(bindingsPanel.ContentRegion.Size.X - 24, 500),
                 ControlPadding = new Vector2(2, 2),
                 ShowTint = true,
                 Title = "Skills",
@@ -714,25 +717,44 @@ namespace Special_Forces_Module
             };
             surrenderKeyAssigner.BindingChanged += delegate
             {
-                surrenderKeyAssigner.KeyBinding.Enabled = true;
-                GameService.Settings.Save();
+                SurrenderBinding.Value = new KeyBinding(surrenderKeyAssigner.KeyBinding.PrimaryKey) { Enabled = true };
             };
-            foreach (var binding in SkillBindings)
+            foreach (var binding in SkillBindings.Values)
             {
-                var skillKeyAssigner = new KeybindingAssigner(binding.Value.Value)
+                var skillKeyAssigner = new KeybindingAssigner(binding.Value)
                 {
                     Parent = skillsBindings,
-                    KeyBindingName = binding.Value.DisplayName,
-                    BasicTooltipText = binding.Value.Description,
+                    KeyBindingName = binding.DisplayName,
+                    BasicTooltipText = binding.Description,
                     Enabled = true
                 };
                 skillKeyAssigner.BindingChanged += delegate
                 {
-                    skillKeyAssigner.KeyBinding.Enabled = true;
-                    GameService.Settings.Save();
+                    binding.Value = new KeyBinding(skillKeyAssigner.KeyBinding.PrimaryKey);
                 };
             }
-
+            var interactionKeyAssigner = new KeybindingAssigner(InteractionBinding.Value)
+            {
+                Parent = skillsBindings,
+                KeyBindingName = InteractionBinding.DisplayName,
+                BasicTooltipText = InteractionBinding.Description,
+                Enabled = true
+            };
+            interactionKeyAssigner.BindingChanged += delegate
+            {
+                InteractionBinding.Value = new KeyBinding(interactionKeyAssigner.KeyBinding.PrimaryKey) { Enabled = true };
+            };
+            var dodgeKeyAssigner = new KeybindingAssigner(DodgeBinding.Value)
+            {
+                Parent = skillsBindings,
+                KeyBindingName = DodgeBinding.DisplayName,
+                BasicTooltipText = DodgeBinding.Description,
+                Enabled = true
+            };
+            interactionKeyAssigner.BindingChanged += delegate
+            {
+                DodgeBinding.Value = new KeyBinding(dodgeKeyAssigner.KeyBinding.PrimaryKey) { Enabled = true };
+            };
             return settingsPanel;
         }
 

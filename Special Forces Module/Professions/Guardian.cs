@@ -91,11 +91,7 @@ namespace Special_Forces_Module.Professions
 
         public (int, int, int) GetTransformation(GuildWarsControls skill)
         {
-            var transform = (0, 0, 0);
-
-            layout.TryGetValue(skill, out transform);
-
-            return transform;
+            return layout?[skill] ?? (0,0,0);
         }
     }
 }
