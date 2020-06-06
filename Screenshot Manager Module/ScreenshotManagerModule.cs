@@ -190,29 +190,28 @@ namespace Screenshot_Manager_Module
                 try
                 {
                     using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
-                        var source = Image.FromStream(fs);
-                        var maxWidth = GameService.Graphics.Resolution.X - 100;
-                        var maxHeight = GameService.Graphics.Resolution.Y - 100;
-                        var (width, height) = PointExtensions.ResizeKeepAspect(new Point(source.Width, source.Height), maxWidth,
-                            maxHeight);
-                        var target = new Bitmap(source, width, height);
-                        source.Dispose();
-                        using (var graphic = Graphics.FromImage(target)) {
-                            graphic.CompositingQuality = CompositingQuality.HighSpeed;
-                            graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                            graphic.SmoothingMode = SmoothingMode.HighSpeed;
-                            graphic.DrawImage(target, 0, 0, width, height);
+                        using (var source = Image.FromStream(fs)) {
+                            var maxWidth = GameService.Graphics.Resolution.X - 100;
+                            var maxHeight = GameService.Graphics.Resolution.Y - 100;
+                            var (width, height) = PointExtensions.ResizeKeepAspect(
+                                new Point(source.Width, source.Height), maxWidth,
+                                maxHeight);
+                            using (var target = new Bitmap(source, width, height)) {
+                                using (var graphic = Graphics.FromImage(target)) {
+                                    graphic.CompositingQuality = CompositingQuality.HighSpeed;
+                                    graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                    graphic.SmoothingMode = SmoothingMode.HighSpeed;
+                                    graphic.DrawImage(target, 0, 0, width, height);
+                                }
+                                using (var textureStream = new MemoryStream()) {
+                                    target.Save(textureStream, ImageFormat.Jpeg);
+                                    var buffer = new byte[textureStream.Length];
+                                    textureStream.Position = 0;
+                                    textureStream.Read(buffer, 0, buffer.Length);
+                                    texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
+                                }
+                            }
                         }
-                        using (var textureStream = new MemoryStream()) {
-                            target.Save(textureStream, ImageFormat.Jpeg);
-                            target.Dispose();
-                            var buffer = new byte[textureStream.Length];
-                            textureStream.Position = 0;
-                            textureStream.Read(buffer, 0, buffer.Length);
-                            texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
-                            textureStream.Close();
-                        }
-                        fs.Close();
                     }
                     completed = true;
                 }
@@ -233,27 +232,22 @@ namespace Screenshot_Manager_Module
             while (!completed) {
                 if (!File.Exists(filePath)) return null;
                 try {
-                    using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-                    {
-                        var source = Image.FromStream(fs);
-                        using (var graphic = Graphics.FromImage(source))
-                        {
-                            graphic.CompositingQuality = CompositingQuality.HighSpeed;
-                            graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                            graphic.SmoothingMode = SmoothingMode.HighSpeed;
-                            graphic.DrawImage(source, 0, 0, _thumbnailSize.X, _thumbnailSize.Y);
+                    using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
+                        using (var source = Image.FromStream(fs)) {
+                            using (var graphic = Graphics.FromImage(source)) {
+                                graphic.CompositingQuality = CompositingQuality.HighSpeed;
+                                graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                graphic.SmoothingMode = SmoothingMode.HighSpeed;
+                                graphic.DrawImage(source, 0, 0, _thumbnailSize.X, _thumbnailSize.Y);
+                            }
+                            using (var textureStream = new MemoryStream()) {
+                                source.Save(textureStream, ImageFormat.Jpeg);
+                                var buffer = new byte[textureStream.Length];
+                                textureStream.Position = 0;
+                                textureStream.Read(buffer, 0, buffer.Length);
+                                texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
+                            }
                         }
-                        using (var textureStream = new MemoryStream())
-                        {
-                            source.Save(textureStream, ImageFormat.Jpeg);
-                            source.Dispose();
-                            var buffer = new byte[textureStream.Length];
-                            textureStream.Position = 0;
-                            textureStream.Read(buffer, 0, buffer.Length);
-                            texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
-                            textureStream.Close();
-                        }
-                        fs.Close();
                     }
                     completed = true;
                 } catch (IOException e) {
@@ -268,6 +262,7 @@ namespace Screenshot_Manager_Module
         internal Panel CreateInspectionPanel(string filePath)
         {
             var texture = GetScreenshot(filePath);
+            if (texture == null) return null;
             var inspectPanel = new Panel
             {
                 Parent = GameService.Graphics.SpriteScreen,
@@ -300,6 +295,7 @@ namespace Screenshot_Manager_Module
         {
             if (modulePanel == null || displayedThumbnails.ContainsKey(filePath)) return;
 
+            
             var texture = GetThumbnail(filePath);
             if (texture == null) return;
 
@@ -668,7 +664,6 @@ namespace Screenshot_Manager_Module
                 Parent = wnd,
                 Size = new Point(WindowWidth, WindowHeight)
             };
-            homePanel.Hidden += delegate { homePanel.Dispose(); };
             thumbnailFlowPanel = new FlowPanel
             {
                 Parent = homePanel,
@@ -761,6 +756,7 @@ namespace Screenshot_Manager_Module
             if (isLoadingThumbnails || displayedThumbnails == null || displayedThumbnails.Count == 0) return;
             var filePaths = new List<string>(displayedThumbnails.Keys);
             foreach (var path in filePaths) {
+                displayedThumbnails[path]?.Dispose();
                 displayedThumbnails.Remove(path);
             }
             filePaths.Clear();
@@ -893,7 +889,7 @@ namespace Screenshot_Manager_Module
             UnfavoriteMarkerTooltip = Resources.Unfavourite;
             ScreenshotCreated = Resources.Screenshot_Created_;
 
-            //TODO: Implement as View so UI reloads automatically.
+            //TODO: Implement as View so panel reloads automatically.
             modulePanel?.Dispose();
             modulePanel = BuildModulePanel(GameService.Overlay.BlishHudWindow);
 
