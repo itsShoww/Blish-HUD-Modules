@@ -58,22 +58,30 @@ namespace Special_Forces_Module
         internal static SpecialForcesModule ModuleInstance;
 
         private List<Control> _moduleControls;
-        private List<TemplateButton> DisplayedTemplates;
-        private RawTemplate EditorTemplate;
+        private List<TemplateButton> _displayedTemplates;
+        private RawTemplate _editorTemplate;
 
-        //Cache
+        #region Rendercache
         private Dictionary<string, AsyncTexture2D> EliteRenderRepository;
         private Dictionary<string, AsyncTexture2D> ProfessionRenderRepository;
         private Dictionary<int, AsyncTexture2D> SkillRenderRepository;
         private IReadOnlyList<Profession> ProfessionRepository;
         private List<Skill> SkillRepository;
         private List<Skill> ChainSkillRepository;
+        #endregion
 
-        private WindowTab SpecialForcesTab;
-        private Image SurrenderButton;
-        private TemplatePlayer TemplatePlayer;
-        private TemplateReader TemplateReader;
-        private List<RawTemplate> Templates;
+        #region Textures
+        private Texture2D _surrenderTooltip_texture;
+        private Texture2D _surrenderFlag_hover;
+        private Texture2D _surrenderFlag;
+        private Texture2D _surrenderFlag_pressed;
+        #endregion
+
+        private WindowTab _specialForcesTab;
+        private Image _surrenderButton;
+        private TemplatePlayer _templatePlayer;
+        private TemplateReader _templateReader;
+        private List<RawTemplate> _templates;
 
         [ImportingConstructor]
         public SpecialForcesModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(
@@ -82,6 +90,15 @@ namespace Special_Forces_Module
             ModuleInstance = this;
         }
 
+        private void LoadTextures()
+        {
+            ICON = ICON ?? ContentsManager.GetTexture("specialforces_icon.png");
+            _surrenderTooltip_texture = ContentsManager.GetTexture("surrender_tooltip.png");
+            _surrenderFlag = ContentsManager.GetTexture("surrender_flag.png");
+            _surrenderFlag_hover = ContentsManager.GetTexture("surrender_flag_hover.png");
+            _surrenderFlag_pressed = ContentsManager.GetTexture("surrender_flag_pressed.png");
+
+        }
         protected override void DefineSettings(SettingCollection settings)
         {
             SurrenderButtonEnabled = settings.DefineSetting("SurrenderButtonEnabled", false, "Show Surrender Skill",
@@ -107,6 +124,8 @@ namespace Special_Forces_Module
 
         protected override void Initialize()
         {
+            LoadTextures();
+
             _moduleControls = new List<Control>();
             EliteRenderRepository = new Dictionary<string, AsyncTexture2D>();
             ProfessionRenderRepository = new Dictionary<string, AsyncTexture2D>();
@@ -114,14 +133,12 @@ namespace Special_Forces_Module
             SkillRepository = new List<Skill>();
             ChainSkillRepository = new List<Skill>();
 
-            ICON = ICON ?? ContentsManager.GetTexture("specialforces_icon.png");
-
-            TemplateReader = new TemplateReader();
-            TemplatePlayer = new TemplatePlayer();
-            Templates = new List<RawTemplate>();
-            EditorTemplate = new RawTemplate();
-            DisplayedTemplates = new List<TemplateButton>();
-            SurrenderButton = SurrenderButtonEnabled.Value ? BuildSurrenderButton() : null;
+            _templateReader = new TemplateReader();
+            _templatePlayer = new TemplatePlayer();
+            _templates = new List<RawTemplate>();
+            _editorTemplate = new RawTemplate();
+            _displayedTemplates = new List<TemplateButton>();
+            _surrenderButton = SurrenderButtonEnabled.Value ? BuildSurrenderButton() : null;
 
             SurrenderBinding.Value.Activated += delegate { GameService.GameIntegration.Chat.Send("/gg"); };
         }
@@ -134,12 +151,12 @@ namespace Special_Forces_Module
 
             // Load local template sheets (*.json) files.
             await Task.Run(() =>
-                Templates = TemplateReader.LoadDirectory(DirectoriesManager.GetFullDirectoryPath("specialforces")));
+                _templates = _templateReader.LoadDirectory(DirectoriesManager.GetFullDirectoryPath("specialforces")));
         }
 
         protected override void OnModuleLoaded(EventArgs e)
         {
-            SpecialForcesTab = GameService.Overlay.BlishHudWindow.AddTab("Special Forces", ICON,
+            _specialForcesTab = GameService.Overlay.BlishHudWindow.AddTab("Special Forces", ICON,
                 BuildHomePanel(GameService.Overlay.BlishHudWindow), 0);
             // Base handler must be called
             base.OnModuleLoaded(e);
@@ -147,78 +164,85 @@ namespace Special_Forces_Module
 
         protected override void Update(GameTime gameTime)
         {
-            if (SurrenderButton != null)
+            if (_surrenderButton != null)
             {
-                SurrenderButton.Visible = GameService.GameIntegration.IsInGame;
-                SurrenderButton.Location =
-                    new Point(GameService.Graphics.SpriteScreen.Width / 2 - SurrenderButton.Width / 2 + 431,
-                        GameService.Graphics.SpriteScreen.Height - SurrenderButton.Height * 2 + 7);
+                _surrenderButton.Visible = GameService.GameIntegration.IsInGame;
+                _surrenderButton.Location =
+                    new Point(GameService.Graphics.SpriteScreen.Width / 2 - _surrenderButton.Width / 2 + 431,
+                        GameService.Graphics.SpriteScreen.Height - _surrenderButton.Height * 2 + 7);
             }
         }
 
+        private void DisposeSurrenderButton()
+        {
+            Task.Run(delegate
+            {
+                GameService.Animation.Tweener.Tween(_surrenderButton, new {Opacity = 0.0f}, 0.2f);
+            }).ContinueWith(delegate {_surrenderButton.Dispose(); });
+        }
         /// <inheritdoc />
         protected override void Unload()
         {
             // Unload
             foreach (var c in _moduleControls) c?.Dispose();
 
-            if (SurrenderButton != null)
+            if (_surrenderButton != null)
             {
-                SurrenderButton.Dispose();
-                SurrenderButton = null;
+                DisposeSurrenderButton();
+                _surrenderButton = null;
             }
 
-            if (TemplatePlayer != null)
+            if (_templatePlayer != null)
             {
-                TemplatePlayer.Dispose();
-                TemplatePlayer = null;
+                _templatePlayer.Dispose();
+                _templatePlayer = null;
             }
 
-            GameService.Overlay.BlishHudWindow.RemoveTab(SpecialForcesTab);
+            GameService.Overlay.BlishHudWindow.RemoveTab(_specialForcesTab);
 
             // All static members must be manually unset
             ModuleInstance = null;
         }
         private Image BuildSurrenderButton()
         {
-            var tooltip_texture = ContentsManager.GetTexture("surrender_tooltip.png");
-            var tooltip_size = new Point(tooltip_texture.Width, tooltip_texture.Height);
+            var tooltip_size = new Point(_surrenderTooltip_texture.Width, _surrenderTooltip_texture.Height);
             var surrenderButtonTooltip = new Tooltip
             {
                 Size = tooltip_size
             };
-            surrenderButtonTooltip.AddChild(new Image(tooltip_texture)
+            var surrenderButtonTooltipImage = new Image(_surrenderTooltip_texture)
             {
+                Parent = surrenderButtonTooltip,
                 Location = new Point(0, 0),
                 Visible = surrenderButtonTooltip.Visible
-            });
+            };
             var surrenderButton = new Image
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Size = new Point(45, 45),
                 Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - 22,
                     GameService.Graphics.SpriteScreen.Height - 45),
-                Texture = ContentsManager.GetTexture("surrender_flag.png"),
+                Texture = _surrenderFlag,
                 Visible = SurrenderButtonEnabled.Value,
                 Tooltip = surrenderButtonTooltip
             };
             surrenderButton.MouseEntered += delegate
             {
-                surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag_hover.png");
+                surrenderButton.Texture = _surrenderFlag_hover;
             };
             surrenderButton.MouseLeft += delegate
             {
-                surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag.png");
+                surrenderButton.Texture = _surrenderFlag;
             };
             surrenderButton.LeftMouseButtonPressed += delegate
             {
                 surrenderButton.Size = new Point(43, 43);
-                surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag_pressed.png");
+                surrenderButton.Texture = _surrenderFlag_pressed;
             };
             surrenderButton.LeftMouseButtonReleased += delegate
             {
                 surrenderButton.Size = new Point(45, 45);
-                surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag.png");
+                surrenderButton.Texture = _surrenderFlag;
                 GameService.GameIntegration.Chat.Send("/gg");
             };
             GameService.Animation.Tweener.Tween(surrenderButton, new {Opacity = 1.0f}, 0.35f);
@@ -509,10 +533,10 @@ namespace Special_Forces_Module
                 Text = template.Title,
                 BottomText = template.GetClassFriendlyName()
             };
-            DisplayedTemplates.Add(button);
+            _displayedTemplates.Add(button);
             button.LeftMouseButtonPressed += delegate
             {
-                if (button.MouseOverPlay) TemplatePlayer.Play(template);
+                if (button.MouseOverPlay) _templatePlayer.Play(template);
                 if (button.MouseOverUtility1 || button.MouseOverUtility2 || button.MouseOverUtility3)
                 {
                     var index = button.MouseOverUtility1 ? 0 : button.MouseOverUtility2 ? 1 : 2;
@@ -551,7 +575,7 @@ namespace Special_Forces_Module
                 ShowBorder = true,
                 CanScroll = true
             };
-            foreach (var template in Templates) AddTemplate(template, contentPanel);
+            foreach (var template in _templates) AddTemplate(template, contentPanel);
             var ddSortMethod = new Dropdown
             {
                 Parent = libraryPanel,
@@ -587,11 +611,11 @@ namespace Special_Forces_Module
             };
             import_button.LeftMouseButtonReleased += delegate
             {
-                var template = TemplateReader.LoadSingle(Clipboard.GetText());
+                var template = _templateReader.LoadSingle(Clipboard.GetText());
                 if (template != null)
                 {
                     template.Save();
-                    Templates.Add(template);
+                    _templates.Add(template);
                     AddTemplate(template, contentPanel);
                     UpdateSort(ddSortMethod, EventArgs.Empty);
                 }
@@ -604,17 +628,17 @@ namespace Special_Forces_Module
             switch (((Dropdown) sender).SelectedItem)
             {
                 case DD_TITLE:
-                    DisplayedTemplates.Sort((e1, e2) => e1.Template.Title.CompareTo(e2.Template.Title));
-                    foreach (var e1 in DisplayedTemplates)
+                    _displayedTemplates.Sort((e1, e2) => e1.Template.Title.CompareTo(e2.Template.Title));
+                    foreach (var e1 in _displayedTemplates)
                         e1.Visible = LibraryShowAll.Value || e1.Template.GetProfession()
                             .Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(),
                                 StringComparison.InvariantCultureIgnoreCase);
 
                     break;
                 case DD_PROFESSION:
-                    DisplayedTemplates.Sort((e1, e2) =>
+                    _displayedTemplates.Sort((e1, e2) =>
                         e1.BottomText.CompareTo(e2.BottomText));
-                    foreach (var e1 in DisplayedTemplates)
+                    foreach (var e1 in _displayedTemplates)
                         e1.Visible = LibraryShowAll.Value || e1.Template.GetProfession()
                             .Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(),
                                 StringComparison.InvariantCultureIgnoreCase);
@@ -627,7 +651,7 @@ namespace Special_Forces_Module
         private void RepositionTemplates()
         {
             var pos = 0;
-            foreach (var e in DisplayedTemplates)
+            foreach (var e in _displayedTemplates)
             {
                 var x = pos % 3;
                 var y = pos / 3;
@@ -664,18 +688,9 @@ namespace Special_Forces_Module
             {
                 SurrenderButtonEnabled.Value = e.Checked;
                 if (e.Checked)
-                {
-                    SurrenderButton = BuildSurrenderButton();
-                }
+                    _surrenderButton = BuildSurrenderButton();
                 else
-                {
-                    GameService.Animation.Tweener.Tween(SurrenderButton, new { Opacity = 0.0f }, 0.2f)
-                        .OnComplete(() =>
-                        {
-                            SurrenderButton.Dispose();
-                            SurrenderButton = null;
-                        });
-                }
+                    DisposeSurrenderButton();
             };
             var bindingsPanel = new FlowPanel
             {
@@ -928,7 +943,7 @@ namespace Special_Forces_Module
                 Parent = title_label.Parent,
                 Size = new Point(100, 30),
                 Location = new Point(LEFT_MARGIN, TOP_MARGIN + template_label.Bottom),
-                Text = EditorTemplate.GetClassFriendlyName()
+                Text = _editorTemplate.GetClassFriendlyName()
             };
             var title_text = new TextBox
             {
@@ -936,7 +951,7 @@ namespace Special_Forces_Module
                 Size = new Point(200, 30),
                 Location = new Point(title_label.Right, title_label.Location.Y),
                 PlaceholderText = "Title",
-                Text = EditorTemplate.Title ?? ""
+                Text = _editorTemplate.Title ?? ""
             };
             var patch_text = new TextBox
             {
@@ -944,16 +959,16 @@ namespace Special_Forces_Module
                 Size = new Point(200, 30),
                 Location = new Point(patch_label.Right, patch_label.Location.Y),
                 PlaceholderText = "DD/MM/YYYY",
-                Text = EditorTemplate.Patch.Equals(DateTime.MinValue)
+                Text = _editorTemplate.Patch.Equals(DateTime.MinValue)
                     ? ""
-                    : EditorTemplate.Patch.ToString("dd/MM/yyyy")
+                    : _editorTemplate.Patch.ToString("dd/MM/yyyy")
             };
             patch_text.EnterPressed += delegate
             {
                 DateTime patch;
                 if (DateTime.TryParseExact(patch_text.Text, "dd/MM/yyyy", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out patch))
-                    EditorTemplate.Patch = patch;
+                    _editorTemplate.Patch = patch;
             };
             var template_text = new TextBox
             {
@@ -961,7 +976,7 @@ namespace Special_Forces_Module
                 Size = new Point(200, 30),
                 Location = new Point(template_label.Right, template_label.Location.Y),
                 PlaceholderText = "[TEMPLATE]",
-                Text = EditorTemplate.Template == null ? "" : EditorTemplate.Template
+                Text = _editorTemplate.Template == null ? "" : _editorTemplate.Template
             };
             var template_text_del = new StandardButton
             {
@@ -976,14 +991,14 @@ namespace Special_Forces_Module
                 fp_weapon_skills.ClearChildren();
                 fp_slot_skills.ClearChildren();
 
-                if (!EditorTemplate.IsValid(template_text.Text)) return;
+                if (!_editorTemplate.IsValid(template_text.Text)) return;
 
-                EditorTemplate.Template = template_text.Text;
-                profession_label.Text = EditorTemplate.GetClassFriendlyName();
+                _editorTemplate.Template = template_text.Text;
+                profession_label.Text = _editorTemplate.GetClassFriendlyName();
 
                 var profSkills =
                     SkillRepository.Where(x =>
-                        x.Professions.Contains(EditorTemplate.GetProfession()));
+                        x.Professions.Contains(_editorTemplate.GetProfession()));
                 foreach (var skill in profSkills)
                 {
                     var fpParent = skill.Type == SkillType.Weapon ? fp_weapon_skills : fp_slot_skills;
