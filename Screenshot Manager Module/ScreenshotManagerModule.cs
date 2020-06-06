@@ -184,11 +184,9 @@ namespace Screenshot_Manager_Module
             Texture2D texture = null;
             var completed = false;
             var timeout = DateTime.Now.AddMilliseconds(FileTimeOutMilliseconds);
-            while (!completed)
-            {
+            while (!completed) {
                 if (!File.Exists(filePath)) return null;
-                try
-                {
+                try {
                     using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
                         using (var source = Image.FromStream(fs)) {
                             var maxWidth = GameService.Graphics.Resolution.X - 100;
@@ -214,9 +212,7 @@ namespace Screenshot_Manager_Module
                         }
                     }
                     completed = true;
-                }
-                catch (IOException e)
-                {
+                } catch (IOException e) {
                     if (DateTime.Now < timeout) continue;
                     Logger.Error(e.Message + e.StackTrace);
                     return null;
@@ -271,7 +267,6 @@ namespace Screenshot_Manager_Module
                     GameService.Graphics.SpriteScreen.Height / 2 - texture.Height / 2),
                 BackgroundColor = Color.Black,
                 ZIndex = 9999,
-                ShowBorder = true,
                 ShowTint = true,
                 Opacity = 0.0f
             };
