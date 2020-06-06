@@ -202,7 +202,6 @@ namespace Screenshot_Manager_Module
                             graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
                             graphic.SmoothingMode = SmoothingMode.HighSpeed;
                             graphic.DrawImage(target, 0, 0, width, height);
-                            graphic.Dispose();
                         }
                         using (var textureStream = new MemoryStream()) {
                             target.Save(textureStream, ImageFormat.Jpeg);
@@ -212,10 +211,8 @@ namespace Screenshot_Manager_Module
                             textureStream.Read(buffer, 0, buffer.Length);
                             texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
                             textureStream.Close();
-                            textureStream.Dispose();
                         }
                         fs.Close();
-                        fs.Dispose();
                     }
                     completed = true;
                 }
@@ -245,7 +242,6 @@ namespace Screenshot_Manager_Module
                             graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
                             graphic.SmoothingMode = SmoothingMode.HighSpeed;
                             graphic.DrawImage(source, 0, 0, _thumbnailSize.X, _thumbnailSize.Y);
-                            graphic.Dispose();
                         }
                         using (var textureStream = new MemoryStream())
                         {
@@ -256,10 +252,8 @@ namespace Screenshot_Manager_Module
                             textureStream.Read(buffer, 0, buffer.Length);
                             texture = Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
                             textureStream.Close();
-                            textureStream.Dispose();
                         }
                         fs.Close();
-                        fs.Dispose();
                     }
                     completed = true;
                 } catch (IOException e) {
