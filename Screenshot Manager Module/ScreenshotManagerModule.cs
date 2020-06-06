@@ -774,7 +774,10 @@ namespace Screenshot_Manager_Module
                     .Where(s => Array.Exists(_imageFilters,
                         filter => filter.Equals('*' + Path.GetExtension(s),
                             StringComparison.InvariantCultureIgnoreCase))))
+                {
+                    if (!modulePanel.Visible) break;
                     AddThumbnail(Path.Combine(DirectoryUtil.ScreensPath, fileName));
+                }
             }).ContinueWith(delegate
             {
                 if (!modulePanel.Visible)
