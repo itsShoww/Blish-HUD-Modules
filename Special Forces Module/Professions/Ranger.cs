@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using Blish_HUD.Controls.Intern;
+using Microsoft.Xna.Framework;
 
 namespace Special_Forces_Module.Professions
 {
-    public class Ranger : IProfession
+    internal class Ranger : IProfession
     {
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Base =
             new Dictionary<GuildWarsControls, (int, int, int)>
@@ -73,7 +74,7 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
 
-        public Ranger(string specialization = "")
+        internal Ranger(string specialization = "")
         {
             switch (specialization)
             {
@@ -92,6 +93,18 @@ namespace Special_Forces_Module.Professions
         public (int, int, int) GetTransformation(GuildWarsControls skill)
         {
             return layout?[skill] ?? (0,0,0);
+        }
+        public bool IsDynamic(GuildWarsControls skill)
+        {
+            return false;
+        }
+        public string GetDisplayText(GuildWarsControls skill)
+        {
+            return "";
+        }
+        public Color GetDisplayTextColor(GuildWarsControls skill)
+        {
+            return Color.White;
         }
     }
 }

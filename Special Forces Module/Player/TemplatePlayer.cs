@@ -15,7 +15,7 @@ using Color = Microsoft.Xna.Framework.Color;
 
 namespace Special_Forces_Module.Player
 {
-    public class TemplatePlayer
+    internal class TemplatePlayer
     {
         private readonly Dictionary<string, GuildWarsControls> map = new Dictionary<string, GuildWarsControls>
         {
@@ -55,12 +55,12 @@ namespace Special_Forces_Module.Player
         private KeyBinding _currentKey;
         private List<Control> _controls;
         private HealthPoolButton _stopButton;
-        public TemplatePlayer()
+        internal TemplatePlayer()
         {
             Time = new Stopwatch();
         }
 
-        public void Dispose()
+        internal void Dispose()
         {
             ResetBindings();
             DisposeControls();
@@ -85,7 +85,7 @@ namespace Special_Forces_Module.Player
                 _controls.Clear();
             }
         }
-        public void Play(RawTemplate template)
+        internal void Play(RawTemplate template)
         {
             Dispose();
 
@@ -131,36 +131,38 @@ namespace Special_Forces_Module.Player
 
             Time.Restart();
 
+            Control hint;
+
             //TODO: Labels for dynamically resizing skills. Ex. attunements.
             if (current.Equals("drop") || current.Equals("take")) {
 
                 _currentKey = SpecialForcesModule.ModuleInstance.InteractionBinding.Value;
 
-                var interactLabel = new Label
+                hint = new Label
                 {
                     Parent = GameService.Graphics.SpriteScreen,
-                    Size = new Point(300, 300),
+                    Size = new Point(300, 40),
                     Visible = GameService.GameIntegration.IsInGame,
                     Text = "Interact!",
                     Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
-                    TextColor = Color.Red
+                    TextColor = Color.Red,
+                    Location = new Point(GameService.Graphics.SpriteScreen.Width / 2, GameService.Graphics.SpriteScreen.Height - 400)
                 };
-                _controls.Add(interactLabel);
 
             } else if (current.Equals("dodge")) {
 
                 _currentKey = SpecialForcesModule.ModuleInstance.DodgeBinding.Value;
 
-                var dodgeLabel = new Label
+                hint =  new Label
                 {
                     Parent = GameService.Graphics.SpriteScreen,
-                    Size = new Point(300, 300),
+                    Size = new Point(300, 40),
                     Visible = GameService.GameIntegration.IsInGame,
                     Text = "Dodge!",
                     Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
-                    TextColor = Color.Red
+                    TextColor = Color.Red,
+                    Location = new Point(GameService.Graphics.SpriteScreen.Width / 2, GameService.Graphics.SpriteScreen.Height - 400)
                 };
-                _controls.Add(dodgeLabel);
 
             } else {
 
@@ -187,29 +189,50 @@ namespace Special_Forces_Module.Player
                 var Y = transforms.Item2;
                 var scale = transforms.Item3 != 0 ? transforms.Item3 : 58;
 
-                var frame = new Image
+                if (_currentProfession.IsDynamic(skill))
                 {
-                    Parent = GameService.Graphics.SpriteScreen,
-                    Size = new Point(scale, scale),
-                    Texture = SpecialForcesModule.ModuleInstance.ContentsManager.GetTexture("skill_frame.png"),
-                    Visible = GameService.GameIntegration.IsInGame,
-                    Tint = Color.Red
-                };
-                frame.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - frame.Width / 2) + X,
-                    (GameService.Graphics.SpriteScreen.Height - frame.Height) - Y);
-                _controls.Add(frame);
-                var arrow = new Image
-                {
-                    Parent = GameService.Graphics.SpriteScreen,
-                    Size = new Point(scale, scale),
-                    Texture = GameService.Content.GetTexture("991944"),
-                    Visible = frame.Visible,
-                    Location = new Point(frame.Location.X, frame.Location.Y - scale)
-                };
-                _controls.Add(arrow);
-                var bounce = GameService.Animation.Tweener
-                    .Tween(arrow, new {Location = new Point(arrow.Location.X, arrow.Location.Y + 10)}, 0.7f).Repeat();
+                    hint = new Label
+                    {
+                        Parent = GameService.Graphics.SpriteScreen,
+                        Size = new Point(300, 40),
+                        Visible = GameService.GameIntegration.IsInGame,
+                        Text = _currentProfession.GetDisplayText(skill),
+                        VerticalAlignment = VerticalAlignment.Top,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
+                        TextColor = _currentProfession.GetDisplayTextColor(skill)
+                    };
+                    hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2) + X,
+                        GameService.Graphics.SpriteScreen.Height - hint.Height - Y);
+
+                } else {
+
+                    hint = new Image
+                    {
+                        Parent = GameService.Graphics.SpriteScreen,
+                        Size = new Point(scale, scale),
+                        Texture = SpecialForcesModule.ModuleInstance.ContentsManager.GetTexture("skill_frame.png"),
+                        Visible = GameService.GameIntegration.IsInGame,
+                        Tint = Color.Red
+                    };
+                    hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2) + X,
+                        (GameService.Graphics.SpriteScreen.Height - hint.Height) - Y);
+
+                    var arrow = new Image
+                    {
+                        Parent = GameService.Graphics.SpriteScreen,
+                        Size = new Point(Math.Min(hint.Width, 58), Math.Min(hint.Height, 58)),
+                        Texture = GameService.Content.GetTexture("991944"),
+                        Visible = hint.Visible,
+                        Location = new Point(hint.Location.X, hint.Location.Y - hint.Height)
+                    };
+                    GameService.Animation.Tweener.Tween(arrow, new {Location = new Point(arrow.Location.X, arrow.Location.Y + 10)}, 0.7f).Repeat();
+                    _controls.Add(arrow);
+                }
             }
+
+            _controls.Add(hint);
+
             _pressed = delegate {
                     if (Time.Elapsed.TotalMilliseconds > duration)
                     {

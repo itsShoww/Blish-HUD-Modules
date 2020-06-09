@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Blish_HUD.Controls.Intern;
+using Microsoft.Xna.Framework;
 
 namespace Special_Forces_Module.Professions
 {
@@ -92,6 +93,18 @@ namespace Special_Forces_Module.Professions
         public (int, int, int) GetTransformation(GuildWarsControls skill)
         {
             return layout?[skill] ?? (0,0,0);
+        }
+        public bool IsDynamic(GuildWarsControls skill)
+        {
+            return false;
+        }
+        public string GetDisplayText(GuildWarsControls skill)
+        {
+            return "";
+        }
+        public Color GetDisplayTextColor(GuildWarsControls skill)
+        {
+            return Color.White;
         }
     }
 }

@@ -4,9 +4,9 @@ using Special_Forces_Module.Professions;
 
 namespace Special_Forces_Module.Parser
 {
-    public static class TemplateParser
+    internal static class TemplateParser
     {
-        public static IProfession Parse(RawTemplate template)
+        internal static IProfession Parse(RawTemplate template)
         {
             IProfession obj;
 

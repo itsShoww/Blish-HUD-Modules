@@ -10,7 +10,7 @@ using MouseEventArgs = Blish_HUD.Input.MouseEventArgs;
 namespace Special_Forces_Module.Controls
 {
     // TODO: Show "Edit" button when music sheet creator correlates to account name from ApiService. Navigates to composer.
-    public class TemplateButton : DetailsButton
+    internal class TemplateButton : DetailsButton
     {
         private const int SHEETBUTTON_WIDTH = 327;
         private const int SHEETBUTTON_HEIGHT = 100;
@@ -39,7 +39,7 @@ namespace Special_Forces_Module.Controls
 
         private RawTemplate _template;
 
-        public TemplateButton(RawTemplate template)
+        internal TemplateButton(RawTemplate template)
         {
             if (template == null) return;
             Template = template;
@@ -65,9 +65,9 @@ namespace Special_Forces_Module.Controls
             Size = new Point(SHEETBUTTON_WIDTH, SHEETBUTTON_HEIGHT);
         }
 
-        public string BottomText { get; set; }
+        internal string BottomText { get; set; }
 
-        public RawTemplate Template
+        internal RawTemplate Template
         {
             get => _template;
             set
@@ -79,7 +79,7 @@ namespace Special_Forces_Module.Controls
             }
         }
 
-        public bool MouseOverPlay
+        internal bool MouseOverPlay
         {
             get => _mouseOverPlay;
             set
@@ -90,7 +90,7 @@ namespace Special_Forces_Module.Controls
             }
         }
 
-        public bool MouseOverTemplate
+        internal bool MouseOverTemplate
         {
             get => _mouseOverTemplate;
             set
@@ -101,7 +101,7 @@ namespace Special_Forces_Module.Controls
             }
         }
 
-        public bool MouseOverUtility1
+        internal bool MouseOverUtility1
         {
             get => _mouseOverUtility1;
             set
@@ -112,7 +112,7 @@ namespace Special_Forces_Module.Controls
             }
         }
 
-        public bool MouseOverUtility2
+        internal bool MouseOverUtility2
         {
             get => _mouseOverUtility2;
             set
@@ -123,7 +123,7 @@ namespace Special_Forces_Module.Controls
             }
         }
 
-        public bool MouseOverUtility3
+        internal bool MouseOverUtility3
         {
             get => _mouseOverUtility3;
             set

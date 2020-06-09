@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Special_Forces_Module.Persistance
 {
-    public class RawTemplate
+    internal class RawTemplate
     {
         private static readonly Logger Logger = Logger.GetLogger(typeof(RawTemplate));
 
@@ -38,7 +38,7 @@ namespace Special_Forces_Module.Persistance
             return result;
         }
 
-        public void Save()
+        internal void Save()
         {
             var json = JsonConvert.SerializeObject(this, Formatting.Indented);
             var title = Title;
@@ -48,30 +48,30 @@ namespace Special_Forces_Module.Persistance
             File.WriteAllText(path + ".json", json);
         }
 
-        public bool IsValid(string template = null)
+        internal bool IsValid(string template = null)
         {
             return Build(template) != null;
         }
-        public string GetProfession()
+        internal string GetProfession()
         {
             return Build() != null ? Build().Profession.ToString() : "";
         }
-        public int GetFirstSpecialization()
+        internal int GetFirstSpecialization()
         {
             return Build().Specialization1Id;
         }
 
-        public int GetSecondSpecialization()
+        internal int GetSecondSpecialization()
         {
             return Build().Specialization2Id;
         }
 
-        public int GetThirdSpecialization()
+        internal int GetThirdSpecialization()
         {
             return Build().Specialization3Id;
         }
 
-        public string GetEliteSpecialization()
+        internal string GetEliteSpecialization()
         {
             var result = "";
             if (Build() == null) return result;
@@ -93,13 +93,13 @@ namespace Special_Forces_Module.Persistance
             }
         }
 
-        public string GetClassFriendlyName()
+        internal string GetClassFriendlyName()
         {
             return !GetEliteSpecialization().Equals("") ? GetEliteSpecialization() : GetProfession();
         }
     }
 
-    public class Rotation
+    internal class Rotation
     {
         [JsonProperty("opener")] public string Opener { get; set; }
 

@@ -7,7 +7,7 @@ using Newtonsoft.Json.Converters;
 
 namespace Special_Forces_Module.Persistance
 {
-    public class TemplateReader
+    internal class TemplateReader
     {
         private readonly List<RawTemplate> cached = new List<RawTemplate>();
         private readonly IsoDateTimeConverter dateFormat = new IsoDateTimeConverter {DateTimeFormat = "dd/MM/yyyy"};
@@ -18,7 +18,7 @@ namespace Special_Forces_Module.Persistance
             return new Uri(p).IsFile;
         }
 
-        public List<RawTemplate> LoadMultiple(string uri)
+        internal List<RawTemplate> LoadMultiple(string uri)
         {
             StreamReader reader;
             string objText;
@@ -41,7 +41,7 @@ namespace Special_Forces_Module.Persistance
             }
         }
 
-        public RawTemplate LoadSingle(string uri)
+        internal RawTemplate LoadSingle(string uri)
         {
             StreamReader reader;
             string objText;
@@ -65,7 +65,7 @@ namespace Special_Forces_Module.Persistance
             }
         }
 
-        public List<RawTemplate> LoadDirectory(string path)
+        internal List<RawTemplate> LoadDirectory(string path)
         {
             cached.Clear();
             loaded = Directory.GetFiles(path, "*.json", SearchOption.TopDirectoryOnly);
