@@ -760,7 +760,7 @@ namespace Screenshot_Manager_Module
                 {
                     if (isLoadingThumbnails) break;
                     displayedThumbnails[path]?.Dispose();
-                    displayedThumbnails.Remove(path);
+                    displayedThumbnails?.Remove(path);
                 }
                 filePaths.Clear();
                 return false;
