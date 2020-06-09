@@ -611,14 +611,17 @@ namespace Special_Forces_Module
             };
             import_button.LeftMouseButtonReleased += delegate
             {
-                var template = _templateReader.LoadSingle(Clipboard.GetText());
+                ScreenNotification.ShowNotification("This function is not implemented", ScreenNotification.NotificationType.Error);
+                /*
+                var json = Task.Run(async () => await ClipboardUtil.WindowsClipboardService.GetTextAsync());
+                var template = _templateReader.LoadSingle(json.Result);
                 if (template != null)
                 {
                     template.Save();
                     _templates.Add(template);
                     AddTemplate(template, contentPanel);
                     UpdateSort(ddSortMethod, EventArgs.Empty);
-                }
+                }*/
             };
             return libraryPanel;
         }

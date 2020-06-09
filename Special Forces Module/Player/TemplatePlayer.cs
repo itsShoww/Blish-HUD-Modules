@@ -123,6 +123,8 @@ namespace Special_Forces_Module.Player
 
         private void DoRotation(string[] rotation, int skillIndex)
         {
+            if (skillIndex >= rotation.Length) skillIndex = 0;
+
             var current = rotation[skillIndex].ToLowerInvariant();
 
             var split = current.Split('/');
