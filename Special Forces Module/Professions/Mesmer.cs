@@ -27,7 +27,6 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Chronomancer =
             new Dictionary<GuildWarsControls, (int, int, int)>
             {
@@ -49,9 +48,6 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
-        private readonly Dictionary<GuildWarsControls, (int, int, int)> layout;
-
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Mirage =
             new Dictionary<GuildWarsControls, (int, int, int)>
             {
@@ -73,26 +69,26 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
+        private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
         internal Mesmer(string specialization = "")
         {
             switch (specialization)
             {
                 case "chronomancer":
-                    layout = Chronomancer;
+                    _layout = Chronomancer;
                     break;
                 case "mirage":
-                    layout = Mirage;
+                    _layout = Mirage;
                     break;
                 default:
-                    layout = Base;
+                    _layout = Base;
                     break;
             }
         }
 
         public (int, int, int) GetTransformation(GuildWarsControls skill)
         {
-            return layout?[skill] ?? (0,0,0);
+            return _layout?[skill] ?? (0,0,0);
         }
         public bool IsDynamic(GuildWarsControls skill)
         {

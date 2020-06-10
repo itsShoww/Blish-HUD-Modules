@@ -27,9 +27,6 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-316, 150, 48)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
-        private readonly Dictionary<GuildWarsControls, (int, int, int)> layout;
-
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Tempest =
             new Dictionary<GuildWarsControls, (int, int, int)>
             {
@@ -51,7 +48,6 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-316, 150, 48)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Weaver =
             new Dictionary<GuildWarsControls, (int, int, int)>
             {
@@ -73,9 +69,7 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-270, 150, 48)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
-        internal string DisplayName;
-
+        private readonly Dictionary<GuildWarsControls, (int, int, int)> layout;
         internal Elementalist(string specialization = "")
         {
             switch (specialization)

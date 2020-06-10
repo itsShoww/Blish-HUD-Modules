@@ -27,7 +27,6 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Berserker =
             new Dictionary<GuildWarsControls, (int, int, int)>
             {
@@ -49,9 +48,6 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
-        private readonly Dictionary<GuildWarsControls, (int, int, int)> layout;
-
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Spellbreaker =
             new Dictionary<GuildWarsControls, (int, int, int)>
             {
@@ -73,26 +69,26 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-
+        private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
         internal Warrior(string specialization = "")
         {
             switch (specialization)
             {
                 case "berserker":
-                    layout = Berserker;
+                    _layout = Berserker;
                     break;
                 case "spellbreaker":
-                    layout = Spellbreaker;
+                    _layout = Spellbreaker;
                     break;
                 default:
-                    layout = Base;
+                    _layout = Base;
                     break;
             }
         }
 
         public (int, int, int) GetTransformation(GuildWarsControls skill)
         {
-            return layout?[skill] ?? (0,0,0);
+            return _layout?[skill] ?? (0,0,0);
         }
         public bool IsDynamic(GuildWarsControls skill)
         {
