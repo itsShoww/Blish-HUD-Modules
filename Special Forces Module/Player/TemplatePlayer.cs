@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Forms.VisualStyles;
 using Blish_HUD;
 using Blish_HUD.Controls;
@@ -9,6 +11,7 @@ using Blish_HUD.Controls.Intern;
 using Blish_HUD.Input;
 using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 using Special_Forces_Module.Parser;
 using Special_Forces_Module.Persistance;
@@ -53,7 +56,7 @@ namespace Special_Forces_Module.Player
             GuildWarsControls.UtilitySkill2,
             GuildWarsControls.UtilitySkill3
         };
-
+        
         private readonly Stopwatch _time;
         private EventHandler<EventArgs> _pressed;
         private IProfession _currentProfession;
@@ -63,12 +66,14 @@ namespace Special_Forces_Module.Player
         private HealthPoolButton _stopButton;
         private Regex _syntaxPattern;
         private BitmapFont _labelFont;
+        private Effect _glowFx;
         internal TemplatePlayer()
         {
             _time = new Stopwatch();
-            _syntaxPattern = new Regex(@"(?(?!.+\+\d|.+/\d))(?<action>.+)(?<repetitions>\+[1-9][0-9]*)|(?<action>.+)(?<duration>/[1-9][0-9]*)|(?<action>.+)",
+            _syntaxPattern = new Regex(@"(?![\w\d]+(?=\+\d|/\d))(?<repetitions>(?<=\+)[1-9][0-9]*)|(?![\w\d]+(?=\+\d|/\d))(?<duration>(?<=/)[1-9][0-9]*)|(?<action>[\w\d]+)",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
             _labelFont = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular);
+            _glowFx = GameService.Content.ContentManager.Load<Effect>(@"effects\glow");
         }
 
         internal void Dispose()
@@ -132,7 +137,7 @@ namespace Special_Forces_Module.Player
                 DoRotation(loop);
         }
 
-        private void DoRotation(string[] rotation, int skillIndex = 0, int repetitions = -1)
+        private async void DoRotation(string[] rotation, int skillIndex = 0, int repetitions = -1)
         {
             if (skillIndex >= rotation.Length) skillIndex = 0;
 
@@ -167,6 +172,8 @@ namespace Special_Forces_Module.Player
                     Visible = GameService.GameIntegration.IsInGame,
                     VerticalAlignment = VerticalAlignment.Middle,
                     HorizontalAlignment = HorizontalAlignment.Center,
+                    StrokeText = true,
+                    ShowShadow = true,
                     Text = text,
                     Font = _labelFont,
                     TextColor = Color.Red
@@ -187,6 +194,8 @@ namespace Special_Forces_Module.Player
                     Visible = GameService.GameIntegration.IsInGame,
                     VerticalAlignment = VerticalAlignment.Middle,
                     HorizontalAlignment = HorizontalAlignment.Center,
+                    StrokeText = true,
+                    ShowShadow = true,
                     Text = text,
                     Font = _labelFont,
                     TextColor = Color.Red
@@ -230,6 +239,8 @@ namespace Special_Forces_Module.Player
                         VerticalAlignment = VerticalAlignment.Top,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         Visible = GameService.GameIntegration.IsInGame,
+                        StrokeText = true,
+                        ShowShadow = true,
                         Text = text,
                         Font = _labelFont,
                         TextColor = _currentProfession.GetDisplayTextColor(skill)
@@ -252,11 +263,73 @@ namespace Special_Forces_Module.Player
                 }
             }
 
+            Label remainingDuration = null;
+            if (repetitions >= 0) {
+
+                var text = (repetitions + 1).ToString();
+                var textWidth = (int)_labelFont.MeasureString(text).Width;
+                var currentRepetition = new Label
+                {
+                    Parent = GameService.Graphics.SpriteScreen,
+                    Size = new Point(textWidth, hint.Height),
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Visible = GameService.GameIntegration.IsInGame,
+                    StrokeText = true,
+                    ShowShadow = true,
+                    Text = text,
+                    Font = _labelFont,
+                    TextColor = Color.Red
+                };
+                currentRepetition.Location = new Point(hint.Location.X + (hint.Width / 2) - (currentRepetition.Width / 2),hint.Location.Y);
+                _controls.Add(currentRepetition);
+
+            } else if (_time.Elapsed.TotalMilliseconds < duration || duration >  0) {
+
+                _time.Restart();
+
+                var text = $"{(duration - _time.Elapsed.TotalMilliseconds) / 1000:0.00}".Replace(',','.');
+                var textWidth = (int)_labelFont.MeasureString(text).Width;
+                remainingDuration = new Label
+                {
+                    Parent = GameService.Graphics.SpriteScreen,
+                    Size = new Point(textWidth, hint.Height),
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Visible = GameService.GameIntegration.IsInGame,
+                    StrokeText = true,
+                    ShowShadow = true,
+                    Text = text,
+                    Font = _labelFont,
+                    TextColor = Color.IndianRed
+                };
+                remainingDuration.Location = new Point(hint.Location.X + (hint.Width / 2) - (remainingDuration.Width / 2),hint.Location.Y);
+                _controls.Add(remainingDuration);
+
+                await Task.Run(() =>
+                {
+                    while (remainingDuration != null && _time.IsRunning && _time.Elapsed.TotalMilliseconds < duration)
+                    {
+                        text = $"{(duration - _time.Elapsed.TotalMilliseconds) / 1000:0.00}".Replace(',','.');
+                        textWidth = (int) _labelFont.MeasureString(text).Width;
+                        remainingDuration.Text = text;
+                        remainingDuration.Size = new Point(textWidth, hint.Height);
+                        remainingDuration.Location = new Point(hint.Location.X + (hint.Width / 2) - (remainingDuration.Width / 2), hint.Location.Y);
+                    }
+                });
+            }
+
+            _glowFx.Parameters["TextureWidth"].SetValue(58.0f);
+            _glowFx.Parameters["GlowColor"].SetValue(Color.Black.ToVector4());
             var arrow = new Image
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Size = new Point(58,58),
                 Texture = GameService.Content.GetTexture("991944"),
+                SpriteBatchParameters = new SpriteBatchParameters()
+                {
+                    Effect = _glowFx
+                },
                 Visible = hint.Visible
             };
             arrow.Location = new Point(hint.Location.X + (hint.Width / 2) - (arrow.Width / 2),hint.Location.Y - arrow.Height);
@@ -265,9 +338,8 @@ namespace Special_Forces_Module.Player
 
             _controls.Add(hint);
 
-            _time.Restart();
             _pressed = delegate {
-                    if (_time.Elapsed.TotalMilliseconds > duration)
+                    if (duration == 0 || _time.Elapsed.TotalMilliseconds > 0.9 * duration)
                     {
                         _currentKey.Activated -= _pressed;
                         _time.Reset();
@@ -279,6 +351,7 @@ namespace Special_Forces_Module.Player
                             DoRotation(rotation, skillIndex, repetitions - 1);
                         else if (skillIndex < rotation.Length)
                             DoRotation(rotation, skillIndex + 1);
+
                     }
             };
             _currentKey.Activated += _pressed;
