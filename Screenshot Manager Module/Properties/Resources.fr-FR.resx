@@ -118,65 +118,65 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Failed to delete image. {0}" xml:space="preserve">
-    <value>Failed to delete image. {0}</value>
+    <value>Impossible de supprimer l&apos;image. {0}</value>
     <comment>Failed To Delete File Notification</comment>
   </data>
   <data name="The image file is in use by another process." xml:space="preserve">
-    <value>The image is in use by another process.</value>
+    <value>L&apos;image est utilisée par un autre processus.</value>
     <comment>Reason for a failed file operation.</comment>
   </data>
   <data name="The image file doesn&apos;t exist anymore!" xml:space="preserve">
-    <value>The image doesn&apos;t exist anymore!</value>
+    <value>L&apos;image n&apos;existe plus!</value>
     <comment>Reason for a failed file operation.</comment>
   </data>
   <data name="A duplicate image name was specified!" xml:space="preserve">
-    <value>A duplicate image name was specified!</value>
+    <value>Un nom d&apos;image en double a été spécifié!</value>
     <comment>Reason for a failed rename operation.</comment>
   </data>
   <data name="The image name contains invalid characters." xml:space="preserve">
-    <value>The image name contains invalid characters.</value>
+    <value>Le nom de l&apos;image contient des caractères non valides.</value>
   </data>
   <data name="Please enter a different image name." xml:space="preserve">
-    <value>Please enter a different image name.</value>
+    <value>Veuillez saisir un nom d&apos;image différent.</value>
     <comment>Prompt to change a specified image name.</comment>
   </data>
   <data name="The following characters are not allowed: {0}" xml:space="preserve">
-    <value>The following characters are not allowed: {0}</value>
+    <value>Les caractères suivants ne sont pas autorisés: {0}</value>
   </data>
   <data name="Delete Image?" xml:space="preserve">
-    <value>Delete Image?</value>
+    <value>Supprimer l&apos;image?</value>
     <comment>Prompt. Centered text on a thumbnail when hovering the delete button.</comment>
   </data>
   <data name="Rename Image" xml:space="preserve">
-    <value>Rename Image</value>
+    <value>Renommer l&apos;image</value>
     <comment>Imperative. Tooltip when hovering a thumbnail&apos;s input textbox.</comment>
   </data>
   <data name="Click To Zoom" xml:space="preserve">
-    <value>Click To Zoom</value>
+    <value>Cliquez pour zoomer</value>
     <comment>Imperative. Tooltip when hovering a thumbnail.</comment>
   </data>
   <data name="Unable to rename image. {0}" xml:space="preserve">
-    <value>Unable to rename image. {0}</value>
+    <value>Impossible de renommer l&apos;image. {0}</value>
     <comment>Failed To Rename File Notification</comment>
   </data>
   <data name="Search..." xml:space="preserve">
-    <value>Search...</value>
+    <value>Chercher...</value>
     <comment>Placeholder text for the search thumbnails input textbox.</comment>
   </data>
   <data name="Favourite" xml:space="preserve">
-    <value>Favourite</value>
+    <value>Favoris</value>
     <comment>Tooltip when hovering a thumbnail&apos;s favourite marker.</comment>
   </data>
   <data name="Unfavourite" xml:space="preserve">
-    <value>Unfavourite</value>
+    <value>Enlever des favoris</value>
     <comment>Tooltip when hovering a thumbnail&apos;s unfavourite marker.</comment>
   </data>
   <data name="Image name cannot be empty." xml:space="preserve">
-    <value>Image name cannot be empty.</value>
+    <value>Le nom de l&apos;image ne peut pas être vide.</value>
     <comment>Error notification when a specified rename text is empty or consists of just spaces.</comment>
   </data>
   <data name="Screenshot Created!" xml:space="preserve">
-    <value>Screenshot Created!</value>
+    <value>Capture d&apos;écran créée!</value>
     <comment>Notification header when a screenshot is created (usually using the print screen key).</comment>
   </data>
 </root>
