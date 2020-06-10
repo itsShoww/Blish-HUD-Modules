@@ -21,10 +21,10 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
                 {GuildWarsControls.ProfessionSkill1, (-316, 150, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-267, 150, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-218, 150, 48)},
-                {GuildWarsControls.ProfessionSkill4, (-168, 150, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-107, 150, 45)},
+                {GuildWarsControls.ProfessionSkill2, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill3, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill4, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill5, (-316, 150, 48)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
 
@@ -45,10 +45,10 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
                 {GuildWarsControls.ProfessionSkill1, (-316, 150, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-267, 150, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-218, 150, 48)},
-                {GuildWarsControls.ProfessionSkill4, (-168, 150, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-107, 150, 45)},
+                {GuildWarsControls.ProfessionSkill2, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill3, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill4, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill5, (-316, 150, 48)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
 
@@ -67,10 +67,10 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
                 {GuildWarsControls.ProfessionSkill1, (-316, 150, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-267, 150, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-218, 150, 48)},
-                {GuildWarsControls.ProfessionSkill4, (-168, 150, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-107, 150, 45)},
+                {GuildWarsControls.ProfessionSkill2, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill3, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill4, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill5, (-316, 150, 48)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
 
@@ -135,13 +135,13 @@ namespace Special_Forces_Module.Professions
             switch (skill)
             {
                 case GuildWarsControls.ProfessionSkill1:
-                    return Color.Firebrick;
+                    return Color.DarkRed;
                 case GuildWarsControls.ProfessionSkill2:
-                    return Color.Aqua;
+                    return Color.DarkBlue;
                 case GuildWarsControls.ProfessionSkill3:
-                    return Color.Violet;
+                    return Color.DarkViolet;
                 case GuildWarsControls.ProfessionSkill4:
-                    return Color.SandyBrown;
+                    return Color.SaddleBrown;
                 default:
                     return Color.White;
             }

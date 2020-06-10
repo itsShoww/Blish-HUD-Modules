@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Blish_HUD;
 using Blish_HUD.Controls;
 using Blish_HUD.Controls.Intern;
@@ -20,7 +21,9 @@ namespace Special_Forces_Module.Player
         private readonly Dictionary<string, GuildWarsControls> map = new Dictionary<string, GuildWarsControls>
         {
             {"swap", GuildWarsControls.SwapWeapons},
+            {"drop", GuildWarsControls.SwapWeapons},
             {"1", GuildWarsControls.WeaponSkill1},
+            {"auto", GuildWarsControls.WeaponSkill1},
             {"2", GuildWarsControls.WeaponSkill2},
             {"3", GuildWarsControls.WeaponSkill3},
             {"4", GuildWarsControls.WeaponSkill4},
@@ -40,7 +43,6 @@ namespace Special_Forces_Module.Player
             {"special", GuildWarsControls.SpecialAction}
         };
 
-        private readonly Stopwatch Time;
 
         private readonly GuildWarsControls[] utilityswaps = new GuildWarsControls[3]
         {
@@ -49,15 +51,19 @@ namespace Special_Forces_Module.Player
             GuildWarsControls.UtilitySkill3
         };
 
+        private readonly Stopwatch _time;
         private EventHandler<EventArgs> _pressed;
         private IProfession _currentProfession;
         private RawTemplate _currentTemplate;
         private KeyBinding _currentKey;
         private List<Control> _controls;
         private HealthPoolButton _stopButton;
+        private Regex _syntaxPattern;
         internal TemplatePlayer()
         {
-            Time = new Stopwatch();
+            _time = new Stopwatch();
+            _syntaxPattern = new Regex(@"(?(?!.+\+\d|.+/\d))(?<action>.+)(?<repetitions>\+[1-9][0-9]*)|(?<action>.+)(?<duration>/[1-9][0-9]*)|(?<action>.+)",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
         }
 
         internal void Dispose()
@@ -66,6 +72,7 @@ namespace Special_Forces_Module.Player
             DisposeControls();
 
             _stopButton?.Dispose();
+            _syntaxPattern = null;
         }
         private void ResetBindings()
         {
@@ -104,39 +111,45 @@ namespace Special_Forces_Module.Player
             };
             _currentTemplate = template;
 
-            var _profession = template.GetProfession();
+            var profession = template.GetProfession();
 
-            if (!_profession.Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(), StringComparison.InvariantCultureIgnoreCase))
+            if (!profession.Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(), StringComparison.InvariantCultureIgnoreCase))
             {
-                ShowNotification($"Your profession is {GameService.Gw2Mumble.PlayerCharacter.Profession}.\nRequired: {_profession}", NotificationType.Error);
+                ShowNotification($"Your profession is {GameService.Gw2Mumble.PlayerCharacter.Profession}.\nRequired: {profession}", NotificationType.Error);
                 return;
             }
 
             var opener = template.Rotation.Opener.Split(null);
             if (opener.Length > 1)
-                DoRotation(opener, 0);
+                DoRotation(opener);
 
             var loop = template.Rotation.Loop.Split(null);
             if (loop.Length > 1)
-                DoRotation(loop, 0);
+                DoRotation(loop);
         }
 
-        private void DoRotation(string[] rotation, int skillIndex)
+        private void DoRotation(string[] rotation, int skillIndex = 0, int repetitions = -1)
         {
             if (skillIndex >= rotation.Length) skillIndex = 0;
 
             var current = rotation[skillIndex].ToLowerInvariant();
 
-            var split = current.Split('/');
+            var duration = 0;
 
-            var duration = split.Length > 1 ? int.Parse(split[1]) : 0;
-
-            Time.Restart();
+            var matchCollection = _syntaxPattern.Matches(current);
+            foreach (Match match in matchCollection)
+            {
+                if (match.Groups["action"].Success)
+                    current = match.Groups["action"].Value;
+                if (match.Groups["duration"].Success)
+                    duration = int.Parse(match.Groups["duration"].Value);
+                if (match.Groups["repetitions"].Success && repetitions < 0)
+                    repetitions = int.Parse(match.Groups["repetitions"].Value);
+            }
 
             Control hint;
 
-            //TODO: Labels for dynamically resizing skills. Ex. attunements.
-            if (current.Equals("drop") || current.Equals("take")) {
+            if (current.Equals("take") || current.Equals("interact")) {
 
                 _currentKey = SpecialForcesModule.ModuleInstance.InteractionBinding.Value;
 
@@ -145,11 +158,13 @@ namespace Special_Forces_Module.Player
                     Parent = GameService.Graphics.SpriteScreen,
                     Size = new Point(300, 40),
                     Visible = GameService.GameIntegration.IsInGame,
-                    Text = "Interact!",
+                    Text = "Interact! [" + _currentKey.GetBindingDisplayText() + ']',
                     Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
                     TextColor = Color.Red,
-                    Location = new Point(GameService.Graphics.SpriteScreen.Width / 2, GameService.Graphics.SpriteScreen.Height - 400)
+                    VerticalAlignment = VerticalAlignment.Middle,
+                    HorizontalAlignment = HorizontalAlignment.Center
                 };
+                hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2), (GameService.Graphics.SpriteScreen.Height - hint.Height) - 160);
 
             } else if (current.Equals("dodge")) {
 
@@ -160,15 +175,17 @@ namespace Special_Forces_Module.Player
                     Parent = GameService.Graphics.SpriteScreen,
                     Size = new Point(300, 40),
                     Visible = GameService.GameIntegration.IsInGame,
-                    Text = "Dodge!",
+                    Text = "Dodge! [" + _currentKey.GetBindingDisplayText() + ']',
                     Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
                     TextColor = Color.Red,
-                    Location = new Point(GameService.Graphics.SpriteScreen.Width / 2, GameService.Graphics.SpriteScreen.Height - 400)
+                    VerticalAlignment = VerticalAlignment.Middle,
+                    HorizontalAlignment = HorizontalAlignment.Center
                 };
+                hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2), (GameService.Graphics.SpriteScreen.Height - hint.Height) - 160);
 
             } else {
 
-                var skill = split.Length > 1 ? map[split[0]] : map[current];
+                var skill = map[current];
 
                 _currentKey = SpecialForcesModule.ModuleInstance.SkillBindings[skill].Value;
 
@@ -235,16 +252,19 @@ namespace Special_Forces_Module.Player
 
             _controls.Add(hint);
 
+            _time.Restart();
             _pressed = delegate {
-                    if (Time.Elapsed.TotalMilliseconds > duration)
+                    if (_time.Elapsed.TotalMilliseconds > duration)
                     {
                         _currentKey.Activated -= _pressed;
-                        Time.Reset();
+                        _time.Reset();
 
                         ResetBindings();
                         DisposeControls();
 
-                        if (skillIndex < rotation.Length)
+                        if (repetitions > 0) 
+                            DoRotation(rotation, skillIndex, repetitions - 1);
+                        else if (skillIndex < rotation.Length)
                             DoRotation(rotation, skillIndex + 1);
                     }
             };
