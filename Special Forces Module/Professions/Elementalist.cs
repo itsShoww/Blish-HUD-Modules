@@ -66,11 +66,11 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill2, (209, 24, 0)},
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
-                {GuildWarsControls.ProfessionSkill1, (-316, 150, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-316, 150, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-316, 150, 48)},
-                {GuildWarsControls.ProfessionSkill4, (-316, 150, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-316, 150, 48)},
+                {GuildWarsControls.ProfessionSkill1, (-350, 150, 48)},
+                {GuildWarsControls.ProfessionSkill2, (-330, 150, 48)},
+                {GuildWarsControls.ProfessionSkill3, (-310, 150, 48)},
+                {GuildWarsControls.ProfessionSkill4, (-290, 150, 48)},
+                {GuildWarsControls.ProfessionSkill5, (-270, 150, 48)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
 
@@ -135,11 +135,11 @@ namespace Special_Forces_Module.Professions
             switch (skill)
             {
                 case GuildWarsControls.ProfessionSkill1:
-                    return Color.DarkRed;
+                    return Color.Red;
                 case GuildWarsControls.ProfessionSkill2:
-                    return Color.DarkBlue;
+                    return Color.Blue;
                 case GuildWarsControls.ProfessionSkill3:
-                    return Color.DarkViolet;
+                    return Color.Violet;
                 case GuildWarsControls.ProfessionSkill4:
                     return Color.SaddleBrown;
                 default:

@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Windows.Forms.VisualStyles;
 using Blish_HUD;
 using Blish_HUD.Controls;
 using Blish_HUD.Controls.Intern;
 using Blish_HUD.Input;
 using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended.BitmapFonts;
 using Special_Forces_Module.Parser;
 using Special_Forces_Module.Persistance;
 using Special_Forces_Module.Professions;
 using static Blish_HUD.Controls.ScreenNotification;
 using Color = Microsoft.Xna.Framework.Color;
+using VerticalAlignment = Blish_HUD.Controls.VerticalAlignment;
 
 namespace Special_Forces_Module.Player
 {
@@ -59,11 +62,13 @@ namespace Special_Forces_Module.Player
         private List<Control> _controls;
         private HealthPoolButton _stopButton;
         private Regex _syntaxPattern;
+        private BitmapFont _labelFont;
         internal TemplatePlayer()
         {
             _time = new Stopwatch();
             _syntaxPattern = new Regex(@"(?(?!.+\+\d|.+/\d))(?<action>.+)(?<repetitions>\+[1-9][0-9]*)|(?<action>.+)(?<duration>/[1-9][0-9]*)|(?<action>.+)",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+            _labelFont = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular);
         }
 
         internal void Dispose()
@@ -72,7 +77,6 @@ namespace Special_Forces_Module.Player
             DisposeControls();
 
             _stopButton?.Dispose();
-            _syntaxPattern = null;
         }
         private void ResetBindings()
         {
@@ -153,16 +157,19 @@ namespace Special_Forces_Module.Player
 
                 _currentKey = SpecialForcesModule.ModuleInstance.InteractionBinding.Value;
 
+                var text = "Interact! [" + _currentKey.GetBindingDisplayText() + ']';
+                var textWidth = (int)_labelFont.MeasureString(text).Width;
+                var textHeight = (int)_labelFont.MeasureString(text).Height;
                 hint = new Label
                 {
                     Parent = GameService.Graphics.SpriteScreen,
-                    Size = new Point(300, 40),
+                    Size = new Point(textWidth, textHeight),
                     Visible = GameService.GameIntegration.IsInGame,
-                    Text = "Interact! [" + _currentKey.GetBindingDisplayText() + ']',
-                    Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
-                    TextColor = Color.Red,
                     VerticalAlignment = VerticalAlignment.Middle,
-                    HorizontalAlignment = HorizontalAlignment.Center
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Text = text,
+                    Font = _labelFont,
+                    TextColor = Color.Red
                 };
                 hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2), (GameService.Graphics.SpriteScreen.Height - hint.Height) - 160);
 
@@ -170,16 +177,19 @@ namespace Special_Forces_Module.Player
 
                 _currentKey = SpecialForcesModule.ModuleInstance.DodgeBinding.Value;
 
+                var text = "Dodge! [" + _currentKey.GetBindingDisplayText() + ']';
+                var textWidth = (int)_labelFont.MeasureString(text).Width;
+                var textHeight = (int)_labelFont.MeasureString(text).Height;
                 hint =  new Label
                 {
                     Parent = GameService.Graphics.SpriteScreen,
-                    Size = new Point(300, 40),
+                    Size = new Point(textWidth, textHeight),
                     Visible = GameService.GameIntegration.IsInGame,
-                    Text = "Dodge! [" + _currentKey.GetBindingDisplayText() + ']',
-                    Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
-                    TextColor = Color.Red,
                     VerticalAlignment = VerticalAlignment.Middle,
-                    HorizontalAlignment = HorizontalAlignment.Center
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Text = text,
+                    Font = _labelFont,
+                    TextColor = Color.Red
                 };
                 hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2), (GameService.Graphics.SpriteScreen.Height - hint.Height) - 160);
 
@@ -210,15 +220,18 @@ namespace Special_Forces_Module.Player
 
                 if (_currentProfession.IsDynamic(skill))
                 {
+                    var text = _currentProfession.GetDisplayText(skill);
+                    var textWidth = (int)_labelFont.MeasureString(text).Width;
+                    var textHeight = (int)_labelFont.MeasureString(text).Height;
                     hint = new Label
                     {
                         Parent = GameService.Graphics.SpriteScreen,
-                        Size = new Point(300, 40),
-                        Visible = GameService.GameIntegration.IsInGame,
-                        Text = _currentProfession.GetDisplayText(skill),
+                        Size = new Point(textWidth, textHeight),
                         VerticalAlignment = VerticalAlignment.Top,
                         HorizontalAlignment = HorizontalAlignment.Left,
-                        Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
+                        Visible = GameService.GameIntegration.IsInGame,
+                        Text = text,
+                        Font = _labelFont,
                         TextColor = _currentProfession.GetDisplayTextColor(skill)
                     };
                     hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2) + X,
@@ -236,19 +249,19 @@ namespace Special_Forces_Module.Player
                     };
                     hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2) + X,
                         (GameService.Graphics.SpriteScreen.Height - hint.Height) - Y);
-
-                    var arrow = new Image
-                    {
-                        Parent = GameService.Graphics.SpriteScreen,
-                        Size = new Point(Math.Min(hint.Width, 58), Math.Min(hint.Height, 58)),
-                        Texture = GameService.Content.GetTexture("991944"),
-                        Visible = hint.Visible,
-                        Location = new Point(hint.Location.X, hint.Location.Y - hint.Height)
-                    };
-                    GameService.Animation.Tweener.Tween(arrow, new {Location = new Point(arrow.Location.X, arrow.Location.Y + 10)}, 0.7f).Repeat();
-                    _controls.Add(arrow);
                 }
             }
+
+            var arrow = new Image
+            {
+                Parent = GameService.Graphics.SpriteScreen,
+                Size = new Point(58,58),
+                Texture = GameService.Content.GetTexture("991944"),
+                Visible = hint.Visible
+            };
+            arrow.Location = new Point(hint.Location.X + (hint.Width / 2) - (arrow.Width / 2),hint.Location.Y - arrow.Height);
+            GameService.Animation.Tweener.Tween(arrow, new {Location = new Point(arrow.Location.X, arrow.Location.Y + 10)}, 0.7f).Repeat();
+            _controls.Add(arrow);
 
             _controls.Add(hint);
 
