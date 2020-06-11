@@ -43,6 +43,8 @@ namespace Special_Forces_Module
     [Export(typeof(Module))]
     public class SpecialForcesModule : Module
     {
+        private static readonly Logger Logger = Logger.GetLogger(typeof(SpecialForcesModule));
+
         private Texture2D ICON;
         private const int SCROLLBAR_WIDTH = 24;
         private const int TOP_MARGIN = 10;
@@ -53,7 +55,7 @@ namespace Special_Forces_Module
         private const string DD_TITLE = "Title";
         private const string DD_PROFESSION = "Profession";
 
-        private static readonly Logger Logger = Logger.GetLogger(typeof(SpecialForcesModule));
+        private const int TimeOutGetRender = 5000;
 
         internal static SpecialForcesModule ModuleInstance;
 
@@ -357,17 +359,45 @@ namespace Special_Forces_Module
                 });
         }
         private AsyncTexture2D GetProfessionRender(RawTemplate template) {
-            if (!ProfessionRenderRepository.Any(x => x.Key.Equals(template.Profession))) {
-                var render = new AsyncTexture2D();
-                ProfessionRenderRepository.Add(template.Profession, render);
+            var completed = false;
+            var timeOut = DateTime.Now.AddMilliseconds(TimeOutGetRender);
+            while (!completed)
+            {
+                try
+                {
+                    if (!ProfessionRenderRepository.Any(x => x.Key.Equals(template.Profession))) {
+                        var render = new AsyncTexture2D();
+                        ProfessionRenderRepository.Add(template.Profession, render);
+                        completed = true;
+                    }
+                } catch (InvalidOperationException e) {
+                    if (DateTime.Now < timeOut) continue;
+                    Logger.Error(e.Message + e.StackTrace);
+                }
             }
             return ProfessionRenderRepository[template.Profession];
         }
-        private AsyncTexture2D GetEliteRender(RawTemplate template) {
-            if (template.Elite == -1) { return GetProfessionRender(template); }
-            if (!EliteRenderRepository.Any(x => x.Key.Equals(template.Elite))) {
-                var render = new AsyncTexture2D();
-                EliteRenderRepository.Add(template.Elite, render);
+
+        private AsyncTexture2D GetEliteRender(RawTemplate template)
+        {
+            if (template.Elite == -1)
+                return GetProfessionRender(template);
+            var completed = false;
+            var timeOut = DateTime.Now.AddMilliseconds(TimeOutGetRender);
+            while (!completed)
+            {
+                try
+                {
+                    if (!EliteRenderRepository.Any(x => x.Key.Equals(template.Elite)))
+                    {
+                        var render = new AsyncTexture2D();
+                        EliteRenderRepository.Add(template.Elite, render);
+                        completed = true;
+                    }
+                } catch (InvalidOperationException e) {
+                    if (DateTime.Now < timeOut) continue;
+                    Logger.Error(e.Message + e.StackTrace);
+                }
             }
             return EliteRenderRepository[template.Elite];
         }
