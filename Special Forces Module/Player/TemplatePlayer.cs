@@ -24,7 +24,7 @@ namespace Special_Forces_Module.Player
 {
     internal class TemplatePlayer
     {
-        private readonly Dictionary<string, GuildWarsControls> map = new Dictionary<string, GuildWarsControls>
+        private readonly Dictionary<string, GuildWarsControls> _map = new Dictionary<string, GuildWarsControls>
         {
             {"swap", GuildWarsControls.SwapWeapons},
             {"drop", GuildWarsControls.SwapWeapons},
@@ -48,20 +48,25 @@ namespace Special_Forces_Module.Player
             {"f5", GuildWarsControls.ProfessionSkill5},
             {"special", GuildWarsControls.SpecialAction}
         };
-
-
-        private readonly GuildWarsControls[] utilityswaps = new GuildWarsControls[3]
+        private readonly GuildWarsControls[] _utilityswaps = new GuildWarsControls[3]
         {
             GuildWarsControls.UtilitySkill1,
             GuildWarsControls.UtilitySkill2,
             GuildWarsControls.UtilitySkill3
         };
-        
+        private readonly GuildWarsControls[] _toolbeltswaps = new GuildWarsControls[3]
+        {
+            GuildWarsControls.ProfessionSkill2,
+            GuildWarsControls.ProfessionSkill3,
+            GuildWarsControls.ProfessionSkill4
+        };
         private readonly Stopwatch _time;
         private EventHandler<EventArgs> _pressed;
         private IProfession _currentProfession;
         private RawTemplate _currentTemplate;
         private KeyBinding _currentKey;
+        private string[] _currentOpener;
+        private string[] _currentLoop;
         private List<Control> _controls;
         private HealthPoolButton _stopButton;
         private Regex _syntaxPattern;
@@ -128,9 +133,12 @@ namespace Special_Forces_Module.Player
                 return;
             }
 
-            var opener = template.Rotation.Opener.Split(null);
-            if (opener.Length > 1)
-                DoRotation(opener);
+            _currentOpener = template.Rotation.Opener.Split(null);
+            _currentLoop = template.Rotation.Loop.Split(null);
+            if (_currentOpener.Length > 1)
+                DoRotation(_currentOpener);
+            else if (_currentLoop.Length > 1)
+                DoRotation(_currentLoop);
         }
 
         private async void DoRotation(string[] rotation, int skillIndex = 0, int repetitions = -1)
@@ -200,22 +208,34 @@ namespace Special_Forces_Module.Player
 
             } else {
 
-                var skill = map[current];
-
-                _currentKey = SpecialForcesModule.ModuleInstance.SkillBindings[skill].Value;
+                var skill = _map[current];
 
                 switch (skill)
                 {
                     case GuildWarsControls.UtilitySkill1:
-                        skill = utilityswaps[_currentTemplate.Utilitykeys[0] - 1];
+                        skill = _utilityswaps[_currentTemplate.Utilitykeys[0] - 1];
                         break;
                     case GuildWarsControls.UtilitySkill2:
-                        skill = utilityswaps[_currentTemplate.Utilitykeys[1] - 1];
+                        skill = _utilityswaps[_currentTemplate.Utilitykeys[1] - 1];
                         break;
                     case GuildWarsControls.UtilitySkill3:
-                        skill = utilityswaps[_currentTemplate.Utilitykeys[2] - 1];
+                        skill = _utilityswaps[_currentTemplate.Utilitykeys[2] - 1];
+                        break;
+                    case GuildWarsControls.ProfessionSkill2:
+                        if (_currentProfession.GetType() == typeof(Engineer))
+                            skill = _toolbeltswaps[_currentTemplate.Utilitykeys[0] - 1];
+                        break;
+                    case GuildWarsControls.ProfessionSkill3:
+                        if (_currentProfession.GetType() == typeof(Engineer))
+                            skill = _toolbeltswaps[_currentTemplate.Utilitykeys[1] - 1];
+                        break;
+                    case GuildWarsControls.ProfessionSkill4:
+                        if (_currentProfession.GetType() == typeof(Engineer))
+                            skill = _toolbeltswaps[_currentTemplate.Utilitykeys[2] - 1];
                         break;
                 }
+
+                _currentKey = SpecialForcesModule.ModuleInstance.SkillBindings[skill].Value;
 
                 var transforms = _currentProfession.GetTransformation(skill);
 
@@ -347,10 +367,8 @@ namespace Special_Forces_Module.Player
                             DoRotation(rotation, skillIndex, repetitions - 1);
                         else if (skillIndex < rotation.Length - 1)
                             DoRotation(rotation, skillIndex + 1);
-                        else {
-                            var loop = _currentTemplate.Rotation.Loop.Split(null);
-                            if (loop.Length > 1)
-                                DoRotation(loop);
+                        else if (_currentLoop.Length > 1) {
+                            DoRotation(_currentLoop);
                         }
                     }
             };
