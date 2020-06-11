@@ -70,7 +70,7 @@ namespace Special_Forces_Module.Player
         internal TemplatePlayer()
         {
             _time = new Stopwatch();
-            _syntaxPattern = new Regex(@"(?<repetitions>(?<=\+)[1-9][0-9]*)|(?<duration>(?<=/)[1-9][0-9]*)|(?<action>[\w\d]+)",
+            _syntaxPattern = new Regex(@"(?<repetitions>(?<=x)[1-9][0-9]*)|(?<duration>(?<=/)[1-9][0-9]*)|(?<action>[^x]+)",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
             _labelFont = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular);
             _glowFx = GameService.Content.ContentManager.Load<Effect>(@"effects\glow");
@@ -131,10 +131,6 @@ namespace Special_Forces_Module.Player
             var opener = template.Rotation.Opener.Split(null);
             if (opener.Length > 1)
                 DoRotation(opener);
-
-            var loop = template.Rotation.Loop.Split(null);
-            if (loop.Length > 1)
-                DoRotation(loop);
         }
 
         private async void DoRotation(string[] rotation, int skillIndex = 0, int repetitions = -1)
@@ -266,7 +262,7 @@ namespace Special_Forces_Module.Player
             Label remainingDuration = null;
             if (repetitions >= 0) {
 
-                var text = (repetitions + 1).ToString();
+                var text = repetitions.ToString();
                 var textWidth = (int)_labelFont.MeasureString(text).Width;
                 var currentRepetition = new Label
                 {
@@ -347,11 +343,15 @@ namespace Special_Forces_Module.Player
                         ResetBindings();
                         DisposeControls();
 
-                        if (repetitions > 0) 
+                        if (repetitions > 1) 
                             DoRotation(rotation, skillIndex, repetitions - 1);
-                        else if (skillIndex < rotation.Length)
+                        else if (skillIndex < rotation.Length - 1)
                             DoRotation(rotation, skillIndex + 1);
-
+                        else {
+                            var loop = _currentTemplate.Rotation.Loop.Split(null);
+                            if (loop.Length > 1)
+                                DoRotation(loop);
+                        }
                     }
             };
             _currentKey.Activated += _pressed;
