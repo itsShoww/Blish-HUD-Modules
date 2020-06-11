@@ -69,26 +69,26 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill5, (-270, 150, 48)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
-        private readonly Dictionary<GuildWarsControls, (int, int, int)> layout;
+        private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
         internal Elementalist(string specialization = "")
         {
             switch (specialization)
             {
                 case "tempest":
-                    layout = Tempest;
+                    _layout = Tempest;
                     break;
                 case "weaver":
-                    layout = Weaver;
+                    _layout = Weaver;
                     break;
                 default:
-                    layout = Base;
+                    _layout = Base;
                     break;
             }
         }
 
         public (int, int, int) GetTransformation(GuildWarsControls skill)
         {
-            return layout?[skill] ?? (0,0,0);
+            return _layout?[skill] ?? (0,0,0);
         }
 
         public bool IsDynamic(GuildWarsControls skill)

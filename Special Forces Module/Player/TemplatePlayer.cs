@@ -70,7 +70,7 @@ namespace Special_Forces_Module.Player
         internal TemplatePlayer()
         {
             _time = new Stopwatch();
-            _syntaxPattern = new Regex(@"(?![\w\d]+(?=\+\d|/\d))(?<repetitions>(?<=\+)[1-9][0-9]*)|(?![\w\d]+(?=\+\d|/\d))(?<duration>(?<=/)[1-9][0-9]*)|(?<action>[\w\d]+)",
+            _syntaxPattern = new Regex(@"(?<repetitions>(?<=\+)[1-9][0-9]*)|(?<duration>(?<=/)[1-9][0-9]*)|(?<action>[\w\d]+)",
                 RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
             _labelFont = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular);
             _glowFx = GameService.Content.ContentManager.Load<Effect>(@"effects\glow");
