@@ -145,24 +145,24 @@ namespace Special_Forces_Module.Player
         {
             if (skillIndex >= rotation.Length) skillIndex = 0;
 
-            var current = rotation[skillIndex].ToLowerInvariant();
+            var expression = rotation[skillIndex].ToLowerInvariant();
 
-            var duration = 0;
+            var duration = -1;
+            var action = "";
+            Control hint;
 
-            var matchCollection = _syntaxPattern.Matches(current);
+            var matchCollection = _syntaxPattern.Matches(expression);
             foreach (Match match in matchCollection)
             {
                 if (match.Groups["action"].Success)
-                    current = match.Groups["action"].Value;
+                    action = match.Groups["action"].Value;
                 if (match.Groups["duration"].Success)
                     duration = int.Parse(match.Groups["duration"].Value);
                 if (match.Groups["repetitions"].Success && repetitions < 0)
                     repetitions = int.Parse(match.Groups["repetitions"].Value);
             }
 
-            Control hint;
-
-            if (current.Equals("take") || current.Equals("interact")) {
+            if (action.Equals("take") || action.Equals("interact")) {
 
                 _currentKey = SpecialForcesModule.ModuleInstance.InteractionBinding.Value;
 
@@ -184,7 +184,7 @@ namespace Special_Forces_Module.Player
                 };
                 hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2), (GameService.Graphics.SpriteScreen.Height - hint.Height) - 160);
 
-            } else if (current.Equals("dodge")) {
+            } else if (action.Equals("dodge")) {
 
                 _currentKey = SpecialForcesModule.ModuleInstance.DodgeBinding.Value;
 
@@ -208,7 +208,7 @@ namespace Special_Forces_Module.Player
 
             } else {
 
-                var skill = _map[current];
+                var skill = _map[action];
 
                 switch (skill)
                 {

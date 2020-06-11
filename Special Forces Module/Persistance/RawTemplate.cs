@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using Blish_HUD;
 using Gw2Sharp.ChatLinks;
+using Gw2Sharp.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -21,6 +23,11 @@ namespace Special_Forces_Module.Persistance
         [JsonProperty("rotation")] public Rotation Rotation { get; set; }
 
         [JsonProperty("utilitykeys")] public int[] Utilitykeys { get; set; }
+
+        public int Elite => IsEliteSpecialization();
+
+        public int Profession => (int)Enum.GetValues(typeof(ProfessionType)).Cast<ProfessionType>().ToList()
+                                          .Find(x => x.ToString().Equals(GetProfession(), StringComparison.InvariantCultureIgnoreCase));
 
         private BuildChatLink Build(string template = null)
         {
@@ -71,31 +78,42 @@ namespace Special_Forces_Module.Persistance
             return Build().Specialization3Id;
         }
 
-        internal string GetEliteSpecialization()
+        internal string GetDisplayName(int specializationId)
         {
-            var result = "";
-            if (Build() == null) return result;
+            if (Build() == null) return "";
 
-            StreamReader reader;
-            string objText;
-            var request = (HttpWebRequest) WebRequest.Create(@"https://api.guildwars2.com/v2/specializations/" +
-                                                             Build().Specialization3Id);
+            var request = (HttpWebRequest) WebRequest.Create(@"https://api.guildwars2.com/v2/specializations/" + specializationId);
             using (var response = (HttpWebResponse) request.GetResponse())
             {
-                using (reader = new StreamReader(response.GetResponseStream()))
+                using (var reader = new StreamReader(response.GetResponseStream() ?? throw new InvalidOperationException()))
                 {
-                    objText = reader.ReadToEnd();
+                    var objText = reader.ReadToEnd();
                     var jsonObj = JsonConvert.DeserializeObject<JObject>(objText);
-                    if ((bool) jsonObj["elite"])
-                        result = (string) jsonObj["name"];
-                    return result;
+                    return (string) jsonObj["name"];
                 }
             }
         }
 
+        internal int IsEliteSpecialization()
+        {
+            if (Build() == null) return -1;
+
+            var request = (HttpWebRequest) WebRequest.Create(@"https://api.guildwars2.com/v2/specializations/" + GetThirdSpecialization());
+            using (var response = (HttpWebResponse) request.GetResponse())
+            {
+                using (var reader = new StreamReader(response.GetResponseStream() ?? throw new InvalidOperationException()))
+                {
+                    var objText = reader.ReadToEnd();
+                    var jsonObj = JsonConvert.DeserializeObject<JObject>(objText);
+                    return (bool)jsonObj["elite"] ? GetThirdSpecialization() : -1;
+                }
+            }
+        }
         internal string GetClassFriendlyName()
         {
-            return !GetEliteSpecialization().Equals("") ? GetEliteSpecialization() : GetProfession();
+            return IsEliteSpecialization() != -1
+                ? GetDisplayName(GetThirdSpecialization())
+                : GetProfession();
         }
     }
 

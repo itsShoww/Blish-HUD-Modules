@@ -62,8 +62,8 @@ namespace Special_Forces_Module
         private RawTemplate _editorTemplate;
 
         #region Rendercache
-        private Dictionary<string, AsyncTexture2D> EliteRenderRepository;
-        private Dictionary<string, AsyncTexture2D> ProfessionRenderRepository;
+        private Dictionary<int, AsyncTexture2D> EliteRenderRepository;
+        private Dictionary<int, AsyncTexture2D> ProfessionRenderRepository;
         private Dictionary<int, AsyncTexture2D> SkillRenderRepository;
         private IReadOnlyList<Profession> ProfessionRepository;
         private List<Skill> SkillRepository;
@@ -127,8 +127,8 @@ namespace Special_Forces_Module
             LoadTextures();
 
             _moduleControls = new List<Control>();
-            EliteRenderRepository = new Dictionary<string, AsyncTexture2D>();
-            ProfessionRenderRepository = new Dictionary<string, AsyncTexture2D>();
+            EliteRenderRepository = new Dictionary<int, AsyncTexture2D>();
+            ProfessionRenderRepository = new Dictionary<int, AsyncTexture2D>();
             SkillRenderRepository = new Dictionary<int, AsyncTexture2D>();
             SkillRepository = new List<Skill>();
             ChainSkillRepository = new List<Skill>();
@@ -173,30 +173,14 @@ namespace Special_Forces_Module
             }
         }
 
-        private void DisposeSurrenderButton()
-        {
-            Task.Run(delegate
-            {
-                GameService.Animation.Tweener.Tween(_surrenderButton, new {Opacity = 0.0f}, 0.2f);
-            }).ContinueWith(delegate {_surrenderButton.Dispose(); });
-        }
         /// <inheritdoc />
         protected override void Unload()
         {
             // Unload
             foreach (var c in _moduleControls) c?.Dispose();
 
-            if (_surrenderButton != null)
-            {
-                DisposeSurrenderButton();
-                _surrenderButton = null;
-            }
-
-            if (_templatePlayer != null)
-            {
-                _templatePlayer.Dispose();
-                _templatePlayer = null;
-            }
+            _surrenderButton?.Dispose(); 
+            _templatePlayer?.Dispose();
 
             GameService.Overlay.BlishHudWindow.RemoveTab(_specialForcesTab);
 
@@ -296,12 +280,12 @@ namespace Special_Forces_Module
 
         private async void LoadProfessionIcons()
         {
-            var professions = await LoadProfessions();
-            foreach (Profession profession in professions)
+            foreach (Profession profession in ProfessionRepository)
             {
                 var renderUri = (string) profession.IconBig;
-                if (ProfessionRenderRepository.Any(x =>
-                    x.Key.Equals(profession.Name, StringComparison.InvariantCultureIgnoreCase)))
+                var id = (int)Enum.GetValues(typeof(ProfessionType)).Cast<ProfessionType>().ToList()
+                    .Find(x => x.ToString().Equals(profession.Id, StringComparison.InvariantCultureIgnoreCase));
+                if (ProfessionRenderRepository.Any(x => x.Key == id))
                 {
                     try
                     {
@@ -313,7 +297,7 @@ namespace Special_Forces_Module
                             var loadedTexture =
                                 Texture2D.FromStream(GameService.Graphics.GraphicsDevice, textureStream);
 
-                            ProfessionRenderRepository[profession.ToString()].SwapTexture(loadedTexture);
+                            ProfessionRenderRepository[id].SwapTexture(loadedTexture);
                         }
                     }
                     catch (Exception ex)
@@ -323,7 +307,7 @@ namespace Special_Forces_Module
                 }
                 else
                 {
-                    ProfessionRenderRepository.Add(profession.Name, GameService.Content.GetRenderServiceTexture(renderUri));
+                    ProfessionRenderRepository.Add(id, GameService.Content.GetRenderServiceTexture(renderUri));
                 }
             }
         }
@@ -339,9 +323,8 @@ namespace Special_Forces_Module
                                 {
                                     var jObj = specialization.Result;
                                     if (!(bool) jObj["elite"]) return;
-                                    var name = (string) jObj["name"];
-                                    if (EliteRenderRepository.Any(x =>
-                                        x.Key.Equals(name, StringComparison.InvariantCultureIgnoreCase)))
+                                    var id = (int) jObj["id"];
+                                    if (EliteRenderRepository.Any(x => x.Key == id))
                                     {
                                         var renderUri = (string) jObj["profession_icon_big"];
                                         try
@@ -356,7 +339,7 @@ namespace Special_Forces_Module
                                                     Texture2D.FromStream(GameService.Graphics.GraphicsDevice,
                                                         textureStream);
 
-                                                EliteRenderRepository[name].SwapTexture(loadedTexture);
+                                                EliteRenderRepository[id].SwapTexture(loadedTexture);
                                             }
                                         }
                                         catch (Exception ex)
@@ -367,25 +350,26 @@ namespace Special_Forces_Module
                                     }
                                     else
                                     {
-                                        EliteRenderRepository.Add(name, GameService.Content.GetRenderServiceTexture(
+                                        EliteRenderRepository.Add(id, GameService.Content.GetRenderServiceTexture(
                                             (string) jObj["profession_icon_big"]));
                                     }
                                 });
                 });
         }
-        private AsyncTexture2D GetIcon(RawTemplate template) {
-            var elite = template.GetEliteSpecialization() ?? "";
-            if (elite.Equals("")) {
-                var profession = template.GetProfession() ?? "";
-                if (ProfessionRenderRepository.ContainsKey(profession)) return ProfessionRenderRepository[profession];
-                var professionIcon = new AsyncTexture2D();
-                ProfessionRenderRepository.Add(profession, professionIcon);
-                return professionIcon;
+        private AsyncTexture2D GetProfessionRender(RawTemplate template) {
+            if (!ProfessionRenderRepository.Any(x => x.Key.Equals(template.Profession))) {
+                var render = new AsyncTexture2D();
+                ProfessionRenderRepository.Add(template.Profession, render);
             }
-            if (EliteRenderRepository.ContainsKey(elite)) return EliteRenderRepository[elite];
-            var eliteIcon = new AsyncTexture2D();
-            EliteRenderRepository.Add(elite, eliteIcon);
-            return eliteIcon;
+            return ProfessionRenderRepository[template.Profession];
+        }
+        private AsyncTexture2D GetEliteRender(RawTemplate template) {
+            if (template.Elite == -1) { return GetProfessionRender(template); }
+            if (!EliteRenderRepository.Any(x => x.Key.Equals(template.Elite))) {
+                var render = new AsyncTexture2D();
+                EliteRenderRepository.Add(template.Elite, render);
+            }
+            return EliteRenderRepository[template.Elite];
         }
         private async void LoadSkillIcons(List<Skill> skills)
         {
@@ -528,7 +512,7 @@ namespace Special_Forces_Module
             var button = new TemplateButton(template)
             {
                 Parent = parent,
-                Icon = GetIcon(template),
+                Icon = GetEliteRender(template),
                 IconSize = DetailsIconSize.Small,
                 Text = template.Title,
                 BottomText = template.GetClassFriendlyName()
@@ -693,7 +677,7 @@ namespace Special_Forces_Module
                 if (e.Checked)
                     _surrenderButton = BuildSurrenderButton();
                 else
-                    DisposeSurrenderButton();
+                    GameService.Animation.Tweener.Tween(_surrenderButton, new {Opacity = 0.0f}, 0.2f).OnComplete(() => _surrenderButton?.Dispose());
             };
             var bindingsPanel = new FlowPanel
             {
@@ -956,22 +940,12 @@ namespace Special_Forces_Module
                 PlaceholderText = "Title",
                 Text = _editorTemplate.Title ?? ""
             };
-            var patch_text = new TextBox
+            var patch_text = new Label
             {
                 Parent = title_label.Parent,
                 Size = new Point(200, 30),
                 Location = new Point(patch_label.Right, patch_label.Location.Y),
-                PlaceholderText = "DD/MM/YYYY",
-                Text = _editorTemplate.Patch.Equals(DateTime.MinValue)
-                    ? ""
-                    : _editorTemplate.Patch.ToString("dd/MM/yyyy")
-            };
-            patch_text.EnterPressed += delegate
-            {
-                DateTime patch;
-                if (DateTime.TryParseExact(patch_text.Text, "dd/MM/yyyy", CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out patch))
-                    _editorTemplate.Patch = patch;
+                Text = DateTime.Today.ToString("dd/MM/yyyy")
             };
             var template_text = new TextBox
             {
