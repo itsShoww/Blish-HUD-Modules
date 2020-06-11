@@ -20,11 +20,11 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill2, (209, 24, 0)},
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
-                {GuildWarsControls.ProfessionSkill1, (-316, 104, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-267, 104, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-218, 104, 48)},
-                {GuildWarsControls.ProfessionSkill4, (-168, 104, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
+                {GuildWarsControls.ProfessionSkill1, (-305, 91, 46)},
+                {GuildWarsControls.ProfessionSkill2, (-255, 91, 46)},
+                {GuildWarsControls.ProfessionSkill3, (-205, 91, 46)},
+                {GuildWarsControls.ProfessionSkill4, (-155, 91, 46)},
+                {GuildWarsControls.ProfessionSkill5, (-107, 77, 35)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Chronomancer =
@@ -41,11 +41,11 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill2, (209, 24, 0)},
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
-                {GuildWarsControls.ProfessionSkill1, (-316, 104, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-267, 104, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-218, 104, 48)},
-                {GuildWarsControls.ProfessionSkill4, (-168, 104, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
+                {GuildWarsControls.ProfessionSkill1, (-305, 91, 46)},
+                {GuildWarsControls.ProfessionSkill2, (-255, 91, 46)},
+                {GuildWarsControls.ProfessionSkill3, (-205, 91, 46)},
+                {GuildWarsControls.ProfessionSkill4, (-155, 91, 46)},
+                {GuildWarsControls.ProfessionSkill5, (-107, 77, 35)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Mirage =
@@ -62,11 +62,11 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill2, (209, 24, 0)},
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
-                {GuildWarsControls.ProfessionSkill1, (-316, 104, 48)},
-                {GuildWarsControls.ProfessionSkill2, (-267, 104, 48)},
-                {GuildWarsControls.ProfessionSkill3, (-218, 104, 48)},
-                {GuildWarsControls.ProfessionSkill4, (-168, 104, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
+                {GuildWarsControls.ProfessionSkill1, (-305, 91, 46)},
+                {GuildWarsControls.ProfessionSkill2, (-255, 91, 46)},
+                {GuildWarsControls.ProfessionSkill3, (-205, 91, 46)},
+                {GuildWarsControls.ProfessionSkill4, (-155, 91, 46)},
+                {GuildWarsControls.ProfessionSkill5, (-107, 77, 55)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
