@@ -28,7 +28,7 @@ namespace Special_Forces_Module.Persistance
         {
             get
             {
-                if (_specialization == null) GetThirdSpecialization();
+                if (_specialization == null) GetEliteSpecialization();
                 return _specialization;
             }
             set {
