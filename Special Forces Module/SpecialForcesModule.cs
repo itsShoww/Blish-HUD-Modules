@@ -138,7 +138,7 @@ namespace Special_Forces_Module
 
         protected override async Task LoadAsync()
         {
-            ProfessionRepository = await LoadProfessions();
+            ProfessionRepository = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Professions.AllAsync();
             await Task.Run(LoadProfessionIcons);
             await Task.Run(LoadEliteIcons);
             await Task.Run(LoadSkills);
@@ -242,12 +242,6 @@ namespace Special_Forces_Module
 
         #endregion
 
-        private async Task<IReadOnlyList<Profession>> LoadProfessions()
-        {
-            return await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Professions
-                .ManyAsync(Enum.GetValues(typeof(ProfessionType)).Cast<ProfessionType>());
-        }
-
         #region Render Getters
 
         private async void LoadProfessionIcons()
@@ -320,16 +314,17 @@ namespace Special_Forces_Module
                 }
             }
         }
-        private AsyncTexture2D GetProfessionRender(RawTemplate template) {
+        private AsyncTexture2D GetProfessionRender(RawTemplate template)
+        {
             var completed = false;
             var timeOut = DateTime.Now.AddMilliseconds(TimeOutGetRender);
             while (!completed)
             {
                 try
                 {
-                    if (!ProfessionRenderRepository.Any(x => x.Key.Equals(template.Profession))) {
+                    if (ProfessionRenderRepository.All(x => x.Key != (int) template.GetProfession())) {
                         var render = new AsyncTexture2D();
-                        ProfessionRenderRepository.Add(template.Profession, render);
+                        ProfessionRenderRepository.Add((int)template.GetProfession(), render);
                         completed = true;
                     }
                 } catch (InvalidOperationException e) {
@@ -337,7 +332,7 @@ namespace Special_Forces_Module
                     Logger.Error(e.Message + e.StackTrace);
                 }
             }
-            return ProfessionRenderRepository[template.Profession];
+            return ProfessionRenderRepository[(int)template.GetProfession()];
         }
 
         private AsyncTexture2D GetEliteRender(RawTemplate template)
@@ -350,7 +345,7 @@ namespace Special_Forces_Module
             {
                 try
                 {
-                    if (!EliteRenderRepository.Any(x => x.Key.Equals(template.Specialization.Id)))
+                    if (EliteRenderRepository.All(x => x.Key != template.Specialization.Id))
                     {
                         var render = new AsyncTexture2D();
                         EliteRenderRepository.Add(template.Specialization.Id, render);
@@ -609,7 +604,7 @@ namespace Special_Forces_Module
                 case DD_TITLE:
                     _displayedTemplates.Sort((e1, e2) => e1.Template.Title.CompareTo(e2.Template.Title));
                     foreach (var e1 in _displayedTemplates)
-                        e1.Visible = LibraryShowAll.Value || e1.Template.GetProfession()
+                        e1.Visible = LibraryShowAll.Value || e1.Template.GetProfession().ToString()
                             .Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(),
                                 StringComparison.InvariantCultureIgnoreCase);
 
@@ -618,7 +613,7 @@ namespace Special_Forces_Module
                     _displayedTemplates.Sort((e1, e2) =>
                         e1.BottomText.CompareTo(e2.BottomText));
                     foreach (var e1 in _displayedTemplates)
-                        e1.Visible = LibraryShowAll.Value || e1.Template.GetProfession()
+                        e1.Visible = LibraryShowAll.Value || e1.Template.GetProfession().ToString()
                             .Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(),
                                 StringComparison.InvariantCultureIgnoreCase);
                     break;
@@ -960,14 +955,10 @@ namespace Special_Forces_Module
                 fp_weapon_skills.ClearChildren();
                 fp_slot_skills.ClearChildren();
 
-                if (!_editorTemplate.IsValid(template_text.Text)) return;
-
                 _editorTemplate.Template = template_text.Text;
                 profession_label.Text = _editorTemplate.GetClassFriendlyName();
 
-                var profSkills =
-                    SkillRepository.Where(x =>
-                        x.Professions.Contains(_editorTemplate.GetProfession()));
+                var profSkills = SkillRepository.Where(x => x.Professions.Contains(_editorTemplate.GetProfession().ToString()));
                 foreach (var skill in profSkills)
                 {
                     var fpParent = skill.Type == SkillType.Weapon ? fp_weapon_skills : fp_slot_skills;

@@ -10,7 +10,7 @@ namespace Special_Forces_Module.Parser
         {
             IProfession obj;
 
-            var profession = template.GetProfession().ToLowerInvariant();
+            var profession = template.GetProfession().ToString().ToLowerInvariant();
             var specialization = template.GetClassFriendlyName();
 
             switch (profession)

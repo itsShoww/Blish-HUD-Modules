@@ -12,9 +12,9 @@ namespace Special_Forces_Module.Persistance
 {
     internal class TemplateReader
     {
-        private readonly List<RawTemplate> cached = new List<RawTemplate>();
-        private readonly IsoDateTimeConverter dateFormat = new IsoDateTimeConverter {DateTimeFormat = "dd/MM/yyyy"};
-        private string[] loaded;
+        private readonly List<RawTemplate> _cached = new List<RawTemplate>();
+        private readonly IsoDateTimeConverter _dateFormat = new IsoDateTimeConverter {DateTimeFormat = "dd/MM/yyyy"};
+        private string[] _loaded;
 
         private bool IsLocalPath(string p)
         {
@@ -30,7 +30,7 @@ namespace Special_Forces_Module.Persistance
                 using (reader = new StreamReader(uri))
                 {
                     objText = reader.ReadToEnd();
-                    return JsonConvert.DeserializeObject<List<RawTemplate>>(objText, dateFormat);
+                    return JsonConvert.DeserializeObject<List<RawTemplate>>(objText, _dateFormat);
                 }
 
             var request = (HttpWebRequest) WebRequest.Create(uri);
@@ -39,7 +39,7 @@ namespace Special_Forces_Module.Persistance
                 using (reader = new StreamReader(response.GetResponseStream()))
                 {
                     objText = reader.ReadToEnd();
-                    return JsonConvert.DeserializeObject<List<RawTemplate>>(objText, dateFormat);
+                    return JsonConvert.DeserializeObject<List<RawTemplate>>(objText, _dateFormat);
                 }
             }
         }
@@ -54,7 +54,7 @@ namespace Special_Forces_Module.Persistance
                 {
                     objText = reader.ReadToEnd();
 
-                    return JsonConvert.DeserializeObject<RawTemplate>(objText, dateFormat);
+                    return JsonConvert.DeserializeObject<RawTemplate>(objText, _dateFormat);
                 }
 
             var request = (HttpWebRequest) WebRequest.Create(uri);
@@ -63,24 +63,28 @@ namespace Special_Forces_Module.Persistance
                 using (reader = new StreamReader(response.GetResponseStream()))
                 {
                     objText = reader.ReadToEnd();
-                    return JsonConvert.DeserializeObject<RawTemplate>(objText, dateFormat);
+                    return JsonConvert.DeserializeObject<RawTemplate>(objText, _dateFormat);
                 }
             }
         }
 
         internal async Task<List<RawTemplate>> LoadDirectory(string path)
         {
-            cached.Clear();
-            loaded = Directory.GetFiles(path, "*.json", SearchOption.TopDirectoryOnly);
-            foreach (var file in loaded) cached.Add(LoadSingle(file));
+            _cached.Clear();
+            _loaded = Directory.GetFiles(path, "*.json", SearchOption.TopDirectoryOnly);
+            foreach (var file in _loaded) _cached.Add(LoadSingle(file));
 
-            var eliteIds = cached.Select(template => template.GetThirdSpecialization());
+            var eliteIds = _cached.Select(template => template.GetThirdSpecialization()).ToList();
+            eliteIds.RemoveAll(x => x < 0);
 
             var elites = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Specializations.ManyAsync(eliteIds);
-            foreach (RawTemplate template in cached)
+            foreach (RawTemplate template in _cached)
+            {
+                if (template.GetThirdSpecialization() < 0) continue;
                 template.Specialization = elites.First(x => x.Id == template.GetThirdSpecialization());
+            }
 
-            return cached;
+            return _cached;
         }
     }
 }

@@ -36,23 +36,16 @@ namespace Special_Forces_Module.Persistance
                 _specialization = value;
             }
         }
-
-        public int Profession => (int)Enum.GetValues(typeof(ProfessionType)).Cast<ProfessionType>().ToList()
-                                          .Find(x => x.ToString().Equals(GetProfession(), StringComparison.InvariantCultureIgnoreCase));
-        private BuildChatLink Build(string template = null)
+        private BuildChatLink Build()
         {
-            BuildChatLink result;
-            try
-            {
-                result = (BuildChatLink) Gw2ChatLink.Parse(template ?? Template);
+            if (Template != null) {
+                try {
+                    return (BuildChatLink) Gw2ChatLink.Parse(Template);
+                } catch (FormatException e) {
+                    Logger.Error(e.Message + e.StackTrace);
+                }
             }
-            catch (FormatException e)
-            {
-                result = null;
-                Logger.Warn(e.Message);
-            }
-
-            return result;
+            return (BuildChatLink) Gw2ChatLink.Parse("[&DQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=]");
         }
 
         internal void Save()
@@ -65,13 +58,13 @@ namespace Special_Forces_Module.Persistance
             System.IO.File.WriteAllText(path + ".json", json);
         }
 
-        internal bool IsValid(string template = null)
+        internal bool IsValid()
         {
-            return Build(template) != null;
+            return Build() != null;
         }
-        internal string GetProfession()
+        internal ProfessionType GetProfession()
         {
-            return IsValid() ? Build().Profession.ToString() : "";
+            return Build().Profession;
         }
         internal int GetFirstSpecialization()
         {
@@ -96,7 +89,7 @@ namespace Special_Forces_Module.Persistance
         {
             return Specialization.Elite
                 ? Specialization.Name
-                : GetProfession();
+                : Specialization.Profession;
         }
     }
 
