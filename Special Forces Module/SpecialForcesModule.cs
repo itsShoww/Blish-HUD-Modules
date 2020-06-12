@@ -1,36 +1,27 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Content;
 using Blish_HUD.Controls;
-using Blish_HUD.Controls.Extern;
 using Blish_HUD.Controls.Intern;
 using Blish_HUD.Input;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
-using Flurl.Http;
 using Gw2Sharp;
 using Gw2Sharp.Models;
 using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Special_Forces_Module.Controls;
 using Special_Forces_Module.Persistance;
 using Special_Forces_Module.Player;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Control = Blish_HUD.Controls.Control;
-using Keyb = Blish_HUD.Controls.Intern.Keyboard;
 using Keys = Microsoft.Xna.Framework.Input.Keys;
 using Label = Blish_HUD.Controls.Label;
 using Menu = Blish_HUD.Controls.Menu;
@@ -64,19 +55,23 @@ namespace Special_Forces_Module
         private RawTemplate _editorTemplate;
 
         #region Rendercache
+
         private Dictionary<int, AsyncTexture2D> EliteRenderRepository;
         private Dictionary<int, AsyncTexture2D> ProfessionRenderRepository;
         private Dictionary<int, AsyncTexture2D> SkillRenderRepository;
         private IReadOnlyList<Profession> ProfessionRepository;
         private List<Skill> SkillRepository;
         private List<Skill> ChainSkillRepository;
+
         #endregion
 
         #region Textures
+
         private Texture2D _surrenderTooltip_texture;
         private Texture2D _surrenderFlag_hover;
         private Texture2D _surrenderFlag;
         private Texture2D _surrenderFlag_pressed;
+
         #endregion
 
         private WindowTab _specialForcesTab;
@@ -101,6 +96,7 @@ namespace Special_Forces_Module
             _surrenderFlag_pressed = ContentsManager.GetTexture("surrender_flag_pressed.png");
 
         }
+
         protected override void DefineSettings(SettingCollection settings)
         {
             SurrenderButtonEnabled = settings.DefineSetting("SurrenderButtonEnabled", false, "Show Surrender Skill",
@@ -118,10 +114,13 @@ namespace Special_Forces_Module
                     settings.DefineSetting(skill.ToString(), new KeyBinding(Keys.None) {Enabled = true}, friendlyName,
                         "Your key binding for " + friendlyName));
             }
+
             InteractionBinding = settings.DefineSetting("InteractionKey", new KeyBinding(Keys.F) {Enabled = true},
-                "Interact", "General context-sensitive interact prompt. Used for\ninteracting with the environment, including Talk,\nLoot Revive, etc.");
+                "Interact",
+                "General context-sensitive interact prompt. Used for\ninteracting with the environment, including Talk,\nLoot Revive, etc.");
             DodgeBinding = settings.DefineSetting("DodgeKey", new KeyBinding(Keys.V) {Enabled = true},
-                "Dodge", "Do an evasive dodge roll, negating damage, in the\ndirection your character is moving (backward if\nstationary).");
+                "Dodge",
+                "Do an evasive dodge roll, negating damage, in the\ndirection your character is moving (backward if\nstationary).");
         }
 
         protected override void Initialize()
@@ -144,6 +143,7 @@ namespace Special_Forces_Module
 
             SurrenderBinding.Value.Activated += delegate { GameService.GameIntegration.Chat.Send("/gg"); };
         }
+
         protected override async Task LoadAsync()
         {
             ProfessionRepository = await LoadProfessions();
@@ -152,8 +152,7 @@ namespace Special_Forces_Module
             await Task.Run(LoadSkills);
 
             // Load local template sheets (*.json) files.
-            await Task.Run(() =>
-                _templates = _templateReader.LoadDirectory(DirectoriesManager.GetFullDirectoryPath("specialforces")));
+            _templates = await _templateReader.LoadDirectory(DirectoriesManager.GetFullDirectoryPath("specialforces"));
         }
 
         protected override void OnModuleLoaded(EventArgs e)
@@ -181,7 +180,7 @@ namespace Special_Forces_Module
             // Unload
             foreach (var c in _moduleControls) c?.Dispose();
 
-            _surrenderButton?.Dispose(); 
+            _surrenderButton?.Dispose();
             _templatePlayer?.Dispose();
 
             GameService.Overlay.BlishHudWindow.RemoveTab(_specialForcesTab);
@@ -189,6 +188,7 @@ namespace Special_Forces_Module
             // All static members must be manually unset
             ModuleInstance = null;
         }
+
         private Image BuildSurrenderButton()
         {
             var tooltip_size = new Point(_surrenderTooltip_texture.Width, _surrenderTooltip_texture.Height);
@@ -212,14 +212,8 @@ namespace Special_Forces_Module
                 Visible = SurrenderButtonEnabled.Value,
                 Tooltip = surrenderButtonTooltip
             };
-            surrenderButton.MouseEntered += delegate
-            {
-                surrenderButton.Texture = _surrenderFlag_hover;
-            };
-            surrenderButton.MouseLeft += delegate
-            {
-                surrenderButton.Texture = _surrenderFlag;
-            };
+            surrenderButton.MouseEntered += delegate { surrenderButton.Texture = _surrenderFlag_hover; };
+            surrenderButton.MouseLeft += delegate { surrenderButton.Texture = _surrenderFlag; };
             surrenderButton.LeftMouseButtonPressed += delegate
             {
                 surrenderButton.Size = new Point(43, 43);
@@ -252,26 +246,12 @@ namespace Special_Forces_Module
 
         internal Dictionary<GuildWarsControls, SettingEntry<KeyBinding>> SkillBindings =
             new Dictionary<GuildWarsControls, SettingEntry<KeyBinding>>();
+
         internal SettingEntry<KeyBinding> InteractionBinding;
         internal SettingEntry<KeyBinding> DodgeBinding;
+
         #endregion
-        private async Task<T> GetJsonResponse<T>(string request) {
-            try {
-                var rawJson = await request.AllowHttpStatus(HttpStatusCode.NotFound).GetStringAsync();
 
-                return JsonConvert.DeserializeObject<T>(rawJson);
-            } catch (FlurlHttpTimeoutException ex) {
-                Logger.Warn(ex, $"Request '{request}' timed out.");
-            } catch (FlurlHttpException ex) {
-                Logger.Warn(ex, $"Request '{request}' was not successful.");
-            } catch (JsonReaderException ex) {
-                Logger.Warn(ex, $"Failed to read JSON response returned by request '{request}' which returned ''");
-            } catch (Exception ex) {
-                Logger.Error(ex, $"Unexpected error while requesting '{request}'.");
-            }
-
-            return default;
-        }
         private async Task<IReadOnlyList<Profession>> LoadProfessions()
         {
             return await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Professions
@@ -285,7 +265,7 @@ namespace Special_Forces_Module
             foreach (Profession profession in ProfessionRepository)
             {
                 var renderUri = (string) profession.IconBig;
-                var id = (int)Enum.GetValues(typeof(ProfessionType)).Cast<ProfessionType>().ToList()
+                var id = (int) Enum.GetValues(typeof(ProfessionType)).Cast<ProfessionType>().ToList()
                     .Find(x => x.ToString().Equals(profession.Id, StringComparison.InvariantCultureIgnoreCase));
                 if (ProfessionRenderRepository.Any(x => x.Key == id))
                 {
@@ -313,50 +293,42 @@ namespace Special_Forces_Module
                 }
             }
         }
+
         private async void LoadEliteIcons()
         {
-            await GetJsonResponse<int[]>("https://api.guildwars2.com/v2/specializations").ContinueWith(
-                async specializations =>
+            var ids = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Specializations.IdsAsync();
+            var specializations = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Specializations.ManyAsync(ids);
+            foreach (Specialization specialization in specializations)
+            {
+                if (!specialization.Elite) continue;
+                if (EliteRenderRepository.Any(x => x.Key == specialization.Id))
                 {
-                    foreach (var i in specializations.Result)
-                        await GetJsonResponse<JObject>("https://api.guildwars2.com/v2/specializations/" + i)
-                            .ContinueWith(
-                                async specialization =>
-                                {
-                                    var jObj = specialization.Result;
-                                    if (!(bool) jObj["elite"]) return;
-                                    var id = (int) jObj["id"];
-                                    if (EliteRenderRepository.Any(x => x.Key == id))
-                                    {
-                                        var renderUri = (string) jObj["profession_icon_big"];
-                                        try
-                                        {
-                                            var textureDataResponse = await GameService.Gw2WebApi.AnonymousConnection
-                                                .Client
-                                                .Render.DownloadToByteArrayAsync(renderUri);
+                    var renderUri = (string)specialization.ProfessionIconBig;
+                    try
+                    {
+                        var textureDataResponse = await GameService.Gw2WebApi.AnonymousConnection
+                            .Client
+                            .Render.DownloadToByteArrayAsync(renderUri);
 
-                                            using (var textureStream = new MemoryStream(textureDataResponse))
-                                            {
-                                                var loadedTexture =
-                                                    Texture2D.FromStream(GameService.Graphics.GraphicsDevice,
-                                                        textureStream);
+                        using (var textureStream = new MemoryStream(textureDataResponse))
+                        {
+                            var loadedTexture =
+                                Texture2D.FromStream(GameService.Graphics.GraphicsDevice,
+                                    textureStream);
 
-                                                EliteRenderRepository[id].SwapTexture(loadedTexture);
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            Logger.Warn(ex, $"Request to render service for {renderUri} failed.",
-                                                renderUri);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        EliteRenderRepository.Add(id, GameService.Content.GetRenderServiceTexture(
-                                            (string) jObj["profession_icon_big"]));
-                                    }
-                                });
-                });
+                            EliteRenderRepository[specialization.Id].SwapTexture(loadedTexture);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn(ex, $"Request to render service for {renderUri} failed.", renderUri);
+                    }
+                }
+                else
+                {
+                    EliteRenderRepository.Add(specialization.Id, GameService.Content.GetRenderServiceTexture(specialization.ProfessionIconBig));
+                }
+            }
         }
         private AsyncTexture2D GetProfessionRender(RawTemplate template) {
             var completed = false;
@@ -380,7 +352,7 @@ namespace Special_Forces_Module
 
         private AsyncTexture2D GetEliteRender(RawTemplate template)
         {
-            if (template.Elite == -1)
+            if (template.Specialization.Elite)
                 return GetProfessionRender(template);
             var completed = false;
             var timeOut = DateTime.Now.AddMilliseconds(TimeOutGetRender);
@@ -388,10 +360,10 @@ namespace Special_Forces_Module
             {
                 try
                 {
-                    if (!EliteRenderRepository.Any(x => x.Key.Equals(template.Elite)))
+                    if (!EliteRenderRepository.Any(x => x.Key.Equals(template.Specialization.Id)))
                     {
                         var render = new AsyncTexture2D();
-                        EliteRenderRepository.Add(template.Elite, render);
+                        EliteRenderRepository.Add(template.Specialization.Id, render);
                         completed = true;
                     }
                 } catch (InvalidOperationException e) {
@@ -399,7 +371,7 @@ namespace Special_Forces_Module
                     Logger.Error(e.Message + e.StackTrace);
                 }
             }
-            return EliteRenderRepository[template.Elite];
+            return EliteRenderRepository[template.Specialization.Id];
         }
         private async void LoadSkillIcons(List<Skill> skills)
         {

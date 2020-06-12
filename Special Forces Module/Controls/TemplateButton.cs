@@ -1,9 +1,9 @@
-﻿using System.Windows.Forms;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Special_Forces_Module.Persistance;
+using System.Windows.Forms;
 using HorizontalAlignment = Blish_HUD.Controls.HorizontalAlignment;
 using MouseEventArgs = Blish_HUD.Input.MouseEventArgs;
 

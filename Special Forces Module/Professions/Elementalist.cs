@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using Blish_HUD.Controls.Intern;
+﻿using Blish_HUD.Controls.Intern;
 using Microsoft.Xna.Framework;
+using System.Collections.Generic;
 
 namespace Special_Forces_Module.Professions
 {

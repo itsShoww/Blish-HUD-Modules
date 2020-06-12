@@ -1,6 +1,6 @@
-﻿using System;
-using Special_Forces_Module.Persistance;
+﻿using Special_Forces_Module.Persistance;
 using Special_Forces_Module.Professions;
+using System;
 
 namespace Special_Forces_Module.Parser
 {

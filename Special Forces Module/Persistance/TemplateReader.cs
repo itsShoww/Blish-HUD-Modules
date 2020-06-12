@@ -1,9 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
+﻿using Blish_HUD;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace Special_Forces_Module.Persistance
 {
@@ -65,11 +68,18 @@ namespace Special_Forces_Module.Persistance
             }
         }
 
-        internal List<RawTemplate> LoadDirectory(string path)
+        internal async Task<List<RawTemplate>> LoadDirectory(string path)
         {
             cached.Clear();
             loaded = Directory.GetFiles(path, "*.json", SearchOption.TopDirectoryOnly);
             foreach (var file in loaded) cached.Add(LoadSingle(file));
+
+            var eliteIds = cached.Select(template => template.GetThirdSpecialization());
+
+            var elites = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Specializations.ManyAsync(eliteIds);
+            foreach (RawTemplate template in cached)
+                template.Specialization = elites.First(x => x.Id == template.GetThirdSpecialization());
+
             return cached;
         }
     }

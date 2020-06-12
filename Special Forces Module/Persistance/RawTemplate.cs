@@ -1,12 +1,12 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Net;
 using Blish_HUD;
 using Gw2Sharp.ChatLinks;
 using Gw2Sharp.Models;
+using Gw2Sharp.WebApi.V2.Models;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Linq;
+using File = System.IO.File;
 
 namespace Special_Forces_Module.Persistance
 {
@@ -24,11 +24,22 @@ namespace Special_Forces_Module.Persistance
 
         [JsonProperty("utilitykeys")] public int[] Utilitykeys { get; set; }
 
-        public int Elite => IsEliteSpecialization();
+        private Specialization _specialization;
+        public Specialization Specialization
+        {
+            get
+            {
+                if (_specialization == null) GetThirdSpecialization();
+                return _specialization;
+            }
+            set {
+                if (_specialization != null) return;
+                _specialization = value;
+            }
+        }
 
         public int Profession => (int)Enum.GetValues(typeof(ProfessionType)).Cast<ProfessionType>().ToList()
                                           .Find(x => x.ToString().Equals(GetProfession(), StringComparison.InvariantCultureIgnoreCase));
-
         private BuildChatLink Build(string template = null)
         {
             BuildChatLink result;
@@ -61,58 +72,31 @@ namespace Special_Forces_Module.Persistance
         }
         internal string GetProfession()
         {
-            return Build() != null ? Build().Profession.ToString() : "";
+            return IsValid() ? Build().Profession.ToString() : "";
         }
         internal int GetFirstSpecialization()
         {
-            return Build().Specialization1Id;
+            return IsValid() ? Build().Specialization1Id : -1;
         }
 
         internal int GetSecondSpecialization()
         {
-            return Build().Specialization2Id;
+            return IsValid() ? Build().Specialization2Id : -1;
         }
 
         internal int GetThirdSpecialization()
         {
-            return Build().Specialization3Id;
+            return IsValid() ? Build().Specialization3Id : -1;
         }
-
-        internal string GetDisplayName(int specializationId)
+        private async void GetEliteSpecialization()
         {
-            if (Build() == null) return "";
-
-            var request = (HttpWebRequest) WebRequest.Create(@"https://api.guildwars2.com/v2/specializations/" + specializationId);
-            using (var response = (HttpWebResponse) request.GetResponse())
-            {
-                using (var reader = new StreamReader(response.GetResponseStream() ?? throw new InvalidOperationException()))
-                {
-                    var objText = reader.ReadToEnd();
-                    var jsonObj = JsonConvert.DeserializeObject<JObject>(objText);
-                    return (string) jsonObj["name"];
-                }
-            }
-        }
-
-        internal int IsEliteSpecialization()
-        {
-            if (Build() == null) return -1;
-
-            var request = (HttpWebRequest) WebRequest.Create(@"https://api.guildwars2.com/v2/specializations/" + GetThirdSpecialization());
-            using (var response = (HttpWebResponse) request.GetResponse())
-            {
-                using (var reader = new StreamReader(response.GetResponseStream() ?? throw new InvalidOperationException()))
-                {
-                    var objText = reader.ReadToEnd();
-                    var jsonObj = JsonConvert.DeserializeObject<JObject>(objText);
-                    return (bool)jsonObj["elite"] ? GetThirdSpecialization() : -1;
-                }
-            }
+            if (GetThirdSpecialization() > 0)
+                _specialization = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Specializations.GetAsync(GetThirdSpecialization());
         }
         internal string GetClassFriendlyName()
         {
-            return IsEliteSpecialization() != -1
-                ? GetDisplayName(GetThirdSpecialization())
+            return Specialization.Elite
+                ? Specialization.Name
                 : GetProfession();
         }
     }
