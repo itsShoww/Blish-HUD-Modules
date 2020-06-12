@@ -13,10 +13,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static Blish_HUD.Controls.ScreenNotification;
-using Color = Microsoft.Xna.Framework.Color;
-using VerticalAlignment = Blish_HUD.Controls.VerticalAlignment;
-
 namespace Special_Forces_Module.Player
 {
     internal class TemplatePlayer
@@ -126,7 +122,7 @@ namespace Special_Forces_Module.Player
 
             if (!profession.Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(), StringComparison.InvariantCultureIgnoreCase))
             {
-                ShowNotification($"Your profession is {GameService.Gw2Mumble.PlayerCharacter.Profession}.\nRequired: {profession}", NotificationType.Error);
+                ScreenNotification.ShowNotification($"Your profession is {GameService.Gw2Mumble.PlayerCharacter.Profession}.\nRequired: {profession}", ScreenNotification.NotificationType.Error);
                 return;
             }
 

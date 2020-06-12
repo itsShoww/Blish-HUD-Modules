@@ -6,7 +6,6 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
-using File = System.IO.File;
 
 namespace Special_Forces_Module.Persistance
 {
@@ -63,7 +62,7 @@ namespace Special_Forces_Module.Persistance
             foreach (var c in Path.GetInvalidFileNameChars()) title = title.Replace(c, '-');
             var path = Path.Combine(
                 SpecialForcesModule.ModuleInstance.DirectoriesManager.GetFullDirectoryPath("specialforces"), title);
-            File.WriteAllText(path + ".json", json);
+            System.IO.File.WriteAllText(path + ".json", json);
         }
 
         internal bool IsValid(string template = null)

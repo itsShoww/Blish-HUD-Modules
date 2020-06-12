@@ -3,9 +3,6 @@ using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Special_Forces_Module.Persistance;
-using System.Windows.Forms;
-using HorizontalAlignment = Blish_HUD.Controls.HorizontalAlignment;
-using MouseEventArgs = Blish_HUD.Input.MouseEventArgs;
 
 namespace Special_Forces_Module.Controls
 {
@@ -134,14 +131,15 @@ namespace Special_Forces_Module.Controls
             }
         }
 
-        private void TemplateButton_LeftMouseButtonClicked(object sender, MouseEventArgs e)
+        private void TemplateButton_LeftMouseButtonClicked(object sender, Blish_HUD.Input.MouseEventArgs e)
         {
+            //TODO: Implement ClipboardUtil
             if (MouseOverTemplate)
-                Clipboard.SetText(Template.Template);
+                ScreenNotification.ShowNotification("Not yet implemented!");
             else if (MouseOverPlay) GameService.Overlay.BlishHudWindow.Hide();
         }
 
-        private void TemplateButton_MouseLeft(object sender, MouseEventArgs e)
+        private void TemplateButton_MouseLeft(object sender, Blish_HUD.Input.MouseEventArgs e)
         {
             MouseOverPlay = false;
             MouseOverTemplate = false;
@@ -150,7 +148,7 @@ namespace Special_Forces_Module.Controls
             MouseOverUtility3 = false;
         }
 
-        private void TemplateButton_MouseMoved(object sender, MouseEventArgs e)
+        private void TemplateButton_MouseMoved(object sender, Blish_HUD.Input.MouseEventArgs e)
         {
             var relPos = e.MouseState.Position - AbsoluteBounds.Location;
 
@@ -237,7 +235,7 @@ namespace Special_Forces_Module.Controls
 
             spriteBatch.DrawStringOnCtrl(this, Template.Utilitykeys[2] + "", Content.DefaultFont14,
                 new Rectangle(SHEETBUTTON_WIDTH - 109, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White,
-                false, true, 2, HorizontalAlignment.Center, VerticalAlignment.Bottom);
+                false, true, 2, Blish_HUD.Controls.HorizontalAlignment.Center, VerticalAlignment.Bottom);
 
             if (MouseOverUtility2)
                 spriteBatch.DrawOnCtrl(this, GlowUtilitySprite,
@@ -250,7 +248,7 @@ namespace Special_Forces_Module.Controls
 
             spriteBatch.DrawStringOnCtrl(this, Template.Utilitykeys[1] + "", Content.DefaultFont14,
                 new Rectangle(SHEETBUTTON_WIDTH - 145, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White,
-                false, true, 2, HorizontalAlignment.Center, VerticalAlignment.Bottom);
+                false, true, 2, Blish_HUD.Controls.HorizontalAlignment.Center, VerticalAlignment.Bottom);
 
             if (MouseOverUtility1)
                 spriteBatch.DrawOnCtrl(this, GlowUtilitySprite,
@@ -263,7 +261,7 @@ namespace Special_Forces_Module.Controls
 
             spriteBatch.DrawStringOnCtrl(this, Template.Utilitykeys[0] + "", Content.DefaultFont14,
                 new Rectangle(SHEETBUTTON_WIDTH - 181, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White,
-                false, true, 2, HorizontalAlignment.Center, VerticalAlignment.Bottom);
+                false, true, 2, Blish_HUD.Controls.HorizontalAlignment.Center, VerticalAlignment.Bottom);
 
             #endregion
 

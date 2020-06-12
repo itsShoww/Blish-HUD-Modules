@@ -21,13 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Control = Blish_HUD.Controls.Control;
-using Keys = Microsoft.Xna.Framework.Input.Keys;
-using Label = Blish_HUD.Controls.Label;
-using Menu = Blish_HUD.Controls.Menu;
-using MouseEventArgs = Blish_HUD.Input.MouseEventArgs;
-using Panel = Blish_HUD.Controls.Panel;
-using TextBox = Blish_HUD.Controls.TextBox;
+using Microsoft.Xna.Framework.Input;
 
 namespace Special_Forces_Module
 {
@@ -50,7 +44,6 @@ namespace Special_Forces_Module
 
         internal static SpecialForcesModule ModuleInstance;
 
-        private List<Control> _moduleControls;
         private List<TemplateButton> _displayedTemplates;
         private RawTemplate _editorTemplate;
 
@@ -127,7 +120,6 @@ namespace Special_Forces_Module
         {
             LoadTextures();
 
-            _moduleControls = new List<Control>();
             EliteRenderRepository = new Dictionary<int, AsyncTexture2D>();
             ProfessionRenderRepository = new Dictionary<int, AsyncTexture2D>();
             SkillRenderRepository = new Dictionary<int, AsyncTexture2D>();
@@ -178,8 +170,6 @@ namespace Special_Forces_Module
         protected override void Unload()
         {
             // Unload
-            foreach (var c in _moduleControls) c?.Dispose();
-
             _surrenderButton?.Dispose();
             _templatePlayer?.Dispose();
 
