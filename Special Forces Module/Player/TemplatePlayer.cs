@@ -118,7 +118,7 @@ namespace Special_Forces_Module.Player
             };
             _currentTemplate = template;
 
-            var profession = template.GetProfession().ToString();
+            var profession = template.BuildChatLink.Profession.ToString();
 
             if (!profession.Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(), StringComparison.InvariantCultureIgnoreCase))
             {

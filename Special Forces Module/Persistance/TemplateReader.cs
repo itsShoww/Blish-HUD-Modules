@@ -74,14 +74,15 @@ namespace Special_Forces_Module.Persistance
             _loaded = Directory.GetFiles(path, "*.json", SearchOption.TopDirectoryOnly);
             foreach (var file in _loaded) _cached.Add(LoadSingle(file));
 
-            var eliteIds = _cached.Select(template => template.GetThirdSpecialization()).ToList();
-            eliteIds.RemoveAll(x => x < 0);
+            var eliteIds = _cached.Where(template => template.BuildChatLink.Specialization3Id > 0)
+                                          .Select(template => (int)template.BuildChatLink.Specialization3Id).ToList();
 
             var elites = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Specializations.ManyAsync(eliteIds);
+
             foreach (RawTemplate template in _cached)
             {
-                if (template.GetThirdSpecialization() < 0) continue;
-                template.Specialization = elites.First(x => x.Id == template.GetThirdSpecialization());
+                if (template.BuildChatLink.Specialization3Id <= 0) continue;
+                template.Specialization = elites.First(x => x.Id == template.BuildChatLink.Specialization3Id);
             }
 
             return _cached;

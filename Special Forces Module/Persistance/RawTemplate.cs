@@ -1,11 +1,10 @@
 using Blish_HUD;
 using Gw2Sharp.ChatLinks;
-using Gw2Sharp.Models;
 using Gw2Sharp.WebApi.V2.Models;
 using Newtonsoft.Json;
 using System;
 using System.IO;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace Special_Forces_Module.Persistance
 {
@@ -28,12 +27,32 @@ namespace Special_Forces_Module.Persistance
         {
             get
             {
-                if (_specialization == null) GetEliteSpecialization();
+                if (_specialization == null)
+                {
+                    var task = GetEliteSpecialization();
+                    if (task != null)
+                        _specialization = task.Result;
+                    return _specialization;
+                };
                 return _specialization;
             }
             set {
                 if (_specialization != null) return;
                 _specialization = value;
+            }
+        }
+
+        private BuildChatLink _buildChatLink;
+        public BuildChatLink BuildChatLink
+        {
+            get
+            {
+                if (_buildChatLink == null) _buildChatLink = Build();
+                return _buildChatLink;
+            }
+            set {
+                if (_buildChatLink != null) return;
+                _buildChatLink = value;
             }
         }
         private BuildChatLink Build()
@@ -57,39 +76,17 @@ namespace Special_Forces_Module.Persistance
                 SpecialForcesModule.ModuleInstance.DirectoriesManager.GetFullDirectoryPath("specialforces"), title);
             System.IO.File.WriteAllText(path + ".json", json);
         }
-
-        internal bool IsValid()
+        private Task<Specialization> GetEliteSpecialization()
         {
-            return Build() != null;
-        }
-        internal ProfessionType GetProfession()
-        {
-            return Build().Profession;
-        }
-        internal int GetFirstSpecialization()
-        {
-            return IsValid() ? Build().Specialization1Id : -1;
-        }
-
-        internal int GetSecondSpecialization()
-        {
-            return IsValid() ? Build().Specialization2Id : -1;
-        }
-
-        internal int GetThirdSpecialization()
-        {
-            return IsValid() ? Build().Specialization3Id : -1;
-        }
-        private async void GetEliteSpecialization()
-        {
-            if (GetThirdSpecialization() > 0)
-                _specialization = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Specializations.GetAsync(GetThirdSpecialization());
+            if (BuildChatLink.Specialization3Id > 0)
+                return GameService.Gw2WebApi.AnonymousConnection.Client.V2.Specializations.GetAsync(BuildChatLink.Specialization3Id);
+            return default;
         }
         internal string GetClassFriendlyName()
         {
-            return Specialization.Elite
+            return Specialization != null && Specialization.Elite
                 ? Specialization.Name
-                : Specialization.Profession;
+                : BuildChatLink.Profession.ToString();
         }
     }
 

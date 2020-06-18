@@ -138,13 +138,10 @@ namespace Special_Forces_Module
 
         protected override async Task LoadAsync()
         {
+            _templates = await _templateReader.LoadDirectory(DirectoriesManager.GetFullDirectoryPath("specialforces"));
             ProfessionRepository = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Professions.AllAsync();
             await Task.Run(LoadProfessionIcons);
             await Task.Run(LoadEliteIcons);
-            await Task.Run(LoadSkills);
-
-            // Load local template sheets (*.json) files.
-            _templates = await _templateReader.LoadDirectory(DirectoriesManager.GetFullDirectoryPath("specialforces"));
         }
 
         protected override void OnModuleLoaded(EventArgs e)
@@ -314,133 +311,31 @@ namespace Special_Forces_Module
                 }
             }
         }
+
         private AsyncTexture2D GetProfessionRender(RawTemplate template)
         {
-            var completed = false;
-            var timeOut = DateTime.Now.AddMilliseconds(TimeOutGetRender);
-            while (!completed)
+            if (ProfessionRenderRepository.All(x => x.Key != (int) template.BuildChatLink.Profession))
             {
-                try
-                {
-                    if (ProfessionRenderRepository.All(x => x.Key != (int) template.GetProfession())) {
-                        var render = new AsyncTexture2D();
-                        ProfessionRenderRepository.Add((int)template.GetProfession(), render);
-                        completed = true;
-                    }
-                } catch (InvalidOperationException e) {
-                    if (DateTime.Now < timeOut) continue;
-                    Logger.Error(e.Message + e.StackTrace);
-                }
+                var render = new AsyncTexture2D();
+                ProfessionRenderRepository.Add((int) template.BuildChatLink.Profession, render);
+                return render;
             }
-            return ProfessionRenderRepository[(int)template.GetProfession()];
+            return ProfessionRenderRepository[(int) template.BuildChatLink.Profession];
         }
 
         private AsyncTexture2D GetEliteRender(RawTemplate template)
         {
-            if (template.Specialization.Elite)
+            if (template.Specialization != null && template.Specialization.Elite)
                 return GetProfessionRender(template);
-            var completed = false;
-            var timeOut = DateTime.Now.AddMilliseconds(TimeOutGetRender);
-            while (!completed)
+            if (EliteRenderRepository.All(x => x.Key != template.BuildChatLink.Specialization3Id))
             {
-                try
-                {
-                    if (EliteRenderRepository.All(x => x.Key != template.Specialization.Id))
-                    {
-                        var render = new AsyncTexture2D();
-                        EliteRenderRepository.Add(template.Specialization.Id, render);
-                        completed = true;
-                    }
-                } catch (InvalidOperationException e) {
-                    if (DateTime.Now < timeOut) continue;
-                    Logger.Error(e.Message + e.StackTrace);
-                }
-            }
-            return EliteRenderRepository[template.Specialization.Id];
+                var render = new AsyncTexture2D();
+                EliteRenderRepository.Add(template.BuildChatLink.Specialization3Id, render);
+                return render;
+            } 
+            return EliteRenderRepository[template.BuildChatLink.Specialization3Id];
         }
-        private async void LoadSkillIcons(List<Skill> skills)
-        {
-            foreach (Skill skill in skills)
-            {
-                var renderUri = (string) skill.Icon;
-                if (SkillRenderRepository.Any(x =>
-                    x.Key == skill.Id))
-                    try
-                    {
-                        var textureDataResponse = await GameService.Gw2WebApi
-                            .AnonymousConnection
-                            .Client
-                            .Render.DownloadToByteArrayAsync(renderUri);
-
-                        using (var textureStream = new MemoryStream(textureDataResponse))
-                        {
-                            var loadedTexture =
-                                Texture2D.FromStream(GameService.Graphics.GraphicsDevice,
-                                    textureStream);
-
-                            SkillRenderRepository[skill.Id]
-                                .SwapTexture(loadedTexture);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Warn(ex,
-                            "Request to render service for {textureUrl} failed.",
-                            renderUri);
-                    }
-                else
-                    SkillRenderRepository.Add(skill.Id,
-                        GameService.Content.GetRenderServiceTexture(renderUri));
-            }
-        }
-        private AsyncTexture2D GetSkillIcon(int id)
-        {
-            if (SkillRenderRepository.ContainsKey(id)) return SkillRenderRepository[id];
-            var icon = new AsyncTexture2D();
-            SkillRenderRepository.Add(id, icon);
-            return icon;
-        }
-
         #endregion
-
-        private List<int> LoadSkillIds()
-        {
-            var skillIds = new List<int>();
-            foreach (Profession profession in ProfessionRepository)
-            {
-                foreach (var skill in profession.Skills)
-                {
-                    skillIds.Add(skill.Id);
-                }
-
-                foreach (var weapon in profession.Weapons)
-                {
-                    skillIds.AddRange(weapon.Value.Skills.Select(x => x.Id));
-                }
-            }
-            return skillIds;
-        }
-        private async void LoadSkills()
-        {
-            var skills = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Skills.ManyAsync(LoadSkillIds().Distinct());
-            var associatedSkillIds = new List<int>();
-            foreach (Skill skill in skills)
-            {
-                if (skill.BundleSkills != null) associatedSkillIds.AddRange(skill.BundleSkills);
-                if (skill.ToolbeltSkill != null) associatedSkillIds.Add((int)skill.ToolbeltSkill);
-                if (skill.SubSkills != null) associatedSkillIds.AddRange(skill.SubSkills.Select(x => x.Id));
-                if (skill.FlipSkill != null) associatedSkillIds.Add((int)skill.FlipSkill);
-                if (skill.TransformSkills != null) associatedSkillIds.AddRange(skill.TransformSkills);
-                if (skill.NextChain != null) associatedSkillIds.Add((int)skill.NextChain);
-            }
-            var chainSkills = await GameService.Gw2WebApi.AnonymousConnection.Client.V2.Skills.ManyAsync(associatedSkillIds.Distinct());
-            SkillRepository.AddRange(skills);
-            ChainSkillRepository.AddRange(chainSkills);
-            var total = new List<Skill>();
-            total.AddRange(SkillRepository);
-            total.AddRange(ChainSkillRepository);
-            LoadSkillIcons(total.Distinct().ToList());
-        }
 
         #region Panel Stuff
 
@@ -604,7 +499,7 @@ namespace Special_Forces_Module
                 case DD_TITLE:
                     _displayedTemplates.Sort((e1, e2) => e1.Template.Title.CompareTo(e2.Template.Title));
                     foreach (var e1 in _displayedTemplates)
-                        e1.Visible = LibraryShowAll.Value || e1.Template.GetProfession().ToString()
+                        e1.Visible = LibraryShowAll.Value || e1.Template.BuildChatLink.Profession.ToString()
                             .Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(),
                                 StringComparison.InvariantCultureIgnoreCase);
 
@@ -613,7 +508,7 @@ namespace Special_Forces_Module
                     _displayedTemplates.Sort((e1, e2) =>
                         e1.BottomText.CompareTo(e2.BottomText));
                     foreach (var e1 in _displayedTemplates)
-                        e1.Visible = LibraryShowAll.Value || e1.Template.GetProfession().ToString()
+                        e1.Visible = LibraryShowAll.Value || e1.Template.BuildChatLink.Profession.ToString()
                             .Equals(GameService.Gw2Mumble.PlayerCharacter.Profession.ToString(),
                                 StringComparison.InvariantCultureIgnoreCase);
                     break;
@@ -750,72 +645,6 @@ namespace Special_Forces_Module
         #endregion
 
         #region Editor Panel
-
-        private Panel BuildSkillAssociationPanel(Skill skill, Panel parent)
-        {
-            var skills = new List<Skill>();
-
-            if (skill.BundleSkills != null)
-                skills.AddRange(ChainSkillRepository.Where(x => skill.BundleSkills.Contains(x.Id)));
-
-            if (skill.ToolbeltSkill != null)
-                skills.Add(ChainSkillRepository.FirstOrDefault(x => x.Id == skill.ToolbeltSkill));
-
-            if (skill.SubSkills != null)
-                skills.AddRange(ChainSkillRepository.Where(x => skill.SubSkills.Select(y => y.Id).Contains(x.Id)));
-
-            if (skill.FlipSkill != null) 
-                skills.Add(ChainSkillRepository.FirstOrDefault(x => x.Id == skill.FlipSkill));
-
-            if (skill.TransformSkills != null)
-                skills.AddRange(ChainSkillRepository.Where(x => skill.TransformSkills.Contains(x.Id)));
-
-            if (skills.Count == 0) return null;
-
-            var panel = new FlowPanel()
-            {
-                Parent = parent,
-                Location = new Point(0, 0),
-                ControlPadding = new Vector2(2, 2),
-                Size = new Point(320 + SCROLLBAR_WIDTH + 9, parent.ContentRegion.Height),
-                Collapsed = false,
-                CanCollapse = false
-            };
-            foreach (Skill chainSkill in skills)
-            {
-                var title = chainSkill.PrevChain != null || chainSkill.NextChain != null
-                    ? "Chain Skills"
-                    : (string)chainSkill.Type;
-
-                var fpChildren = panel.Children.OfType<FlowPanel>();
-                var fpCategory = fpChildren.SingleOrDefault(y => y.Title.Equals(chainSkill.Type))
-                                 ?? new FlowPanel {
-                                     Parent = panel,
-                                     Size = new Point(panel.ContentRegion.Size.X, 38),
-                                     ControlPadding = new Vector2(2, 2),
-                                     Title = title,
-                                     ShowTint = true,
-                                     CanCollapse = false,
-                                     Collapsed = false
-                                 };
-                if (fpCategory.Children.Any(x => x.BasicTooltipText.Equals(chainSkill.Name))) continue;
-                var img = new Image()
-                {
-                    Parent = fpCategory,
-                    Size = new Point(64,64),
-                    Texture = GetSkillIcon(chainSkill.Id),
-                    BasicTooltipText = chainSkill.Name
-                };
-                var maxRow = fpCategory.Width / img.Width;
-                var rowCount = fpCategory.Children.Count / maxRow;
-                rowCount = fpCategory.Children.Count % maxRow > 0 ? rowCount + 1 : rowCount;
-
-                fpCategory.Height = rowCount * img.Height + 38;
-            }
-            panel.Height = 38 + panel.Sum(fp => fp.Height);
-
-            return panel;
-        }
         private Panel BuildEditorPanel(WindowBase wndw)
         {
             var editorPanel = new Panel
@@ -950,58 +779,6 @@ namespace Special_Forces_Module
                 Text = "x"
             };
             template_text_del.Click += delegate { template_text.Text = ""; };
-            template_text.TextChanged += delegate
-            {
-                fp_weapon_skills.ClearChildren();
-                fp_slot_skills.ClearChildren();
-
-                _editorTemplate.Template = template_text.Text;
-                profession_label.Text = _editorTemplate.GetClassFriendlyName();
-
-                var profSkills = SkillRepository.Where(x => x.Professions.Contains(_editorTemplate.GetProfession().ToString()));
-                foreach (var skill in profSkills)
-                {
-                    var fpParent = skill.Type == SkillType.Weapon ? fp_weapon_skills : fp_slot_skills;
-                    var fpChildren = fpParent.Children.OfType<FlowPanel>();
-                    var fpCategory = fpChildren.SingleOrDefault(y => y.Title.Equals(skill.Type) || skill.Type == SkillType.Weapon && y.Title.Equals(skill.WeaponType))
-                                     ?? new FlowPanel
-                                     {
-                                         Parent = fpParent,
-                                         Size = new Point(fpParent.ContentRegion.Size.X, 38),
-                                         ControlPadding = new Vector2(2, 2),
-                                         ShowTint = true,
-                                         Title = skill.Type == SkillType.Weapon ? (string)skill.WeaponType : (string)skill.Type,
-                                         CanCollapse = true,
-                                         Collapsed = false
-                                     };
-                    var img = new Image
-                    {
-                        Parent = fpCategory,
-                        Size = new Point(64, 64),
-                        BasicTooltipText = skill.Name + "",
-                        Texture = GetSkillIcon(skill.Id)
-                    };
-                    img.Click += delegate
-                     {
-                         var associationPanel = BuildSkillAssociationPanel(skill, contentPanel);
-
-                         void DisposeAssociationPanel(object sender, MouseEventArgs e)
-                         {
-                             GameService.Input.Mouse.LeftMouseButtonReleased -= DisposeAssociationPanel;
-                             associationPanel?.Dispose();
-                         }
-                         GameService.Input.Mouse.LeftMouseButtonReleased += DisposeAssociationPanel;
-                     };
-
-                    var maxRow = fpCategory.Width / img.Width;
-                    var rowCount = fpCategory.Children.Count / maxRow;
-                    rowCount = fpCategory.Children.Count % maxRow > 0 ? rowCount + 1 : rowCount;
-
-                    fpCategory.Height = rowCount * img.Height + 38;
-                }
-                fp_weapon_skills.Height = 38 + fp_weapon_skills.Sum(fp => fp.Height);
-                fp_slot_skills.Height = 38 + fp_slot_skills.Sum(fp => fp.Height);
-            };
             return editorPanel;
         }
 
