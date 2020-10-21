@@ -11,7 +11,7 @@ namespace Special_Forces_Module.Parser
             IProfession obj;
 
             var profession = template.BuildChatLink.Profession.ToString().ToLowerInvariant();
-            var specialization = template.GetClassFriendlyName();
+            var specialization = template.GetClassFriendlyName().ToLowerInvariant();
 
             switch (profession)
             {

@@ -72,11 +72,11 @@ namespace Loading_Screen_Hints_Module.Controls {
         }
         private void OnLeftMouseButtonReleased(object sender, MouseEventArgs e) {
             if (Opacity != 1.0f) return;
-            AnimationService.Animation.Tweener.Tween(this, new { Opacity = 0.0f }, 0.2f);
+            GameService.Animation.Tweener.Tween(this, new { Opacity = 0.0f }, 0.2f);
         }
         private void OnRightMouseButtonReleased(object sender, MouseEventArgs e) {
             if (Opacity != 0.0f) return;
-            AnimationService.Animation.Tweener.Tween(this, new { Opacity = 1.0f }, 0.2f);
+            GameService.Animation.Tweener.Tween(this, new { Opacity = 1.0f }, 0.2f);
         }
         private void OnDisposed(object sender, EventArgs e)
         {

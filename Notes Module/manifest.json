@@ -1,0 +1,16 @@
+{
+  "name": "Notes Module",
+  "version": "0.1.0",
+  "namespace": "Notes_Module",
+  "package": "Notes Module.dll",
+  "manifest_version": 1,
+  "description": "Take notes. Create pages. Bind a book.",
+  "dependencies": {
+    "bh.blishhud": ">=0.4.2"
+  },
+  "url": "https://github.com/blish-hud",
+  "author": {
+    "name": "Nekres",
+    "nickname": "Nekres.1038"
+  }
+}

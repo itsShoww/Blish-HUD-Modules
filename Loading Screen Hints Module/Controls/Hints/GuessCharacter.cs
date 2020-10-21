@@ -85,15 +85,17 @@ namespace Loading_Screen_Hints_Module.Controls {
 
             var center = new Point(this.Size.X / 2, this.Size.Y / 2);
             int centerLeft = center.X / 2;
-            int centerRight = center.X + (center.X / 2);
+            //int centerRight = center.X + (center.X / 2);
 
             var imgSize = PointExtensions.ResizeKeepAspect(new Point(CharacterTexture.Width, CharacterTexture.Height), this.Size.X / 2 - LoadScreenPanel.RIGHT_PADDING, this.Size.Y - LoadScreenPanel.TOP_PADDING);
             var imgCenter = new Point(centerLeft - (imgSize.X / 2), center.Y - (imgSize.Y / 2));
 
             SilhouetteFX.Parameters["TextureWidth"].SetValue((float)CharacterTexture.Width);
             SilhouetteFX.Parameters["GlowColor"].SetValue(Color.White.ToVector4());
+            SilhouetteFX.Parameters["Opacity"].SetValue(Opacity);
             GlowFX.Parameters["TextureWidth"].SetValue((float)CharacterTexture.Width);
             GlowFX.Parameters["GlowColor"].SetValue(Color.White.ToVector4());
+            GlowFX.Parameters["Opacity"].SetValue(Opacity);
 
             CharacterImage = new Image(CharacterTexture) {
                 Parent = this.Parent,
@@ -109,7 +111,7 @@ namespace Loading_Screen_Hints_Module.Controls {
 
         protected override void Paint(SpriteBatch spriteBatch, Rectangle bounds) {
             var center = new Point(this.Size.X / 2, this.Size.Y / 2);
-            int centerLeft = center.X / 2;
+            //int centerLeft = center.X / 2;
             int centerRight = center.X + (center.X / 2);
 
             var left = HorizontalAlignment.Left;

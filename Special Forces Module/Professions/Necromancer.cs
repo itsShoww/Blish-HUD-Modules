@@ -24,7 +24,7 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill2, (-267, 104, 48)},
                 {GuildWarsControls.ProfessionSkill3, (-218, 104, 48)},
                 {GuildWarsControls.ProfessionSkill4, (-168, 104, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
+                {GuildWarsControls.ProfessionSkill5, (-100, 91, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Reaper =
@@ -45,7 +45,7 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.ProfessionSkill2, (-267, 104, 48)},
                 {GuildWarsControls.ProfessionSkill3, (-218, 104, 48)},
                 {GuildWarsControls.ProfessionSkill4, (-168, 104, 48)},
-                {GuildWarsControls.ProfessionSkill5, (-107, 107, 45)},
+                {GuildWarsControls.ProfessionSkill5, (-100, 91, 45)},
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> Scourge =
@@ -62,7 +62,7 @@ namespace Special_Forces_Module.Professions
                 {GuildWarsControls.UtilitySkill2, (209, 24, 0)},
                 {GuildWarsControls.UtilitySkill3, (270, 24, 0)},
                 {GuildWarsControls.EliteSkill, (332, 24, 0)},
-                {GuildWarsControls.ProfessionSkill1, (-316, 104, 48)},
+                {GuildWarsControls.ProfessionSkill1, (-336, 118, 45)},
                 {GuildWarsControls.ProfessionSkill2, (-267, 104, 48)},
                 {GuildWarsControls.ProfessionSkill3, (-218, 104, 48)},
                 {GuildWarsControls.ProfessionSkill4, (-168, 104, 48)},
@@ -72,6 +72,8 @@ namespace Special_Forces_Module.Professions
         private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
         internal Necromancer(string specialization = "")
         {
+            _layout = Scourge;
+            return;
             switch (specialization)
             {
                 case "reaper":

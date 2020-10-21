@@ -92,11 +92,12 @@ namespace Special_Forces_Module
 
         protected override void DefineSettings(SettingCollection settings)
         {
-            SurrenderButtonEnabled = settings.DefineSetting("SurrenderButtonEnabled", false, "Show Surrender Skill",
+            var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
+            SurrenderButtonEnabled = selfManagedSettings.DefineSetting("SurrenderButtonEnabled", false, "Show Surrender Skill",
                 "Shows a skill with a white flag to the right of your skill bar.\nClicking it defeats you. (Sends \"/gg\" into chat.)");
-            SurrenderBinding = settings.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.None) {Enabled = true},
+            SurrenderBinding = selfManagedSettings.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.None) {Enabled = true},
                 "Surrender", "Defeats you.\n(Sends \"/gg\" into chat.)");
-            LibraryShowAll = settings.DefineSetting("LibraryShowAll", false, "Show All Templates",
+            LibraryShowAll = selfManagedSettings.DefineSetting("LibraryShowAll", false, "Show All Templates",
                 "Show all templates no matter your current profession.");
             foreach (GuildWarsControls skill in Enum.GetValues(typeof(GuildWarsControls)))
             {
@@ -104,14 +105,14 @@ namespace Special_Forces_Module
                 var friendlyName = Regex.Replace(skill.ToString(), "([A-Z]|[1-9])", " $1", RegexOptions.Compiled)
                     .Trim();
                 SkillBindings.Add(skill,
-                    settings.DefineSetting(skill.ToString(), new KeyBinding(Keys.None) {Enabled = true}, friendlyName,
+                    selfManagedSettings.DefineSetting(skill.ToString(), new KeyBinding(Keys.None) {Enabled = true}, friendlyName,
                         "Your key binding for " + friendlyName));
             }
 
-            InteractionBinding = settings.DefineSetting("InteractionKey", new KeyBinding(Keys.F) {Enabled = true},
+            InteractionBinding = selfManagedSettings.DefineSetting("InteractionKey", new KeyBinding(Keys.F) {Enabled = true},
                 "Interact",
                 "General context-sensitive interact prompt. Used for\ninteracting with the environment, including Talk,\nLoot Revive, etc.");
-            DodgeBinding = settings.DefineSetting("DodgeKey", new KeyBinding(Keys.V) {Enabled = true},
+            DodgeBinding = selfManagedSettings.DefineSetting("DodgeKey", new KeyBinding(Keys.V) {Enabled = true},
                 "Dodge",
                 "Do an evasive dodge roll, negating damage, in the\ndirection your character is moving (backward if\nstationary).");
         }

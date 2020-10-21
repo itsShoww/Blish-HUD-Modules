@@ -23,6 +23,7 @@ namespace Special_Forces_Module.Persistance
         [JsonProperty("utilitykeys")] public int[] Utilitykeys { get; set; }
 
         private Specialization _specialization;
+        [JsonIgnore]
         public Specialization Specialization
         {
             get
@@ -43,6 +44,7 @@ namespace Special_Forces_Module.Persistance
         }
 
         private BuildChatLink _buildChatLink;
+        [JsonIgnore]
         public BuildChatLink BuildChatLink
         {
             get

@@ -41,23 +41,22 @@ namespace Loading_Screen_Hints_Module {
         private HashSet<int> SeenNarrations;
         private HashSet<int> SeenGuessCharacters;
 
-        private Random Randomize;
-
         [ImportingConstructor]
         public LoadingScreenHintsModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) {
             ModuleInstance = this;
         }
 
-        protected override void DefineSettings(SettingCollection settings) {
-            SeenHints = settings.DefineSetting<HashSet<int>[]>("SeenHints", new HashSet<int>[3], "PreviousHints", "Previously Seen Hints");
+        protected override void DefineSettings(SettingCollection settings)
+        {
+            var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
+            SeenHints = selfManagedSettings.DefineSetting<HashSet<int>[]>("SeenHints", new HashSet<int>[3], "PreviousHints", "Previously Seen Hints");
         }
 
         protected override void Initialize() {
-            this.Randomize = new Random();
             this.ShuffledHints = new HashSet<int>();
-            this.SeenGamingTips = SeenHints.Value[0] != null ? SeenHints.Value[0] : new HashSet<int>();
-            this.SeenNarrations = SeenHints.Value[1] != null ? SeenHints.Value[1] : new HashSet<int>();
-            this.SeenGuessCharacters = SeenHints.Value[2] != null ? SeenHints.Value[2] : new HashSet<int>();
+            this.SeenGamingTips = SeenHints.Value[0] ?? new HashSet<int>();
+            this.SeenNarrations = SeenHints.Value[1] ?? new HashSet<int>();
+            this.SeenGuessCharacters = SeenHints.Value[2] ?? new HashSet<int>();
         }
 
         protected override async Task LoadAsync() { /** NOOP **/ }
@@ -89,20 +88,20 @@ namespace Loading_Screen_Hints_Module {
         protected override void Unload() {
             ModuleInstance = null;
 
-            if (LoadScreenPanel != null) { LoadScreenPanel.Dispose(); }
+            LoadScreenPanel?.Dispose();
         }
         private void Save() {
             SeenHints.Value = new HashSet<int>[] { SeenGamingTips, SeenNarrations, SeenGuessCharacters };
         }
         public void NextHint()
         {
-            if (LoadScreenPanel != null) { LoadScreenPanel.Dispose(); }
+            LoadScreenPanel?.Dispose();
 
             int total = 3;
             int count = ShuffledHints.Count;
             if (count >= total) { ShuffledHints.Clear(); count = 0; }
             var range = Enumerable.Range(1, total).Where(i => !ShuffledHints.Contains(i));
-            int index = Randomize.Next(0, total - count - 1);
+            int index = RandomUtil.GetRandom(0, total - count - 1);
             int hint = range.ElementAt(index);
 
             ShuffledHints.Add(hint);
@@ -122,7 +121,7 @@ namespace Loading_Screen_Hints_Module {
                     count = SeenGamingTips.Count;
                     if (count >= total) { SeenGamingTips.Clear(); count = 0; }
                     range = Enumerable.Range(0, total).Where(i => !SeenGamingTips.Contains(i));
-                    index = Randomize.Next(0, total - count);
+                    index = RandomUtil.GetRandom(0, total - count);
                     hint = range.ElementAt(index);
 
                     SeenGamingTips.Add(hint);
@@ -136,7 +135,7 @@ namespace Loading_Screen_Hints_Module {
                     count = SeenNarrations.Count;
                     if (count >= total) { SeenNarrations.Clear(); count = 0; }
                     range = Enumerable.Range(0, total).Where(i => !SeenNarrations.Contains(i));
-                    index = Randomize.Next(0, total - count);
+                    index = RandomUtil.GetRandom(0, total - count);
                     hint = range.ElementAt(index);
 
                     SeenNarrations.Add(hint);
@@ -150,7 +149,7 @@ namespace Loading_Screen_Hints_Module {
                     count = SeenGuessCharacters.Count;
                     if (count >= total) { SeenGuessCharacters.Clear(); count = 0; }
                     range = Enumerable.Range(0, total).Where(i => !SeenGuessCharacters.Contains(i));
-                    index = Randomize.Next(0, total - count);
+                    index = RandomUtil.GetRandom(0, total - count);
                     hint = range.ElementAt(index);
 
                     SeenGuessCharacters.Add(hint);

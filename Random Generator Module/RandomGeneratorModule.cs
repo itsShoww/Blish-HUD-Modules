@@ -47,8 +47,9 @@ namespace Random_Generator_Module
 
         protected override void DefineSettings(SettingCollection settings)
         {
-            ShowDie = settings.DefineSetting("ShowDie", true, "Show Die", "Shows a die");
-            DieSides = settings.DefineSetting("DieSides", 6, "Die Sides", "Indicates the amount of sides the die has.");
+            var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
+            ShowDie = selfManagedSettings.DefineSetting("ShowDie", true, "Show Die", "Shows a die");
+            DieSides = selfManagedSettings.DefineSetting("DieSides", 6, "Die Sides", "Indicates the amount of sides the die has.");
         }
 
         protected override void Initialize()

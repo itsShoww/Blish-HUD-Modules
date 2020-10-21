@@ -111,18 +111,19 @@ namespace Inquest_Module
 
         protected override void DefineSettings(SettingCollection settings)
         {
-            KillProofDeceiverEnabled = settings.DefineSetting("KillProofDeceiverEnabled", false,
+            var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
+            KillProofDeceiverEnabled = selfManagedSettings.DefineSetting("KillProofDeceiverEnabled", false,
                 "Kill Proof Deceiver Panel.", "Deceive players by showing off with fake kill proofs.");
-            TokenQuantity = settings.DefineSetting("TokenQuantity", new Dictionary<string, int>());
-            SkillFramesEnabled = settings.DefineSetting("SkillFramesEnabled", false, "Customizable Skill Frames",
+            TokenQuantity = selfManagedSettings.DefineSetting("TokenQuantity", new Dictionary<string, int>());
+            SkillFramesEnabled = selfManagedSettings.DefineSetting("SkillFramesEnabled", false, "Customizable Skill Frames",
                 "Shows customizable skill frames.");
-            SkillFramesSettings = settings.DefineSetting("SkillFramesSettings",
+            SkillFramesSettings = selfManagedSettings.DefineSetting("SkillFramesSettings",
                 new Dictionary<GuildWarsControls, Tuple<bool, bool>>());
-            HealthpoolShadowEnabled = settings.DefineSetting("HealthpoolShadowEnabled", false, "Health-pool shadow",
+            HealthpoolShadowEnabled = selfManagedSettings.DefineSetting("HealthpoolShadowEnabled", false, "Health-pool shadow",
                 "Shows an inner shadow on the health-pool.");
-            EmotePanelEnabled = settings.DefineSetting("EmotePanelEnabled", false, "Emote Panel.",
+            EmotePanelEnabled = selfManagedSettings.DefineSetting("EmotePanelEnabled", false, "Emote Panel.",
                 "Express a variety of emotes in a press of a button.");
-            SurrenderButtonEnabled = settings.DefineSetting("SurrenderButtonEnabled", false, "Surrender Button.",
+            SurrenderButtonEnabled = selfManagedSettings.DefineSetting("SurrenderButtonEnabled", false, "Surrender Button.",
                 "Send /gg by a press of the white surrender flag.");
         }
 
