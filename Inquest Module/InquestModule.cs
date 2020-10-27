@@ -100,7 +100,6 @@ namespace Nekres.Inquest_Module
 
         private Dictionary<GuildWarsControls, Control> SkillFrames;
         private Dictionary<GuildWarsControls, Control> SkillGlassFrames;
-        private Image SurrenderButton;
         private Dictionary<string, int> TokenQuantityRepository;
 
         [ImportingConstructor]
@@ -123,8 +122,6 @@ namespace Nekres.Inquest_Module
                 "Shows an inner shadow on the health-pool.");
             EmotePanelEnabled = selfManagedSettings.DefineSetting("EmotePanelEnabled", false, "Emote Panel.",
                 "Express a variety of emotes in a press of a button.");
-            SurrenderButtonEnabled = selfManagedSettings.DefineSetting("SurrenderButtonEnabled", false, "Surrender Button.",
-                "Send /gg by a press of the white surrender flag.");
         }
 
         protected override void Initialize()
@@ -167,7 +164,6 @@ namespace Nekres.Inquest_Module
             };
             if (KillProofDeceiverEnabled.Value) DeceiverPanel = BuildDeceiverPanel();
             if (EmotePanelEnabled.Value) EmotePanel = BuildEmotePanel();
-            if (SurrenderButtonEnabled.Value) SurrenderButton = BuildSurrenderButton();
 
             if (SkillFramesEnabled.Value)
             {
@@ -213,13 +209,6 @@ namespace Nekres.Inquest_Module
         {
             if (DeceiverPanel != null) DeceiverPanel.Visible = GameService.GameIntegration.IsInGame;
             if (EmotePanel != null) EmotePanel.Visible = GameService.GameIntegration.IsInGame;
-            if (SurrenderButton != null)
-            {
-                SurrenderButton.Visible = GameService.GameIntegration.IsInGame;
-                SurrenderButton.Location =
-                    new Point(GameService.Graphics.SpriteScreen.Width / 2 - SurrenderButton.Width / 2 + 431,
-                        GameService.Graphics.SpriteScreen.Height - SurrenderButton.Height * 2 + 7);
-            }
 
             if (!GameService.GameIntegration.IsInGame && !QueueAbort)
             {
@@ -273,7 +262,6 @@ namespace Nekres.Inquest_Module
             foreach (var c in _moduleControls) c?.Dispose();
             DeceiverPanel?.Dispose();
             EmotePanel?.Dispose();
-            SurrenderButton?.Dispose();
             HealthpoolShadow?.Dispose();
             QueuePanel?.Dispose();
             QueueWorker?.Abort();
@@ -332,53 +320,6 @@ namespace Nekres.Inquest_Module
             return emotePanel;
         }
 
-        private Image BuildSurrenderButton()
-        {
-            var tooltip_texture = ContentsManager.GetTexture("surrender_tooltip.png");
-            var tooltip_size = new Point(tooltip_texture.Width, tooltip_texture.Height);
-            var surrenderButtonTooltip = new Tooltip
-            {
-                Size = tooltip_size
-            };
-            var surrenderButtonTooltipImage = new Image(tooltip_texture)
-            {
-                Parent = surrenderButtonTooltip,
-                Location = new Point(0, 0),
-                Visible = surrenderButtonTooltip.Visible
-            };
-            var surrenderButton = new Image
-            {
-                Parent = GameService.Graphics.SpriteScreen,
-                Size = new Point(45, 45),
-                Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - 22,
-                    GameService.Graphics.SpriteScreen.Height - 45),
-                Texture = ContentsManager.GetTexture("surrender_flag.png"),
-                Visible = SurrenderButtonEnabled.Value,
-                Tooltip = surrenderButtonTooltip,
-                Opacity = 0.0f
-            };
-            surrenderButton.MouseEntered += delegate
-            {
-                surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag_hover.png");
-            };
-            surrenderButton.MouseLeft += delegate
-            {
-                surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag.png");
-            };
-            surrenderButton.LeftMouseButtonPressed += delegate
-            {
-                surrenderButton.Size = new Point(43, 43);
-                surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag_pressed.png");
-            };
-            surrenderButton.LeftMouseButtonReleased += delegate
-            {
-                surrenderButton.Size = new Point(45, 45);
-                surrenderButton.Texture = ContentsManager.GetTexture("surrender_flag.png");
-                GameService.GameIntegration.Chat.Send("/gg");
-            };
-            GameService.Animation.Tweener.Tween(surrenderButton, new {Opacity = 1.0}, 0.35f);
-            return surrenderButton;
-        }
 
         private void TryMapJoin(int x, int y)
         {
@@ -629,30 +570,6 @@ namespace Nekres.Inquest_Module
                         );
             };
             _moduleControls.Add(emoteItem);
-
-            var surrenderItem = new ContextMenuStripItem
-            {
-                Text = "Surrender Button",
-                CanCheck = true,
-                Checked = SurrenderButtonEnabled.Value,
-                Parent = InquestIconMenu
-            };
-            surrenderItem.CheckedChanged += delegate(object sender, CheckChangedEvent e)
-            {
-                SurrenderButtonEnabled.Value = e.Checked;
-
-                if (e.Checked)
-                    SurrenderButton = BuildSurrenderButton();
-                else
-                    GameService.Animation.Tweener.Tween(SurrenderButton, new {Opacity = 0.0f}, 0.2f)
-                        .OnComplete(() =>
-                            {
-                                SurrenderButton.Dispose();
-                                SurrenderButton = null;
-                            }
-                        );
-            };
-            _moduleControls.Add(surrenderItem);
 
             BuildSkillFramesMenu();
         }
@@ -1018,7 +935,6 @@ namespace Nekres.Inquest_Module
         private SettingEntry<bool> SkillFramesEnabled;
         private SettingEntry<Dictionary<GuildWarsControls, Tuple<bool, bool>>> SkillFramesSettings;
         private SettingEntry<bool> EmotePanelEnabled;
-        private SettingEntry<bool> SurrenderButtonEnabled;
         private SettingEntry<bool> HealthpoolShadowEnabled;
 
         #endregion

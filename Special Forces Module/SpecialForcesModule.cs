@@ -58,17 +58,7 @@ namespace Nekres.Special_Forces_Module
 
         #endregion
 
-        #region Textures
-
-        private Texture2D _surrenderTooltip_texture;
-        private Texture2D _surrenderFlag_hover;
-        private Texture2D _surrenderFlag;
-        private Texture2D _surrenderFlag_pressed;
-
-        #endregion
-
         private WindowTab _specialForcesTab;
-        private Image _surrenderButton;
         private TemplatePlayer _templatePlayer;
         private TemplateReader _templateReader;
         private List<RawTemplate> _templates;
@@ -83,20 +73,11 @@ namespace Nekres.Special_Forces_Module
         private void LoadTextures()
         {
             ICON = ICON ?? ContentsManager.GetTexture("specialforces_icon.png");
-            _surrenderTooltip_texture = ContentsManager.GetTexture("surrender_tooltip.png");
-            _surrenderFlag = ContentsManager.GetTexture("surrender_flag.png");
-            _surrenderFlag_hover = ContentsManager.GetTexture("surrender_flag_hover.png");
-            _surrenderFlag_pressed = ContentsManager.GetTexture("surrender_flag_pressed.png");
-
         }
 
         protected override void DefineSettings(SettingCollection settings)
         {
             var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
-            SurrenderButtonEnabled = selfManagedSettings.DefineSetting("SurrenderButtonEnabled", false, "Show Surrender Skill",
-                "Shows a skill with a white flag to the right of your skill bar.\nClicking it defeats you. (Sends \"/gg\" into chat.)");
-            SurrenderBinding = selfManagedSettings.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.None) {Enabled = true},
-                "Surrender", "Defeats you.\n(Sends \"/gg\" into chat.)");
             LibraryShowAll = selfManagedSettings.DefineSetting("LibraryShowAll", false, "Show All Templates",
                 "Show all templates no matter your current profession.");
             foreach (GuildWarsControls skill in Enum.GetValues(typeof(GuildWarsControls)))
@@ -132,9 +113,6 @@ namespace Nekres.Special_Forces_Module
             _templates = new List<RawTemplate>();
             _editorTemplate = new RawTemplate();
             _displayedTemplates = new List<TemplateButton>();
-            _surrenderButton = SurrenderButtonEnabled.Value ? BuildSurrenderButton() : null;
-
-            SurrenderBinding.Value.Activated += delegate { GameService.GameIntegration.Chat.Send("/gg"); };
         }
 
         protected override async Task LoadAsync()
@@ -155,20 +133,12 @@ namespace Nekres.Special_Forces_Module
 
         protected override void Update(GameTime gameTime)
         {
-            if (_surrenderButton != null)
-            {
-                _surrenderButton.Visible = GameService.GameIntegration.IsInGame;
-                _surrenderButton.Location =
-                    new Point(GameService.Graphics.SpriteScreen.Width / 2 - _surrenderButton.Width / 2 + 431,
-                        GameService.Graphics.SpriteScreen.Height - _surrenderButton.Height * 2 + 7);
-            }
         }
 
         /// <inheritdoc />
         protected override void Unload()
         {
             // Unload
-            _surrenderButton?.Dispose();
             _templatePlayer?.Dispose();
 
             GameService.Overlay.BlishHudWindow.RemoveTab(_specialForcesTab);
@@ -177,45 +147,6 @@ namespace Nekres.Special_Forces_Module
             ModuleInstance = null;
         }
 
-        private Image BuildSurrenderButton()
-        {
-            var tooltip_size = new Point(_surrenderTooltip_texture.Width, _surrenderTooltip_texture.Height);
-            var surrenderButtonTooltip = new Tooltip
-            {
-                Size = tooltip_size
-            };
-            var surrenderButtonTooltipImage = new Image(_surrenderTooltip_texture)
-            {
-                Parent = surrenderButtonTooltip,
-                Location = new Point(0, 0),
-                Visible = surrenderButtonTooltip.Visible
-            };
-            var surrenderButton = new Image
-            {
-                Parent = GameService.Graphics.SpriteScreen,
-                Size = new Point(45, 45),
-                Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - 22,
-                    GameService.Graphics.SpriteScreen.Height - 45),
-                Texture = _surrenderFlag,
-                Visible = SurrenderButtonEnabled.Value,
-                Tooltip = surrenderButtonTooltip
-            };
-            surrenderButton.MouseEntered += delegate { surrenderButton.Texture = _surrenderFlag_hover; };
-            surrenderButton.MouseLeft += delegate { surrenderButton.Texture = _surrenderFlag; };
-            surrenderButton.LeftMouseButtonPressed += delegate
-            {
-                surrenderButton.Size = new Point(43, 43);
-                surrenderButton.Texture = _surrenderFlag_pressed;
-            };
-            surrenderButton.LeftMouseButtonReleased += delegate
-            {
-                surrenderButton.Size = new Point(45, 45);
-                surrenderButton.Texture = _surrenderFlag;
-                GameService.GameIntegration.Chat.Send("/gg");
-            };
-            GameService.Animation.Tweener.Tween(surrenderButton, new {Opacity = 1.0f}, 0.35f);
-            return surrenderButton;
-        }
 
         #region Service Managers
 
@@ -228,8 +159,6 @@ namespace Nekres.Special_Forces_Module
 
         #region Settings
 
-        private SettingEntry<bool> SurrenderButtonEnabled;
-        private SettingEntry<KeyBinding> SurrenderBinding;
         private SettingEntry<bool> LibraryShowAll;
 
         internal Dictionary<GuildWarsControls, SettingEntry<KeyBinding>> SkillBindings =
@@ -546,22 +475,6 @@ namespace Nekres.Special_Forces_Module
                 Size = wndw.ContentRegion.Size,
                 Visible = false
             };
-            var surrenderItem = new Checkbox
-            {
-                Parent = settingsPanel,
-                Location = new Point(LEFT_MARGIN, TOP_MARGIN),
-                Text = SurrenderButtonEnabled.DisplayName,
-                BasicTooltipText = SurrenderButtonEnabled.Description,
-                Checked = SurrenderButtonEnabled.Value
-            };
-            surrenderItem.CheckedChanged += delegate(object sender, CheckChangedEvent e)
-            {
-                SurrenderButtonEnabled.Value = e.Checked;
-                if (e.Checked)
-                    _surrenderButton = BuildSurrenderButton();
-                else
-                    GameService.Animation.Tweener.Tween(_surrenderButton, new {Opacity = 0.0f}, 0.2f).OnComplete(() => _surrenderButton?.Dispose());
-            };
             var bindingsPanel = new FlowPanel
             {
                 Parent = settingsPanel,
@@ -593,17 +506,6 @@ namespace Nekres.Special_Forces_Module
                 Collapsed = true
             };
             // KeybindingAssigners
-            var surrenderKeyAssigner = new KeybindingAssigner(SurrenderBinding.Value)
-            {
-                Parent = miscBindings,
-                KeyBindingName = SurrenderBinding.DisplayName,
-                BasicTooltipText = SurrenderBinding.Description,
-                Enabled = true
-            };
-            surrenderKeyAssigner.BindingChanged += delegate
-            {
-                SurrenderBinding.Value = new KeyBinding(surrenderKeyAssigner.KeyBinding.PrimaryKey) { Enabled = true };
-            };
             foreach (var binding in SkillBindings.Values)
             {
                 var skillKeyAssigner = new KeybindingAssigner(binding.Value)
