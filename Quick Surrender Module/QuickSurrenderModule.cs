@@ -83,6 +83,8 @@ namespace Quick_Surrender_Module
             SurrenderBinding.Value.Enabled = true;
             SurrenderBinding.Value.Activated += OnSurrenderBindingActivated;
             SurrenderButtonEnabled.SettingChanged += OnSurrenderButtonEnabledSettingChanged;
+            GameService.Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
+
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
@@ -104,6 +106,7 @@ namespace Quick_Surrender_Module
             // Unload
             SurrenderBinding.Value.Activated -= OnSurrenderBindingActivated;
             SurrenderButtonEnabled.SettingChanged -= OnSurrenderButtonEnabledSettingChanged;
+            GameService.Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
             _surrenderButton?.Dispose();
             // All static members must be manually unset
             ModuleInstance = null;
@@ -117,6 +120,11 @@ namespace Quick_Surrender_Module
             }
             GameService.GameIntegration.Chat.Send("/gg");
             _lastSurrenderTime = DateTime.Now;
+        }
+
+
+        private void OnIsMapOpenChanged(object o, ValueEventArgs<bool> e) {
+            _surrenderButton.Visible = e.Value;
         }
 
 
