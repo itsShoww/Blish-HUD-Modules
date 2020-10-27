@@ -1,7 +1,7 @@
 using System;
 using NAudio.Wave;
 
-namespace Musician_Module.Player.Sound
+namespace Nekres.Musician_Module.Player.Sound
 {
     public class CachedSoundSampleProvider : ISampleProvider
     {

@@ -1,10 +1,10 @@
 ﻿using System.Linq;
 using System.Threading;
-using Musician_Module.Controls.Instrument;
-using Musician_Module.Domain;
-using Musician_Module.Player.Algorithms;
-using Musician_Module.Controls;
-namespace Musician_Module.Player
+using Nekres.Musician_Module.Controls.Instrument;
+using Nekres.Musician_Module.Domain;
+using Nekres.Musician_Module.Player.Algorithms;
+using Nekres.Musician_Module.Controls;
+namespace Nekres.Musician_Module.Player
 {
     public class MusicPlayer
     {

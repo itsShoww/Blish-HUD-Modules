@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{793E9252-2AA2-43CD-BB71-6A86663AB606}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Screenshot_Manager_Module</RootNamespace>
+    <RootNamespace>Nekres.Screenshot_Manager_Module</RootNamespace>
     <AssemblyName>Screenshot Manager Module</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

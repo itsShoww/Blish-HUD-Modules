@@ -1,13 +1,13 @@
 ﻿using System;
-using Musician_Module.Controls.Instrument;
-using Musician_Module.Notation.Parsers;
-using Musician_Module.Notation.Persistance;
-using Musician_Module.Player.Algorithms;
+using Nekres.Musician_Module.Controls.Instrument;
+using Nekres.Musician_Module.Notation.Parsers;
+using Nekres.Musician_Module.Notation.Persistance;
+using Nekres.Musician_Module.Player.Algorithms;
 using System.Collections.Generic;
 using Blish_HUD.Controls.Intern;
 using Blish_HUD;
 
-namespace Musician_Module.Player
+namespace Nekres.Musician_Module.Player
 {
     internal static class MusicPlayerFactory
     {

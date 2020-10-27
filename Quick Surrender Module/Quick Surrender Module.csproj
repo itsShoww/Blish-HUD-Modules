@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Quick_Surrender_Module</RootNamespace>
+    <RootNamespace>Nekres.Quick_Surrender_Module</RootNamespace>
     <AssemblyName>Quick Surrender Module</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

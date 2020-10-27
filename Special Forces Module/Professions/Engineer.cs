@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 
-namespace Special_Forces_Module.Professions
+namespace Nekres.Special_Forces_Module.Professions
 {
     public class Engineer : IProfession
     {

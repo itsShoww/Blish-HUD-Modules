@@ -7,8 +7,8 @@ using Blish_HUD.Settings;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Screenshot_Manager_Module.Controls;
-using Screenshot_Manager_Module.Properties;
+using Nekres.Screenshot_Manager_Module.Controls;
+using Nekres.Screenshot_Manager_Module.Properties;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -23,7 +23,7 @@ using Color = Microsoft.Xna.Framework.Color;
 using Image = System.Drawing.Image;
 using Point = Microsoft.Xna.Framework.Point;
 
-namespace Screenshot_Manager_Module
+namespace Nekres.Screenshot_Manager_Module
 {
     [Export(typeof(Module))]
     public class ScreenshotManagerModule : Module
@@ -41,7 +41,7 @@ namespace Screenshot_Manager_Module
 
         private readonly string[] _imageFilters = {"*.bmp", "*.jpg", "*.png"};
         private readonly IEnumerable<char> _invalidFileNameCharacters;
-        private readonly Point _thumbnailSize = new Point(306, 175);
+        internal readonly Point _thumbnailSize = new Point(306, 175);
         private Texture2D _completeHeartIcon;
         private Texture2D _deleteSearchBoxContentIcon;
 

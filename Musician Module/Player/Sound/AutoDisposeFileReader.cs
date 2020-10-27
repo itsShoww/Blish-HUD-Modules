@@ -1,7 +1,7 @@
 using NAudio.Vorbis;
 using NAudio.Wave;
 
-namespace Musician_Module.Player.Sound
+namespace Nekres.Musician_Module.Player.Sound
 {
     public class AutoDisposeFileReader : ISampleProvider
     {

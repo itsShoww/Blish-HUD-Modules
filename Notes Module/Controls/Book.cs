@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Blish_HUD;
 using Blish_HUD.Controls;
 
-namespace Notes_Module.Controls
+namespace Nekres.Notes_Module.Controls
 {
     public class Book : Container
     {

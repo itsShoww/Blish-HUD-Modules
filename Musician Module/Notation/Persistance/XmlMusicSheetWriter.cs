@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Xml.Linq;
 
-namespace Musician_Module.Notation.Persistance
+namespace Nekres.Musician_Module.Notation.Persistance
 {
     public class XmlMusicSheetWriter
     {

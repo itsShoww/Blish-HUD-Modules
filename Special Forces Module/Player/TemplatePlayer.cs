@@ -5,15 +5,15 @@ using Blish_HUD.Input;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
-using Special_Forces_Module.Parser;
-using Special_Forces_Module.Persistance;
-using Special_Forces_Module.Professions;
+using Nekres.Special_Forces_Module.Parser;
+using Nekres.Special_Forces_Module.Persistance;
+using Nekres.Special_Forces_Module.Professions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-namespace Special_Forces_Module.Player
+namespace Nekres.Special_Forces_Module.Player
 {
     internal class TemplatePlayer
     {

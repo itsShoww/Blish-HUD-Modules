@@ -8,7 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Special_Forces_Module.Persistance
+namespace Nekres.Special_Forces_Module.Persistance
 {
     internal class TemplateReader
     {

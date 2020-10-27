@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Musician_Module.Domain.Values;
+using Nekres.Musician_Module.Domain.Values;
 
-namespace Musician_Module.Domain
+namespace Nekres.Musician_Module.Domain
 {
     public class MusicSheet
     {

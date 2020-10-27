@@ -18,7 +18,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Inquest_Module
+namespace Nekres.Inquest_Module
 {
     [Export(typeof(Module))]
     public class InquestModule : Module

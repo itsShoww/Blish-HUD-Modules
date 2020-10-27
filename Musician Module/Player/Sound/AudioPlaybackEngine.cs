@@ -2,7 +2,7 @@
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-namespace Musician_Module.Player.Sound
+namespace Nekres.Musician_Module.Player.Sound
 {
     public class AudioPlaybackEngine : IDisposable
     {

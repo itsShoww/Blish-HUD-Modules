@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Musician_Module
+namespace Nekres.Musician_Module
 {
     internal static class DictionaryExtension
     {

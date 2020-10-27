@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace Music_Mixer.Persistance
+namespace Nekres.Music_Mixer
 {
     public partial class EncounterData 
     { 

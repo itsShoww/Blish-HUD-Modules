@@ -6,7 +6,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Special_Forces_Module.Persistance
+namespace Nekres.Special_Forces_Module.Persistance
 {
     internal class RawTemplate
     {

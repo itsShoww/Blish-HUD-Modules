@@ -13,7 +13,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Timers;
 
-namespace Random_Generator_Module
+namespace Nekres.Random_Generator_Module
 {
     [Export(typeof(Module))]
     public class RandomGeneratorModule : Module

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Blish_HUD.Controls.Intern;
-using Musician_Module.Player.Sound;
+using Nekres.Musician_Module.Player.Sound;
 using NAudio.Vorbis;
-namespace Musician_Module.Controls.Instrument
+namespace Nekres.Musician_Module.Controls.Instrument
 {
     public class BellSoundRepository
     {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
-namespace Musician_Module.Notation.Persistance
+namespace Nekres.Musician_Module.Notation.Persistance
 {
     public class XmlMusicSheetReader
     {

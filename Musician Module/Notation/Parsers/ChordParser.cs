@@ -1,8 +1,8 @@
 ﻿using System.Linq;
 using System.Text.RegularExpressions;
-using Musician_Module.Domain.Values;
+using Nekres.Musician_Module.Domain.Values;
 
-namespace Musician_Module.Notation.Parsers
+namespace Nekres.Musician_Module.Notation.Parsers
 {
     public class ChordParser
     {

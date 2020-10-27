@@ -4,7 +4,7 @@ using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Screenshot_Manager_Module.Controls
+namespace Nekres.Screenshot_Manager_Module.Controls
 {
     public class ScreenshotNotification : Panel
     {

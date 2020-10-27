@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Music_Mixer
+namespace Nekres.Music_Mixer
 {
     internal class Encounter
     {

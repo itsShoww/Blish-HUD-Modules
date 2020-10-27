@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 
-namespace Musician_Module.Domain.Values
+namespace Nekres.Musician_Module.Domain.Values
 {
     public class Note
     {

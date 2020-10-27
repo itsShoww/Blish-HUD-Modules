@@ -1,8 +1,8 @@
 ﻿using System.Text;
-using Musician_Module.Domain;
-using Musician_Module.Notation.Persistance;
+using Nekres.Musician_Module.Domain;
+using Nekres.Musician_Module.Notation.Persistance;
 
-namespace Musician_Module.Notation.Serializer
+namespace Nekres.Musician_Module.Notation.Serializer
 {
     public class MusicSheetSerializer
     {

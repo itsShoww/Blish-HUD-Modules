@@ -9,7 +9,7 @@ using Blish_HUD.Settings;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Notes_Module
+namespace Nekres.Notes_Module
 {
 
     [Export(typeof(Blish_HUD.Modules.Module))]

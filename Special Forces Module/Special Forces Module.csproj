@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{9F8BEA6A-0F48-4970-846F-8B2A40BA8C30}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Special_Forces_Module</RootNamespace>
+    <RootNamespace>Nekres.Special_Forces_Module</RootNamespace>
     <AssemblyName>Special Forces Module</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{3DD080AD-1EAC-4286-90A4-C30F0DF9A931}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Random_Generator_Module</RootNamespace>
+    <RootNamespace>Nekres.Random_Generator_Module</RootNamespace>
     <AssemblyName>Random Generator Module</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

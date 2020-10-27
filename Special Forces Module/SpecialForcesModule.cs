@@ -11,9 +11,9 @@ using Gw2Sharp.Models;
 using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Special_Forces_Module.Controls;
-using Special_Forces_Module.Persistance;
-using Special_Forces_Module.Player;
+using Nekres.Special_Forces_Module.Controls;
+using Nekres.Special_Forces_Module.Persistance;
+using Nekres.Special_Forces_Module.Player;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -23,7 +23,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework.Input;
 
-namespace Special_Forces_Module
+namespace Nekres.Special_Forces_Module
 {
     [Export(typeof(Module))]
     public class SpecialForcesModule : Module

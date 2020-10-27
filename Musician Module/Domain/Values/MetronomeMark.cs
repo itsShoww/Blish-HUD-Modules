@@ -1,7 +1,7 @@
 ﻿using Blish_HUD;
 using System;
 
-namespace Musician_Module.Domain.Values
+namespace Nekres.Musician_Module.Domain.Values
 {
     public class MetronomeMark
     {

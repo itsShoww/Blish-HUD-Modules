@@ -1,9 +1,9 @@
-﻿using Musician_Module.Player.Sound;
+﻿using Nekres.Musician_Module.Player.Sound;
 using NAudio.Vorbis;
 using System.Threading.Tasks;
-using static Musician_Module.MusicianModule;
+using static Nekres.Musician_Module.MusicianModule;
 
-namespace Musician_Module
+namespace Nekres.Musician_Module
 {
     internal static class FileUtil
     {

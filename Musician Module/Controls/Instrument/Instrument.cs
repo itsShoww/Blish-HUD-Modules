@@ -1,11 +1,11 @@
 ﻿using System;
-using Musician_Module.Domain.Values;
+using Nekres.Musician_Module.Domain.Values;
 using Blish_HUD;
 using Blish_HUD.Controls.Intern;
 using System.Collections.Generic;
 using Blish_HUD.Controls.Extern;
 
-namespace Musician_Module.Controls.Instrument
+namespace Nekres.Musician_Module.Controls.Instrument
 {
     public enum InstrumentSkillType
     {

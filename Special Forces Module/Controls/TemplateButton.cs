@@ -2,9 +2,9 @@
 using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Special_Forces_Module.Persistance;
+using Nekres.Special_Forces_Module.Persistance;
 
-namespace Special_Forces_Module.Controls
+namespace Nekres.Special_Forces_Module.Controls
 {
     // TODO: Show "Edit" button when music sheet creator correlates to account name from ApiService. Navigates to composer.
     internal class TemplateButton : DetailsButton

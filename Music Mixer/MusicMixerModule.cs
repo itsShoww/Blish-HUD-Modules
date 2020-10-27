@@ -3,9 +3,7 @@ using Blish_HUD.ArcDps;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
-using Gw2Sharp.WebApi.Caching;
 using Microsoft.Xna.Framework;
-using Music_Mixer.Persistance;
 using Newtonsoft.Json;
 using Stateless;
 using System;
@@ -16,7 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using static Blish_HUD.GameService;
 
-namespace Music_Mixer
+namespace Nekres.Music_Mixer
 {
 
     [Export(typeof(Module))]

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using Blish_HUD;
 using Blish_HUD.Controls.Intern;
-using Musician_Module.Domain.Values;
-namespace Musician_Module.Controls.Instrument
+using Nekres.Musician_Module.Domain.Values;
+namespace Nekres.Musician_Module.Controls.Instrument
 {
     public class Harp : Instrument
     {

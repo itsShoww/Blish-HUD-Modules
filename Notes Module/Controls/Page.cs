@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 using Blish_HUD;
 
-namespace Notes_Module.Controls
+namespace Nekres.Notes_Module.Controls
 {
     public class Page : Control
     {

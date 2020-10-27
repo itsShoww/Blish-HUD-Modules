@@ -1,4 +1,4 @@
-namespace Musician_Module.Notation.Persistance
+namespace Nekres.Musician_Module.Notation.Persistance
 {
     public class RawMusicSheet
     {

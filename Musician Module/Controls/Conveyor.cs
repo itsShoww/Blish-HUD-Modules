@@ -4,10 +4,10 @@ using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Blish_HUD.Controls.Intern;
-using Musician_Module.Controls.Instrument;
+using Nekres.Musician_Module.Controls.Instrument;
 using Blish_HUD;
 
-namespace Musician_Module.Controls {
+namespace Nekres.Musician_Module.Controls {
 
     public class Conveyor : Container {
         public static readonly Dictionary<GuildWarsControls, int> LaneCoordinatesX = new Dictionary<GuildWarsControls, int>

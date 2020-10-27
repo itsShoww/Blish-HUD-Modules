@@ -1,7 +1,4 @@
-﻿using System;
-using System.ComponentModel.Composition;
-using System.Threading.Tasks;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Blish_HUD.Input;
 using Blish_HUD.Modules;
@@ -10,8 +7,10 @@ using Blish_HUD.Settings;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.ComponentModel.Composition;
 
-namespace Quick_Surrender_Module
+namespace Nekres.Quick_Surrender_Module
 {
 
     [Export(typeof(Module))]

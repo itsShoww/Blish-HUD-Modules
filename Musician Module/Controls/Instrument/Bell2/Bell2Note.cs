@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Musician_Module.Domain.Values;
+using Nekres.Musician_Module.Domain.Values;
 
-namespace Musician_Module.Controls.Instrument
+namespace Nekres.Musician_Module.Controls.Instrument
 {
     public class Bell2Note
     {

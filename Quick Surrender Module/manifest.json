@@ -1,7 +1,7 @@
 {
   "name": "Quick Surrender",
   "version": "0.1.0",
-  "namespace": "Quick_Surrender_Module",
+  "namespace": "Nekres.Quick_Surrender_Module",
   "package": "Quick Surrender Module.dll",
   "manifest_version": 1,
   "description": "Allows to quickly surrender and defeat your character for when you are so done with everything.",

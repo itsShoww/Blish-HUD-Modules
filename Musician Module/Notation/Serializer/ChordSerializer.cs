@@ -1,8 +1,8 @@
 ﻿using System.Linq;
 using System.Text;
-using Musician_Module.Domain.Values;
+using Nekres.Musician_Module.Domain.Values;
 
-namespace Musician_Module.Notation.Serializer
+namespace Nekres.Musician_Module.Notation.Serializer
 {
     public class ChordSerializer
     {

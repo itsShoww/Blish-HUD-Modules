@@ -1,8 +1,8 @@
 ﻿using System;
 using Blish_HUD;
 using Blish_HUD.Controls.Intern;
-using Musician_Module.Player.Sound;
-namespace Musician_Module.Controls.Instrument
+using Nekres.Musician_Module.Player.Sound;
+namespace Nekres.Musician_Module.Controls.Instrument
 {
     public class HarpPreview : IInstrumentPreview
     {

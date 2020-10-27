@@ -2,10 +2,10 @@
 using System.Diagnostics;
 using System.Threading;
 using Blish_HUD;
-using Musician_Module.Controls.Instrument;
-using Musician_Module.Domain.Values;
+using Nekres.Musician_Module.Controls.Instrument;
+using Nekres.Musician_Module.Domain.Values;
 
-namespace Musician_Module.Player.Algorithms
+namespace Nekres.Musician_Module.Player.Algorithms
 {
     public class FavorChordsAlgorithm : IPlayAlgorithm
     {

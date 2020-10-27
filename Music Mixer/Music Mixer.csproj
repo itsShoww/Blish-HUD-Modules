@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{198F1394-AE12-4C1D-8D9B-C1272AD1631A}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Music_Mixer</RootNamespace>
+    <RootNamespace>Nekres.Music_Mixer</RootNamespace>
     <AssemblyName>Music Mixer</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

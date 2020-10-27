@@ -10,12 +10,12 @@ using Blish_HUD.Settings;
 using Blish_HUD.Modules.Managers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Musician_Module.Controls;
-using Musician_Module.Notation.Persistance;
-using Musician_Module.Player;
-using Musician_Module.Controls.Instrument;
+using Nekres.Musician_Module.Controls;
+using Nekres.Musician_Module.Notation.Persistance;
+using Nekres.Musician_Module.Player;
+using Nekres.Musician_Module.Controls.Instrument;
 
-namespace Musician_Module
+namespace Nekres.Musician_Module
 {
 
     [Export(typeof(Module))]

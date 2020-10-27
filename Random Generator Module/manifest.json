@@ -1,7 +1,7 @@
 {
   "name": "Random Generator",
   "version": "0.1.0",
-  "namespace": "Random_Generator_Module",
+  "namespace": "Nekres.Random_Generator_Module",
   "package": "Random Generator Module.dll",
   "manifest_version": 1,
 
@@ -12,6 +12,6 @@
   "url": "https://github.com/blish-hud/Community-Module-Pack",
   "author": {
     "name": "Nekres",
-    "username":  "Nekres.1038" 
+    "username": "Nekres.1038"
   }
 }

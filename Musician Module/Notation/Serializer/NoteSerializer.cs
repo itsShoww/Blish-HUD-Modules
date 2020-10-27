@@ -1,8 +1,8 @@
 ﻿using System;
-using Musician_Module.Domain.Values;
-using Musician_Module.Controls.Instrument;
+using Nekres.Musician_Module.Domain.Values;
+using Nekres.Musician_Module.Controls.Instrument;
 using System.Collections.Generic;
-namespace Musician_Module.Notation.Serializer
+namespace Nekres.Musician_Module.Notation.Serializer
 {
     public class NoteSerializer
     {

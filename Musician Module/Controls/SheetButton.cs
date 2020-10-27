@@ -2,11 +2,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Blish_HUD.Controls;
-using Musician_Module.Notation.Persistance;
+using Nekres.Musician_Module.Notation.Persistance;
 using Blish_HUD;
 using Blish_HUD.Input;
 
-namespace Musician_Module.Controls {
+namespace Nekres.Musician_Module.Controls {
 
     // TODO: Show "Edit" button when music sheet creator correlates to account name from ApiService. Navigates to composer.
     public class SheetButton : DetailsButton {

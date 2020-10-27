@@ -1,8 +1,8 @@
-﻿using Special_Forces_Module.Persistance;
-using Special_Forces_Module.Professions;
+﻿using Nekres.Special_Forces_Module.Persistance;
+using Nekres.Special_Forces_Module.Professions;
 using System;
 
-namespace Special_Forces_Module.Parser
+namespace Nekres.Special_Forces_Module.Parser
 {
     internal static class TemplateParser
     {
