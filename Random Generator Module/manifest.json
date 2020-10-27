@@ -7,11 +7,11 @@
 
   "description": "Roll a dice, flip a coin, whatever suits your needs.",
   "dependencies": {
-    "bh.blishhud": ">=0.5.2"
+    "bh.blishhud": ">=0.6.0"
   },
   "url": "https://github.com/blish-hud/Community-Module-Pack",
   "author": {
-    "name": "Andrew Gardner",
+    "name": "Nekres",
     "username":  "Nekres.1038" 
   }
 }

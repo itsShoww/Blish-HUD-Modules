@@ -1,6 +1,6 @@
 {
   "name": "Musician",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "namespace": "bh.general.musician",
   "package": "Musician Module.dll",
   "manifest_version": 1,
@@ -8,7 +8,7 @@
   "description": "Create, share and play sheet music.",
   "url": "https://github.com/blish-hud/Blish-HUD",
   "author": {
-    "name": "Andy",
+    "name": "Nekres",
     "username": "Nekres.1038"
   },
   "directories": [ "musician" ],

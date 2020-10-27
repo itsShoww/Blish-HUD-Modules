@@ -111,7 +111,7 @@ namespace Random_Generator_Module
             int ApplyDieValue(bool reset = false)
             {
                 var value = reset ? DieSides.Value : RandomUtil.GetRandom(1, DieSides.Value);
-                if (value < 7)
+                if (value < 7) // Write text on a blank die side or apply texture with up to six dots.
                 {
                     dieLabel.Text = "";
                     dieImage.Texture = _dieTextures[value];

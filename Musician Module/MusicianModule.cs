@@ -185,9 +185,11 @@ namespace Musician_Module
             var lPanel = BuildLibraryPanel(wndw);
             var library = musicianCategories.AddMenuItem("Library");
             library.LeftMouseButtonReleased += delegate { wndw.Navigate(lPanel); };
-            var cPanel = BuildComposerPanel(wndw);
+
+            //TODO: Composer
+            /*var cPanel = BuildComposerPanel(wndw);
             var composer = musicianCategories.AddMenuItem("Composer");
-            composer.LeftMouseButtonReleased += delegate { wndw.Navigate(cPanel); };
+            composer.LeftMouseButtonReleased += delegate { wndw.Navigate(cPanel); };*/
 
             return hPanel;
         }
@@ -233,7 +235,9 @@ namespace Musician_Module
                 { 
                     if (melody.MouseOverPlay)
                     {
-                        this.StopPlayback();
+                        //TODO: Practice Mode
+                        ScreenNotification.ShowNotification("Practice mode (Synthesia) is not yet implemented.", ScreenNotification.NotificationType.Info);
+                        /*this.StopPlayback();
                         GameService.Overlay.BlishHudWindow.Hide();
                         MusicPlayer = MusicPlayerFactory.Create(
                             melody.MusicSheet,
@@ -241,7 +245,7 @@ namespace Musician_Module
                         );
                         MusicPlayer.Worker.Start();
                         Conveyor.Visible = true;
-                        StopButton.Visible = true;
+                        StopButton.Visible = true;*/
                     }
                     if (melody.MouseOverEmulate)
                     {

@@ -1,114 +1,178 @@
 [
   {
     "name": "Vale Guardian",
-    "id": [
+    "ids": [
       "0x3C4E"
     ],
     "health": 22021440,
-    "enrageTimer": 480000
+    "enrageTimer": 480000,
+    "phases": [
+      66,
+      33
+    ]
   },
   {
     "name": "Gorseval the Multifarious",
-    "id": [
+    "ids": [
       "0x3C45"
     ],
     "health": 21628200,
-    "enrageTimer": 420000
+    "enrageTimer": 420000,
+    "phases": [
+      66,
+      33
+    ]
   },
   {
     "name": "Sabetha the Saboteur",
-    "id": [
+    "ids": [
       "0x3C0F"
     ],
     "health": 34015256,
-    "enrageTimer": 540000
+    "enrageTimer": 540000,
+    "phases": [
+      75,
+      50,
+      25
+    ]
   },
   {
     "name": "Slothasor",
-    "id": [
+    "ids": [
       "0x3EFB"
     ],
     "health": 18973828,
-    "enrageTimer": 420000
+    "enrageTimer": 420000,
+    "phases": [
+      80,
+      60,
+      50,
+      40,
+      20,
+      10
+    ]
   },
   {
     "name": "Bandit Trio",
-    "id": [
+    "ids": [
       "0x3ED8",
       "0x3F09",
       "0x3EFD"
     ],
     "health": 0,
-    "enrageTimer": 420000
+    "enrageTimer": 420000,
+    "times": [
+      130000,
+      250000,
+      370000
+    ]
   },
   {
     "name": "Matthias Gabrel",
-    "id": [
+    "ids": [
       "0x3EF3"
     ],
     "health": 25953840,
-    "enrageTimer": 600000
+    "enrageTimer": 600000,
+    "phases": [
+      80,
+      60,
+      40
+    ]
   },
   {
     "name": "Keep Construct",
-    "id": [
+    "ids": [
       "0x3F6B"
     ],
     "health": 55053600,
-    "enrageTimer": 600000
+    "enrageTimer": 600000,
+    "phases": [
+      66,
+      33
+    ]
   },
   {
     "name": "Xera",
-    "id": [
+    "ids": [
       "0x3F76",
       "0x3F9E"
     ],
     "health": 22611300,
-    "enrageTimer": 660000
+    "enrageTimer": 660000,
+    "phases": [
+      50
+    ]
   },
   {
     "name": "Cairn the Indomitable",
-    "id": [
+    "ids": [
       "0x432A"
     ],
     "health": 19999998,
-    "enrageTimer": 480000
+    "enrageTimer": 480000,
+    "phases": [
+      75,
+      50,
+      25
+    ]
   },
   {
     "name": "Mursaat Overseer",
-    "id": [
+    "ids": [
       "0x432A"
     ],
     "health": 22021440,
-    "enrageTimer": 360000
+    "enrageTimer": 360000,
+    "phases": [
+      75,
+      50,
+      25
+    ]
   },
   {
     "name": "Samarog",
-    "id": [
+    "ids": [
       "0x4324"
     ],
     "health": 29493000,
-    "enrageTimer": 660000
+    "enrageTimer": 660000,
+    "phases": [
+      66,
+      33
+    ]
   },
   {
     "name": "Deimos",
-    "id": [
+    "ids": [
       "0x4302"
     ],
     "health": 50049000,
-    "enrageTimer": 720000
+    "enrageTimer": 720000,
+    "phases": [
+      75,
+      60,
+      50,
+      25,
+      10
+    ]
   },
   {
     "name": "Soulless Horror",
-    "id": [
+    "ids": [
       "0x4D37"
     ],
     "health": 35391600,
-    "enrageTimer": 480000
+    "enrageTimer": 480000,
+    "phases": [
+      90,
+      66,
+      33
+    ]
   },
   {
     "name": "Statues - Soul Eater",
-    "id": [
+    "ids": [
       "0x4C50"
     ],
     "health": 1720425,
@@ -116,7 +180,7 @@
   },
   {
     "name": "Statues - Ice King",
-    "id": [
+    "ids": [
       "0x4CEB"
     ],
     "health": 9831000,
@@ -124,7 +188,7 @@
   },
   {
     "name": "Statues - Cave",
-    "id": [
+    "ids": [
       "0x4CC3",
       "0x4D84"
     ],
@@ -133,111 +197,179 @@
   },
   {
     "name": "Dhuum",
-    "id": [
+    "ids": [
       "0x4BFA"
     ],
     "health": 32000000,
-    "enrageTimer": 600000
+    "enrageTimer": 600000,
+    "phases": [
+      60,
+      33,
+      10
+    ],
+    "times": [
+      130000
+    ]
   },
   {
     "name": "Conjured Amalgamate",
-    "id": [
+    "ids": [
       "43974",
       "37464",
       "10142"
     ],
     "health": 0,
-    "enrageTimer": 480000
+    "enrageTimer": 480000,
+    "phases": [
+      50,
+      25
+    ]
   },
   {
     "name": "Twin Largos",
-    "id": [
+    "ids": [
       "21105",
       "21089"
     ],
     "health": 17548336,
-    "enrageTimer": 480000
+    "enrageTimer": 480000,
+    "phases": [
+      50,
+      25
+    ]
   },
   {
     "name": "Qadim",
-    "id": [
+    "ids": [
       "20934"
     ],
     "health": 19268760,
-    "enrageTimer": 780000
+    "enrageTimer": 780000,
+    "phases": [
+      66,
+      33,
+      15
+    ]
   },
   {
     "name": "Adina",
-    "id": [
+    "ids": [
       "22006"
     ],
     "health": 22611300,
-    "enrageTimer": 480000
+    "enrageTimer": 480000,
+    "phases": [
+      75,
+      50,
+      25
+    ]
   },
   {
     "name": "Sabir",
-    "id": [
+    "ids": [
       "21964"
     ],
     "health": 29493000,
-    "enrageTimer": 0
+    "enrageTimer": 0,
+    "phases": [
+      80,
+      60
+    ]
   },
   {
     "name": "Qadim the Peerless",
-    "id": [
+    "ids": [
       "22000"
     ],
     "health": 47188800,
-    "enrageTimer": 720000
+    "enrageTimer": 720000,
+    "phases": [
+      80,
+      60,
+      40,
+      30,
+      20
+    ]
   },
   {
     "name": "MAMA",
-    "id": [
+    "ids": [
       "0x427D",
       "0x4268",
       "0x424E"
     ],
     "health": 5200519,
-    "enrageTimer": 0
+    "enrageTimer": 0,
+    "phases": [
+      75,
+      50,
+      33,
+      25
+    ]
   },
   {
     "name": "Siax",
-    "id": [
+    "ids": [
       "0x4284"
     ],
     "health": 6138797,
-    "enrageTimer": 0
+    "enrageTimer": 0,
+    "phases": [
+      75,
+      66,
+      33
+    ]
   },
   {
     "name": "Ensolyss of the Endless Torment",
-    "id": [
+    "ids": [
       "0x4234"
     ],
     "health": 14059890,
-    "enrageTimer": 0
+    "enrageTimer": 0,
+    "phases": [
+      66,
+      33,
+      15
+    ]
   },
   {
     "name": "Skorvald the Shattered",
-    "id": [
+    "ids": [
       "0x44E0"
     ],
     "health": 5551340,
-    "enrageTimer": 0
+    "enrageTimer": 0,
+    "phases": [
+      66,
+      33
+    ]
   },
   {
     "name": "Artsariiv",
-    "id": [
+    "ids": [
       "0x461D"
     ],
     "health": 5962266,
-    "enrageTimer": 0
+    "enrageTimer": 0,
+    "phases": [
+      66,
+      33
+    ]
   },
   {
     "name": "Arkk",
-    "id": [
+    "ids": [
       "0x455F"
     ],
     "health": 9942250,
-    "enrageTimer": 0
+    "enrageTimer": 0,
+    "phases": [
+      80,
+      70,
+      50,
+      40,
+      30
+    ]
   }
 ]

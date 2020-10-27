@@ -48,12 +48,12 @@ namespace Musician_Module.Controls.Instrument
 
         };
 
-        public CachedSound Get(string id)
+        public static CachedSound Get(string id)
         {
             return Sound[id];
         }
 
-        public CachedSound Get(GuildWarsControls key, BassNote.Octaves octave)
+        public static CachedSound Get(GuildWarsControls key, BassNote.Octaves octave)
         {
             return Sound[Map[$"{key}{octave}"]];
         }

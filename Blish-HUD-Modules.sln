@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notes Module", "Notes Modul
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music Mixer", "Music Mixer\Music Mixer.csproj", "{198F1394-AE12-4C1D-8D9B-C1272AD1631A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quick Surrender Module", "Quick Surrender Module\Quick Surrender Module.csproj", "{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +81,12 @@ Global
 		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|Any CPU.ActiveCfg = Release|x64
 		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|x64.ActiveCfg = Release|x64
 		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|x64.Build.0 = Release|x64
+		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Debug|x64.ActiveCfg = Debug|x64
+		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Debug|x64.Build.0 = Debug|x64
+		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Release|Any CPU.ActiveCfg = Release|x64
+		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Release|x64.ActiveCfg = Release|x64
+		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

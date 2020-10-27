@@ -8,8 +8,6 @@ namespace Musician_Module.Controls.Instrument
     {
         private BassNote.Octaves _octave = BassNote.Octaves.Low;
 
-        private readonly BassSoundRepository _soundRepository = new BassSoundRepository();
-
         public void PlaySoundByKey(GuildWarsControls key)
         {
             switch (key)
@@ -23,7 +21,7 @@ namespace Musician_Module.Controls.Instrument
                 case GuildWarsControls.UtilitySkill1:
                 case GuildWarsControls.UtilitySkill2:
                     AudioPlaybackEngine.Instance.StopSound();
-                    AudioPlaybackEngine.Instance.PlaySound(_soundRepository.Get(key, _octave));
+                    AudioPlaybackEngine.Instance.PlaySound(BassSoundRepository.Get(key, _octave));
                     break;
                 case GuildWarsControls.UtilitySkill3:
                     DecreaseOctave();
