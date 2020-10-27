@@ -1,14 +1,12 @@
-﻿using Blish_HUD.Input;
+﻿using Blish_HUD;
+using Blish_HUD.Controls;
+using Blish_HUD.Input;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Blish_HUD;
-using Blish_HUD.Controls;
 
 namespace Nekres.Notes_Module.Controls
 {

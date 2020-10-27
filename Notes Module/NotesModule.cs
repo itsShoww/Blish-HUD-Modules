@@ -12,8 +12,8 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Nekres.Notes_Module
 {
 
-    [Export(typeof(Blish_HUD.Modules.Module))]
-    public class NotesModule : Blish_HUD.Modules.Module
+    [Export(typeof(Module))]
+    public class NotesModule : Module
     {
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(NotesModule));
@@ -30,14 +30,14 @@ namespace Nekres.Notes_Module
         [ImportingConstructor]
         public NotesModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
 
+        protected override void DefineSettings(SettingCollection settings) {
+
+        }
+
         private Texture2D _icon64;
         //private Texture2D _icon128;
 
         private CornerIcon moduleCornerIcon;
-
-        protected override void DefineSettings(SettingCollection settings) {
-
-        }
 
         protected override void Initialize() {
             LoadTextures();
@@ -49,15 +49,12 @@ namespace Nekres.Notes_Module
             };
         }
 
-        private void CreateNote()
+        private void LoadTextures()
         {
-            var note = new Notes_Module.Controls.Book()
-            {
-                Parent = GameService.Graphics.SpriteScreen,
-                Size = new Point(500, 1000)
-            };
-
+            _icon64 = ContentsManager.GetTexture("notes_icon_64x64.png");
+            //_icon128 = ContentsManager.GetTexture("notes_icon_128x128.png");
         }
+
         protected override async Task LoadAsync() {
 
         }
@@ -80,11 +77,6 @@ namespace Nekres.Notes_Module
             ModuleInstance = null;
         }
 
-        private void LoadTextures()
-        {
-            _icon64 = ContentsManager.GetTexture("notes_icon_64x64.png");
-            //_icon128 = ContentsManager.GetTexture("notes_icon_128x128.png");
-        }
     }
 
 }
