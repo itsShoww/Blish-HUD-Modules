@@ -72,12 +72,17 @@ namespace Loading_Screen_Hints_Module.Controls {
         }
         private void OnLeftMouseButtonReleased(object sender, MouseEventArgs e) {
             if (Opacity != 1.0f) return;
-            GameService.Animation.Tweener.Tween(this, new { Opacity = 0.0f }, 0.2f);
+            AnimationService.Animation.Tweener.Tween(this, new { Opacity = 0.0f }, 0.2f);
         }
         private void OnRightMouseButtonReleased(object sender, MouseEventArgs e) {
             if (Opacity != 0.0f) return;
-            GameService.Animation.Tweener.Tween(this, new { Opacity = 1.0f }, 0.2f);
+            AnimationService.Animation.Tweener.Tween(this, new { Opacity = 1.0f }, 0.2f);
         }
+
+        protected override CaptureType CapturesInput() {
+            return CaptureType.ForceNone;
+        }
+
         private void OnDisposed(object sender, EventArgs e)
         {
             if (LoadScreenTip != null)

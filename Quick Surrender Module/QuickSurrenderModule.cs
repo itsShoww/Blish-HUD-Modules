@@ -35,7 +35,9 @@ namespace Quick_Surrender_Module
         protected override void DefineSettings(SettingCollection settings) {
             SurrenderButtonEnabled = settings.DefineSetting("SurrenderButtonEnabled", true, "Show Surrender Skill",
                 "Shows a skill with a white flag to the right of your skill bar.\nClicking it defeats you. (Sends \"/gg\" into chat.)");
-            SurrenderBinding = settings.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.None) {Enabled = true},
+
+            var keyBindingCol = settings.AddSubCollection("Hotkey", true, false);
+            SurrenderBinding = keyBindingCol.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.None),
                 "Surrender", "Defeats you.\n(Sends \"/gg\" into chat.)");
         }
 
@@ -76,15 +78,12 @@ namespace Quick_Surrender_Module
         }
 
 
-        protected override async Task LoadAsync() { /* NOOP */ }
-
-
         protected override void OnModuleLoaded(EventArgs e) {
             SurrenderBinding.Value.Enabled = true;
             SurrenderBinding.Value.Activated += OnSurrenderBindingActivated;
             SurrenderButtonEnabled.SettingChanged += OnSurrenderButtonEnabledSettingChanged;
             GameService.Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
-
+            GameService.Gw2Mumble.IsAvailableChanged += OnIsAvailableChanged;
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
@@ -103,10 +102,10 @@ namespace Quick_Surrender_Module
 
         /// <inheritdoc />
         protected override void Unload() {
-            // Unload
             SurrenderBinding.Value.Activated -= OnSurrenderBindingActivated;
             SurrenderButtonEnabled.SettingChanged -= OnSurrenderButtonEnabledSettingChanged;
             GameService.Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
+            GameService.Gw2Mumble.IsAvailableChanged -= OnIsAvailableChanged;
             _surrenderButton?.Dispose();
             // All static members must be manually unset
             ModuleInstance = null;
@@ -123,6 +122,11 @@ namespace Quick_Surrender_Module
         }
 
 
+        private void OnIsAvailableChanged(object o, ValueEventArgs<bool> e) {
+            _surrenderButton.Visible = e.Value;
+        }
+
+
         private void OnIsMapOpenChanged(object o, ValueEventArgs<bool> e) {
             _surrenderButton.Visible = e.Value;
         }
@@ -134,9 +138,10 @@ namespace Quick_Surrender_Module
 
 
         private void OnSurrenderButtonEnabledSettingChanged(object o, ValueChangedEventArgs<bool> e) {
-            if (e.NewValue)
+            if (e.NewValue) {
+                _surrenderButton?.Dispose();
                 _surrenderButton = BuildSurrenderButton();
-            else
+            } else
                 GameService.Animation.Tweener.Tween(_surrenderButton, new {Opacity = 0.0f}, 0.2f).OnComplete(() => _surrenderButton?.Dispose());
         }
 
