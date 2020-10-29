@@ -34,17 +34,13 @@ namespace Nekres.Musician_Module.Player
                 int.Parse(rawMusicSheet.Meter.Split('/')[1]));
 
 
-            var algorithm = rawMusicSheet.Algorithm == "favor notes"
-                ? new FavorNotesAlgorithm() : (IPlayAlgorithm)new FavorChordsAlgorithm();
+            var algorithm = rawMusicSheet.Algorithm == "favor notes" ? new FavorNotesAlgorithm() : (IPlayAlgorithm)new FavorChordsAlgorithm();
 
             Instrument instrument = InstrumentRepository[rawMusicSheet.Instrument];
             instrument.Mode = mode;
             MusicianModule.ModuleInstance.Conveyor.Visible = mode == InstrumentMode.Practice;
 
-            return new MusicPlayer(
-                musicSheet,
-                instrument,
-                algorithm);
+            return new MusicPlayer(musicSheet, instrument, algorithm);
         }
     }
 }

@@ -14,6 +14,7 @@ using Nekres.Musician_Module.Controls;
 using Nekres.Musician_Module.Notation.Persistance;
 using Nekres.Musician_Module.Player;
 using Nekres.Musician_Module.Controls.Instrument;
+using static Blish_HUD.GameService;
 
 namespace Nekres.Musician_Module
 {
@@ -21,17 +22,25 @@ namespace Nekres.Musician_Module
     [Export(typeof(Module))]
     public class MusicianModule : Module
     {
-        private static readonly Logger Logger = Logger.GetLogger(typeof(MusicianModule));
+        //private static readonly Logger Logger = Logger.GetLogger(typeof(MusicianModule));
 
         internal static MusicianModule ModuleInstance;
 
-        // Service Managers
+        #region Service Managers
         internal SettingsManager SettingsManager => this.ModuleParameters.SettingsManager;
         internal ContentsManager ContentsManager => this.ModuleParameters.ContentsManager;
         internal DirectoriesManager DirectoriesManager => this.ModuleParameters.DirectoriesManager;
         internal Gw2ApiManager Gw2ApiManager => this.ModuleParameters.Gw2ApiManager;
+        #endregion
+
+        #region Textures
 
         private Texture2D ICON;
+
+        #endregion
+
+        #region Constants
+
         private const int TOP_MARGIN = 0;
         private const int RIGHT_MARGIN = 5;
         private const int BOTTOM_MARGIN = 10;
@@ -46,18 +55,27 @@ namespace Nekres.Musician_Module
         private const string DD_BASS = "Bass";
         private const string DD_BELL = "Bell";
         private const string DD_BELL2 = "Bell2";
-        private readonly List<string> Instruments = new List<string>{
-           "Harp", "Flute", "Lute", "Horn", "Bell", "Bell2", "Bass"
-        };
 
-        private WindowTab MusicianTab;
-        public MusicPlayer MusicPlayer;
-        private HealthPoolButton StopButton;
-        private XmlMusicSheetReader xmlParser;
-        private List<SheetButton> displayedSheets;
-        private List<RawMusicSheet> Sheets;
+        #endregion
 
-        public Conveyor Conveyor { get; private set; }
+        #region Controls
+
+        private WindowTab _musicianTab;
+        private HealthPoolButton _stopButton;
+        private List<SheetButton> _displayedSheets;
+
+        internal Conveyor Conveyor { get; private set; }
+
+        #endregion
+
+        private readonly string[] Instruments = new[] { "Harp", "Flute", "Lute", "Horn", "Bell", "Bell2", "Bass" };
+
+        private XmlMusicSheetReader _xmlParser;
+
+        private List<RawMusicSheet> _rawMusicSheets;
+
+        internal MusicPlayer MusicPlayer { get; private set; }
+
 
         /// <summary>
         /// Ideally you should keep the constructor as is.
@@ -75,7 +93,7 @@ namespace Nekres.Musician_Module
 
         protected override void DefineSettings(SettingCollection settingsManager)
         {
-            settingBackgroundPlayback = settingsManager.DefineSetting<bool>("backgroundPlayback", false, "No background playback", "Stop key emulation when GW2 is in the background");
+            settingBackgroundPlayback = settingsManager.DefineSetting("backgroundPlayback", false, "No background playback", "Stop key emulation when GW2 is in the background");
         }
 
         #endregion
@@ -83,71 +101,59 @@ namespace Nekres.Musician_Module
         protected override void Initialize()
         {
             ICON = ICON ?? ContentsManager.GetTexture("musician_icon.png");
-            Conveyor = new Conveyor() { Parent = ContentService.Graphics.SpriteScreen, Visible = false };
-            xmlParser = new XmlMusicSheetReader();
-            displayedSheets = new List<SheetButton>();
-            StopButton = new HealthPoolButton()
+            Conveyor = new Conveyor() { Parent = Graphics.SpriteScreen, Visible = false };
+            _xmlParser = new XmlMusicSheetReader();
+            _displayedSheets = new List<SheetButton>();
+            _stopButton = new HealthPoolButton()
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Text = "Stop Playback",
                 ZIndex = -1,
                 Visible = false
             };
-            StopButton.LeftMouseButtonReleased += delegate
-            {
-                this.StopPlayback();
-            };
-            GameService.GameIntegration.Gw2LostFocus += GameIntegrationOnGw2LostFocus;
+
+            _stopButton.Click += StopPlayback;
+
+            GameIntegration.Gw2LostFocus += OnGw2LostFocus;
         }
 
         protected override async Task LoadAsync()
         {
             // Load local sheet music (*.xml) files.
-            await Task.Run(() => Sheets = xmlParser.LoadDirectory(DirectoriesManager.GetFullDirectoryPath("musician")));
+            await Task.Run(() => _rawMusicSheets = _xmlParser.LoadDirectory(DirectoriesManager.GetFullDirectoryPath("musician")));
         }
 
         protected override void OnModuleLoaded(EventArgs e)
         {
-            MusicianTab = GameService.Overlay.BlishHudWindow.AddTab("Musician", ICON, BuildHomePanel(GameService.Overlay.BlishHudWindow), 0);
+            _musicianTab = Overlay.BlishHudWindow.AddTab("Musician", ICON, BuildHomePanel(Overlay.BlishHudWindow), 0);
             base.OnModuleLoaded(e);
         }
 
-        private void GameIntegrationOnGw2LostFocus(object sender, EventArgs e) {
-            if (settingBackgroundPlayback.Value) {
-                this.StopPlayback();
-            }
+        private void OnGw2LostFocus(object sender, EventArgs e) {
+            if (!settingBackgroundPlayback.Value) return;
+            StopPlayback(null, null);
         }
 
         protected override void Unload()
         {
-            this.StopButton.Dispose();
-            this.StopButton = null;
-            this.Conveyor.Dispose();
-            this.Conveyor = null;
-            this.StopPlayback();
-            GameService.Overlay.BlishHudWindow.RemoveTab(MusicianTab);
+            _stopButton?.Dispose();
+            Conveyor?.Dispose();
+            StopPlayback(null, null);
+
+            Overlay.BlishHudWindow.RemoveTab(_musicianTab);
             ModuleInstance = null;
         }
 
-        private void StopPlayback()
+        private void StopPlayback(object o, MouseEventArgs e)
         {
             if (Conveyor != null)
-            {
                 Conveyor.Visible = false;
-            }
-            if (StopButton != null)
-            {
-                StopButton.Visible = false;
-            }
-            if (MusicPlayer != null)
-            {
-                MusicPlayer.Dispose();
-                MusicPlayer = null;
-            }
-            foreach (SheetButton sheetButton in displayedSheets)
-            {
+            if (_stopButton != null)
+                _stopButton.Visible = false;
+            MusicPlayer?.Dispose();
+
+            foreach (SheetButton sheetButton in _displayedSheets)
                 sheetButton.IsPreviewing = false;
-            }
         }
 
         /*######################################
@@ -164,7 +170,7 @@ namespace Nekres.Musician_Module
             var contentPanel = new Panel()
             {
                 Location = new Point(hPanel.Width - 630, 50),
-                Size = new Point(630, hPanel.Size.Y - 50 - MusicianModule.BOTTOM_MARGIN),
+                Size = new Point(630, hPanel.Size.Y - 50 - BOTTOM_MARGIN),
                 Parent = hPanel,
                 CanScroll = true
             };
@@ -172,8 +178,8 @@ namespace Nekres.Musician_Module
             {
                 ShowBorder = true,
                 //Title = "Musician Panel",
-                Size = new Point(hPanel.Width - contentPanel.Width - 10, contentPanel.Height + MusicianModule.BOTTOM_MARGIN),
-                Location = new Point(MusicianModule.LEFT_MARGIN, 20),
+                Size = new Point(hPanel.Width - contentPanel.Width - 10, contentPanel.Height + BOTTOM_MARGIN),
+                Location = new Point(LEFT_MARGIN, 20),
                 Parent = hPanel,
             };
             var musicianCategories = new Menu
@@ -209,8 +215,8 @@ namespace Nekres.Musician_Module
             };
             var melodyPanel = new Panel()
             {
-                Location = new Point(0, MusicianModule.BOTTOM_MARGIN + backButton.Bottom),
-                Size = new Point(lPanel.Width, lPanel.Size.Y - 50 - MusicianModule.BOTTOM_MARGIN),
+                Location = new Point(0, BOTTOM_MARGIN + backButton.Bottom),
+                Size = new Point(lPanel.Width, lPanel.Size.Y - 50 - BOTTOM_MARGIN),
                 Parent = lPanel,
                 ShowTint = true,
                 ShowBorder = true,
@@ -218,7 +224,7 @@ namespace Nekres.Musician_Module
             };
 
             // TODO: Load a list from online database.
-            foreach (RawMusicSheet sheet in Sheets)
+            foreach (RawMusicSheet sheet in _rawMusicSheets)
             {
                 var melody = new SheetButton
                 {
@@ -230,14 +236,14 @@ namespace Nekres.Musician_Module
                     User = sheet.User,
                     MusicSheet = sheet
                 };
-                displayedSheets.Add(melody);
+                _displayedSheets.Add(melody);
                 melody.LeftMouseButtonPressed += delegate
                 { 
                     if (melody.MouseOverPlay)
                     {
                         //TODO: Practice Mode
                         ScreenNotification.ShowNotification("Practice mode (Synthesia) is not yet implemented.", ScreenNotification.NotificationType.Info);
-                        /*this.StopPlayback();
+                        /*StopPlayback(null, null);
                         GameService.Overlay.BlishHudWindow.Hide();
                         MusicPlayer = MusicPlayerFactory.Create(
                             melody.MusicSheet,
@@ -249,24 +255,25 @@ namespace Nekres.Musician_Module
                     }
                     if (melody.MouseOverEmulate)
                     {
-                        this.StopPlayback();
-                        GameService.Overlay.BlishHudWindow.Hide();
+                        StopPlayback(null, null);
+
+                        Overlay.BlishHudWindow.Hide();
+
                         MusicPlayer = MusicPlayerFactory.Create(
                             melody.MusicSheet,
                             InstrumentMode.Emulate
                         );
+
                         MusicPlayer.Worker.Start();
-                        StopButton.Visible = true;
+                        _stopButton.Visible = true;
                     }
                     if (melody.MouseOverPreview)
                     {
                         if (melody.IsPreviewing)
-                        {
-                            this.StopPlayback();
-                        }
+                            StopPlayback(null, null);
                         else
                         {
-                            this.StopPlayback();
+                            StopPlayback(null, null);
                             melody.IsPreviewing = true;
                             MusicPlayer = MusicPlayerFactory.Create(
                                 melody.MusicSheet,
@@ -319,8 +326,8 @@ namespace Nekres.Musician_Module
             };
             var composerPanel = new Panel()
             {
-                Location = new Point(MusicianModule.LEFT_MARGIN + 20, MusicianModule.BOTTOM_MARGIN + backButton.Bottom),
-                Size = new Point(cPanel.Size.X - 50 - MusicianModule.LEFT_MARGIN, cPanel.Size.Y - 50 - MusicianModule.BOTTOM_MARGIN),
+                Location = new Point(LEFT_MARGIN + 20, BOTTOM_MARGIN + backButton.Bottom),
+                Size = new Point(cPanel.Size.X - 50 - LEFT_MARGIN, cPanel.Size.Y - 50 - BOTTOM_MARGIN),
                 Parent = cPanel,
                 CanScroll = false
             };
@@ -348,7 +355,7 @@ namespace Nekres.Musician_Module
             var userLabel = new Label
             {
                 Size = new Point(150, 20),
-                Location = new Point(0, titleTextBox.Top + 20 + MusicianModule.BOTTOM_MARGIN),
+                Location = new Point(0, titleTextBox.Top + 20 + BOTTOM_MARGIN),
                 Text = "Created by",
                 Parent = composerPanel
             };
@@ -363,7 +370,7 @@ namespace Nekres.Musician_Module
             var ddInstrumentSelection = new Dropdown()
             {
                 Parent = composerPanel,
-                Location = new Point(0, userTextBox.Top + 20 + MusicianModule.BOTTOM_MARGIN),
+                Location = new Point(0, userTextBox.Top + 20 + BOTTOM_MARGIN),
                 Width = 150,
             };
             foreach (string item in Instruments)
@@ -381,7 +388,7 @@ namespace Nekres.Musician_Module
             var tempoLabel = new Label()
             {
                 Parent = composerPanel,
-                Location = new Point(0, ddInstrumentSelection.Top + 22 + MusicianModule.BOTTOM_MARGIN),
+                Location = new Point(0, ddInstrumentSelection.Top + 22 + BOTTOM_MARGIN),
                 Size = new Point(150, 20),
                 Text = "Beats per minute:"
             };
@@ -398,7 +405,7 @@ namespace Nekres.Musician_Module
             var meterLabel = new Label()
             {
                 Parent = composerPanel,
-                Location = new Point(0, tempoLabel.Top + 22 + MusicianModule.BOTTOM_MARGIN),
+                Location = new Point(0, tempoLabel.Top + 22 + BOTTOM_MARGIN),
                 Size = new Point(150, 20),
                 Text = "Notes per beat:"
             };
@@ -418,14 +425,14 @@ namespace Nekres.Musician_Module
             var notationTextBox = new Label
             {
                 Size = new Point(composerPanel.Width, composerPanel.Height - 300),
-                Location = new Point(0, meterCounterBox.Top + 22 + MusicianModule.BOTTOM_MARGIN),
+                Location = new Point(0, meterCounterBox.Top + 22 + BOTTOM_MARGIN),
                 Parent = composerPanel
             };
 
             var saveBttn = new StandardButton()
             {
                 Text = "Save",
-                Location = new Point(composerPanel.Width - 128 - MusicianModule.RIGHT_MARGIN, notationTextBox.Bottom + 5),
+                Location = new Point(composerPanel.Width - 128 - RIGHT_MARGIN, notationTextBox.Bottom + 5),
                 Width = 128,
                 Height = 26,
                 Parent = composerPanel
@@ -439,62 +446,51 @@ namespace Nekres.Musician_Module
         }
         private void UpdateSort(object sender, EventArgs e)
         {
-            switch (((Dropdown)sender).SelectedItem)
-            {
+            switch (((Dropdown)sender).SelectedItem) {
                 case DD_TITLE:
-                    displayedSheets.Sort((e1, e2) => e1.Title.CompareTo(e2.Title));
-                    foreach (SheetButton e1 in displayedSheets) { e1.Visible = true; }
+                    _displayedSheets.Sort((e1, e2) => e1.Title.CompareTo(e2.Title));
+                    foreach (SheetButton e1 in _displayedSheets)
+                        e1.Visible = true;
                     break;
                 case DD_ARTIST:
-                    displayedSheets.Sort((e1, e2) => e1.Artist.CompareTo(e2.Artist));
-                    foreach (SheetButton e1 in displayedSheets) { e1.Visible = true; }
+                    _displayedSheets.Sort((e1, e2) => e1.Artist.CompareTo(e2.Artist));
+                    foreach (SheetButton e1 in _displayedSheets)
+                        e1.Visible = true;
                     break;
                 case DD_USER:
-                    displayedSheets.Sort((e1, e2) => e1.User.CompareTo(e2.User));
-                    foreach (SheetButton e1 in displayedSheets) { e1.Visible = true; }
+                    _displayedSheets.Sort((e1, e2) => e1.User.CompareTo(e2.User));
+                    foreach (SheetButton e1 in _displayedSheets)
+                        e1.Visible = true;
                     break;
                 case DD_HARP:
-                    displayedSheets.Sort((e1, e2) => e1.MusicSheet.Instrument.CompareTo(e2.MusicSheet.Instrument));
-                    foreach (SheetButton e1 in displayedSheets)
-                    {
+                    _displayedSheets.Sort((e1, e2) => e1.MusicSheet.Instrument.CompareTo(e2.MusicSheet.Instrument));
+                    foreach (SheetButton e1 in _displayedSheets)
                         e1.Visible = string.Equals(e1.MusicSheet.Instrument, DD_HARP, StringComparison.InvariantCultureIgnoreCase);
-                    }
                     break;
                 case DD_FLUTE:
-                    foreach (SheetButton e1 in displayedSheets)
-                    {
+                    foreach (SheetButton e1 in _displayedSheets)
                         e1.Visible = string.Equals(e1.MusicSheet.Instrument, DD_FLUTE, StringComparison.InvariantCultureIgnoreCase);
-                    }
                     break;
                 case DD_LUTE:
-                    foreach (SheetButton e1 in displayedSheets)
-                    {
+                    foreach (SheetButton e1 in _displayedSheets)
                         e1.Visible = string.Equals(e1.MusicSheet.Instrument, DD_LUTE, StringComparison.InvariantCultureIgnoreCase);
-                    }
                     break;
                 case DD_HORN:
-                    foreach (SheetButton e1 in displayedSheets)
-                    {
+                    foreach (SheetButton e1 in _displayedSheets)
                         e1.Visible = string.Equals(e1.MusicSheet.Instrument, DD_HORN, StringComparison.InvariantCultureIgnoreCase);
-                    }
                     break;
                 case DD_BASS:
-                    foreach (SheetButton e1 in displayedSheets)
-                    {
+                    foreach (SheetButton e1 in _displayedSheets)
                         e1.Visible = string.Equals(e1.MusicSheet.Instrument, DD_BASS, StringComparison.InvariantCultureIgnoreCase);
-                    }
                     break;
                 case DD_BELL:
-                    foreach (SheetButton e1 in displayedSheets)
-                    {
+                    foreach (SheetButton e1 in _displayedSheets)
+
                         e1.Visible = string.Equals(e1.MusicSheet.Instrument, DD_BELL, StringComparison.InvariantCultureIgnoreCase);
-                    }
                     break;
                 case DD_BELL2:
-                    foreach (SheetButton e1 in displayedSheets)
-                    {
+                    foreach (SheetButton e1 in _displayedSheets)
                         e1.Visible = string.Equals(e1.MusicSheet.Instrument, DD_BELL2, StringComparison.InvariantCultureIgnoreCase);
-                    }
                     break;
             }
 
@@ -503,7 +499,7 @@ namespace Nekres.Musician_Module
         private void RepositionMel()
         {
             int pos = 0;
-            foreach (var mel in displayedSheets)
+            foreach (var mel in _displayedSheets)
             {
                 int x = pos % 3;
                 int y = pos / 3;

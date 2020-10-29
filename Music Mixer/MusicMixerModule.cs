@@ -161,7 +161,7 @@ namespace Nekres.Music_Mixer
             if (CurrentEncounter != null && CurrentEncounter.Name.Equals(encounterData.Name) && CurrentEncounter.SessionId.Equals(e.CombatEvent.Dst.Id))
                 CurrentEncounter.DoDamage(e.CombatEvent.Ev);
             else
-                CurrentEncounter = new Encounter(encounterData.Name, encounterData.Ids, encounterData.Health, encounterData.EnrageTimer, e.CombatEvent.Dst.Id);
+                CurrentEncounter = new Encounter(encounterData, e.CombatEvent.Dst.Id);
             
         }
 

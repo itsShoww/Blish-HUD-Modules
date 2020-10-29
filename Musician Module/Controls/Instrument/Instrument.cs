@@ -43,15 +43,14 @@ namespace Nekres.Musician_Module.Controls.Instrument
         public InstrumentMode Mode { get; set; }
 
         public bool IsInstrument(string instrument) {
-            return string.Equals(this.GetType().Name, instrument, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(GetType().Name, instrument, StringComparison.OrdinalIgnoreCase);
         }
         protected virtual void PressKey(GuildWarsControls key, string octave)
         {
             if (Mode == InstrumentMode.Practice)
             {
                 InstrumentSkillType noteType;
-                switch (key)
-                {
+                switch (key) {
                     case GuildWarsControls.EliteSkill:
                         noteType = InstrumentSkillType.IncreaseOctave;
                         break;

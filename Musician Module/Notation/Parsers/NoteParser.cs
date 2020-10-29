@@ -16,8 +16,7 @@ namespace Nekres.Musician_Module.Notation.Parsers
         private static Note.Keys ParseKey(string text)
         {
             Note.Keys key;
-            switch (text)
-            {
+            switch (text) {
                 case "Z,":
                 case "Z,,":
                 case "Z,,,":
@@ -92,8 +91,7 @@ namespace Nekres.Musician_Module.Notation.Parsers
 
         private static Note.Octaves ParseOctave(string text, string instrument)
         {
-            switch (text)
-            {
+            switch (text) {
                 case "Z,":
                 case "Z":
                 case "z":

@@ -28,15 +28,15 @@ namespace Nekres.Musician_Module.Controls {
         public Conveyor() {
             ConveyorTopSprite = ConveyorTopSprite ?? MusicianModule.ModuleInstance.ContentsManager.GetTexture("conveyor_top.png");
             ConveyorBottomSprite = ConveyorBottomSprite ?? MusicianModule.ModuleInstance.ContentsManager.GetTexture("conveyor_bottom.png");
-            this.Size = new Point(744, Graphics.SpriteScreen.Height); // set static bounds.
-            this.ZIndex = 0;
+            Size = new Point(744, Graphics.SpriteScreen.Height); // set static bounds.
+            ZIndex = 0;
             UpdateLocation(null, null);
             Graphics.SpriteScreen.Resized += UpdateLocation;
         }
 
         private void UpdateLocation(object sender, EventArgs e) {
-            this.Location = new Point((Graphics.SpriteScreen.Width / 2 - this.Width / 2), 0);
-            this.Size = new Point(744, Graphics.SpriteScreen.Height);
+            Location = new Point((Graphics.SpriteScreen.Width / 2 - this.Width / 2), 0);
+            Size = new Point(744, Graphics.SpriteScreen.Height);
         }
 
         protected override CaptureType CapturesInput() {

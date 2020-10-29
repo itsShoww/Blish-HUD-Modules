@@ -1,4 +1,5 @@
-﻿using Blish_HUD.ArcDps.Models;
+﻿using Blish_HUD;
+using Blish_HUD.ArcDps.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -39,13 +40,33 @@ namespace Nekres.Music_Mixer
         /// </remarks>
         public bool Enraged { get => _enrageTimer < DateTime.Now.Subtract(_startTime).Milliseconds; }
 
-        public Encounter(string name, IReadOnlyList<uint> ids, long health, long enrageTimer, ulong sessionId) {
-            Name = name;
-            Ids = ids;
-            _initialHealth = health;
-            Health = health;
+        public IReadOnlyList<int> Phases { get; private set; }
+        public IReadOnlyList<long> Times { get; private set; }
+
+        public event EventHandler<ValueEventArgs<int>> PhaseChanged;
+
+        private int _currentPhase;
+        public int CurrentPhase { 
+            get => _currentPhase;
+            private set {
+                if (_currentPhase == value) return;
+
+                _currentPhase = value;
+
+                PhaseChanged?.Invoke(this, new ValueEventArgs<int>(value));
+            }
+        }
+
+        public Encounter(EncounterData data, ulong sessionId) {
+            Name = data.Name;
+            Ids = data.Ids;
+            _initialHealth = data.Health;
+            Health = data.Health;
             SessionId = sessionId;
-            _enrageTimer = enrageTimer;
+            Times = data.Times;
+            Phases = data.Phases;
+            CurrentPhase = 0;
+            _enrageTimer = data.EnrageTimer;
             _startTime = DateTime.Now;
         }
         /// <summary>

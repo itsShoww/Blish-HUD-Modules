@@ -1,10 +1,10 @@
 {
   "name": "Quick Surrender",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "namespace": "Nekres.Quick_Surrender_Module",
   "package": "Quick Surrender Module.dll",
   "manifest_version": 1,
-  "description": "Allows to quickly surrender and defeat your character for when you are so done with everything.",
+  "description": "Allows to abandon all hope and defeat your character for when you are so done with everything.\n\nUsable only in raids or fractals.",
   "dependencies": {
     "bh.blishhud": ">=0.6.0"
   },

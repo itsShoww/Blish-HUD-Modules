@@ -35,9 +35,8 @@ namespace Nekres.Musician_Module.Notation.Parsers
 
         private static Fraction ParseFraction(string nominator, string denominator)
         {
-            return new Fraction(
-                string.IsNullOrEmpty(nominator) ? 1 : int.Parse(nominator),
-                string.IsNullOrEmpty(denominator) ? 1 : int.Parse(denominator));
+            return new Fraction( string.IsNullOrEmpty(nominator) ? 1 : int.Parse(nominator),
+                                 string.IsNullOrEmpty(denominator) ? 1 : int.Parse(denominator) );
         }
     }
 }

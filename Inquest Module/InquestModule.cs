@@ -96,7 +96,6 @@ namespace Nekres.Inquest_Module
         private Stopwatch QueueStopWatch;
         private Label QueueTimeLabel;
         private Thread QueueWorker;
-        private Random Randomizer;
 
         private Dictionary<GuildWarsControls, Control> SkillFrames;
         private Dictionary<GuildWarsControls, Control> SkillGlassFrames;
@@ -126,7 +125,6 @@ namespace Nekres.Inquest_Module
 
         protected override void Initialize()
         {
-            Randomizer = new Random();
             _moduleControls = new List<Control>();
             TokenQuantityRepository = TokenQuantity.Value;
             SkillFrames = new Dictionary<GuildWarsControls, Control>();
@@ -371,7 +369,7 @@ namespace Nekres.Inquest_Module
                     QueuePanel.BasicTooltipText = "Map join attempts: " + tries;
                 }
 
-                Thread.Sleep(Randomizer.Next(700, 1000));
+                Thread.Sleep(RandomUtil.GetRandom(700, 1000));
             }
 
             QueueWorker = null;
@@ -884,7 +882,7 @@ namespace Nekres.Inquest_Module
 
                 if (randomizeButton.BackgroundColor == Color.LightGreen)
                 {
-                    var rand = Randomizer.Next(0, tokens.Count);
+                    var rand = RandomUtil.GetRandom(0, tokens.Count);
                     chatLink.ItemId = TokenIdRepository[tokens[rand]];
                     int amount;
                     try

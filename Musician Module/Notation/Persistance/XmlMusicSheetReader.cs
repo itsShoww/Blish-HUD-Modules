@@ -29,10 +29,10 @@ namespace Nekres.Musician_Module.Notation.Persistance
         {
             cachedSheets.Clear();
             loadedSheets = Directory.GetFiles(path, "*.xml", SearchOption.TopDirectoryOnly);
+
             foreach (string file in loadedSheets)
-            {
                 cachedSheets.Add(LoadFromFile(file));
-            }
+            
             return cachedSheets;
         }
     }

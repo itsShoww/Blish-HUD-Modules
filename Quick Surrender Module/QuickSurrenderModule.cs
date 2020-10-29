@@ -4,11 +4,13 @@ using Blish_HUD.Input;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
+using Gw2Sharp.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.ComponentModel.Composition;
+using static Blish_HUD.GameService;
 
 namespace Nekres.Quick_Surrender_Module
 {
@@ -30,30 +32,35 @@ namespace Nekres.Quick_Surrender_Module
         [ImportingConstructor]
         public QuickSurrenderModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
 
-
         protected override void DefineSettings(SettingCollection settings) {
             SurrenderButtonEnabled = settings.DefineSetting("SurrenderButtonEnabled", true, "Show Surrender Skill",
-                "Shows a skill with a white flag to the right of your skill bar.\nClicking it defeats you. (Sends \"/gg\" into chat.)");
+                "Shows a skill with a white flag to the right of\nyour skill bar while in an instance. Clicking it defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
 
             var keyBindingCol = settings.AddSubCollection("Hotkey", true, false);
             SurrenderBinding = keyBindingCol.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.None),
-                "Surrender", "Defeats you.\n(Sends \"/gg\" into chat.)");
+                "Surrender", "Defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
         }
 
-        #region Controls
-        private Image _surrenderButton;
-        #endregion
-
         #region Textures
+
         private Texture2D _surrenderTooltip_texture;
         private Texture2D _surrenderFlag_hover;
         private Texture2D _surrenderFlag;
         private Texture2D _surrenderFlag_pressed;
+
+        #endregion
+
+        #region Controls
+
+        private Image _surrenderButton;
+
         #endregion
 
         #region Settings
+
         private SettingEntry<bool> SurrenderButtonEnabled;
         private SettingEntry<KeyBinding> SurrenderBinding;
+
         #endregion
 
         private DateTime _lastSurrenderTime;
@@ -65,7 +72,7 @@ namespace Nekres.Quick_Surrender_Module
             _lastSurrenderTime = DateTime.Now;
             _cooldown = 2000;
 
-            _surrenderButton = SurrenderButtonEnabled.Value ? BuildSurrenderButton() : null;
+            BuildSurrenderButton();
         }
 
 
@@ -81,21 +88,18 @@ namespace Nekres.Quick_Surrender_Module
             SurrenderBinding.Value.Enabled = true;
             SurrenderBinding.Value.Activated += OnSurrenderBindingActivated;
             SurrenderButtonEnabled.SettingChanged += OnSurrenderButtonEnabledSettingChanged;
-            GameService.Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
-            GameService.Gw2Mumble.IsAvailableChanged += OnIsAvailableChanged;
+
+            Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
+            GameIntegration.IsInGameChanged += OnIsInGameChanged;
+
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
 
 
         protected override void Update(GameTime gameTime) {
-            if (_surrenderButton != null)
-            {
-                _surrenderButton.Visible = GameService.GameIntegration.IsInGame;
-                _surrenderButton.Location =
-                    new Point(GameService.Graphics.SpriteScreen.Width / 2 - _surrenderButton.Width / 2 + 431,
-                        GameService.Graphics.SpriteScreen.Height - _surrenderButton.Height * 2 + 7);
-            }
+            if (_surrenderButton == null) return;
+            _surrenderButton.Location = new Point(Graphics.SpriteScreen.Width / 2 - _surrenderButton.Width / 2 + 431, Graphics.SpriteScreen.Height - _surrenderButton.Height * 2 + 7);
         }
 
 
@@ -103,8 +107,10 @@ namespace Nekres.Quick_Surrender_Module
         protected override void Unload() {
             SurrenderBinding.Value.Activated -= OnSurrenderBindingActivated;
             SurrenderButtonEnabled.SettingChanged -= OnSurrenderButtonEnabledSettingChanged;
-            GameService.Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
-            GameService.Gw2Mumble.IsAvailableChanged -= OnIsAvailableChanged;
+
+            Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
+            GameIntegration.IsInGameChanged -= OnIsInGameChanged;
+
             _surrenderButton?.Dispose();
             // All static members must be manually unset
             ModuleInstance = null;
@@ -112,41 +118,38 @@ namespace Nekres.Quick_Surrender_Module
 
 
         private void DoSurrender() {
+            if (!IsUiAvailable() || Gw2Mumble.UI.IsTextInputFocused || Gw2Mumble.CurrentMap.Type != MapType.Instance) return;
             if (DateTimeOffset.Now.Subtract(_lastSurrenderTime).TotalMilliseconds < _cooldown) {
                 ScreenNotification.ShowNotification("Skill recharging.", ScreenNotification.NotificationType.Error);
                 return;
             }
-            GameService.GameIntegration.Chat.Send("/gg");
+            GameIntegration.Chat.Send("/gg");
             _lastSurrenderTime = DateTime.Now;
         }
 
 
-        private void OnIsAvailableChanged(object o, ValueEventArgs<bool> e) {
-            _surrenderButton.Visible = e.Value;
+        private bool IsUiAvailable() => Gw2Mumble.IsAvailable && GameIntegration.IsInGame && !Gw2Mumble.UI.IsMapOpen;
+
+        private void OnSurrenderBindingActivated(object o, EventArgs e) => DoSurrender();
+
+        private void OnIsMapOpenChanged(object o, ValueEventArgs<bool> e) => ToggleSurrenderButton(!e.Value, 0.45f);
+        private void OnIsInGameChanged(object o, ValueEventArgs<bool> e) => ToggleSurrenderButton(e.Value, 0.1f);
+        private void OnSurrenderButtonEnabledSettingChanged(object o, ValueChangedEventArgs<bool> e) => ToggleSurrenderButton(e.NewValue, 0.1f);
+
+        private void ToggleSurrenderButton(bool enabled, float tDuration) {
+            if (enabled)
+                BuildSurrenderButton();
+            else if (_surrenderButton != null)
+                Animation.Tweener.Tween(_surrenderButton, new {Opacity = 0.0f}, tDuration).OnComplete(() => _surrenderButton?.Dispose());
         }
 
 
-        private void OnIsMapOpenChanged(object o, ValueEventArgs<bool> e) {
-            _surrenderButton.Visible = e.Value;
-        }
-
-
-        private void OnSurrenderBindingActivated(object o, EventArgs e) {
-            DoSurrender();
-        }
-
-
-        private void OnSurrenderButtonEnabledSettingChanged(object o, ValueChangedEventArgs<bool> e) {
-            if (e.NewValue) {
-                _surrenderButton?.Dispose();
-                _surrenderButton = BuildSurrenderButton();
-            } else
-                GameService.Animation.Tweener.Tween(_surrenderButton, new {Opacity = 0.0f}, 0.2f).OnComplete(() => _surrenderButton?.Dispose());
-        }
-
-
-        private Image BuildSurrenderButton()
+        private void BuildSurrenderButton()
         {
+            _surrenderButton?.Dispose();
+
+            if (!SurrenderButtonEnabled.Value || !IsUiAvailable() || Gw2Mumble.CurrentMap.Type != MapType.Instance) return;
+
             var tooltip_size = new Point(_surrenderTooltip_texture.Width, _surrenderTooltip_texture.Height);
             var surrenderButtonTooltip = new Tooltip
             {
@@ -158,35 +161,34 @@ namespace Nekres.Quick_Surrender_Module
                 Location = new Point(0, 0),
                 Visible = surrenderButtonTooltip.Visible
             };
-            var surrenderButton = new Image
+            _surrenderButton = new Image
             {
-                Parent = GameService.Graphics.SpriteScreen,
+                Parent = Graphics.SpriteScreen,
                 Size = new Point(45, 45),
-                Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - 22,
-                    GameService.Graphics.SpriteScreen.Height - 45),
+                Location = new Point(Graphics.SpriteScreen.Width / 2 - 22, Graphics.SpriteScreen.Height - 45),
                 Texture = _surrenderFlag,
-                Visible = SurrenderButtonEnabled.Value,
-                Tooltip = surrenderButtonTooltip
+                Tooltip = surrenderButtonTooltip,
+                Opacity = 0.0f
             };
-            surrenderButton.MouseEntered += delegate { surrenderButton.Texture = _surrenderFlag_hover; };
-            surrenderButton.MouseLeft += delegate { surrenderButton.Texture = _surrenderFlag; };
 
-            surrenderButton.LeftMouseButtonPressed += delegate
+            _surrenderButton.MouseEntered += delegate { _surrenderButton.Texture = _surrenderFlag_hover; };
+            _surrenderButton.MouseLeft += delegate { _surrenderButton.Texture = _surrenderFlag; };
+
+            _surrenderButton.LeftMouseButtonPressed += delegate
             {
-                surrenderButton.Size = new Point(43, 43);
-                surrenderButton.Texture = _surrenderFlag_pressed;
+                _surrenderButton.Size = new Point(43, 43);
+                _surrenderButton.Texture = _surrenderFlag_pressed;
             };
 
-            surrenderButton.LeftMouseButtonReleased += delegate
+            _surrenderButton.LeftMouseButtonReleased += delegate
             {
-                surrenderButton.Size = new Point(45, 45);
-                surrenderButton.Texture = _surrenderFlag;
+                _surrenderButton.Size = new Point(45, 45);
+                _surrenderButton.Texture = _surrenderFlag;
             };
 
-            surrenderButton.Click += OnSurrenderBindingActivated;
+            _surrenderButton.Click += OnSurrenderBindingActivated;
 
-            GameService.Animation.Tweener.Tween(surrenderButton, new {Opacity = 1.0f}, 0.35f);
-            return surrenderButton;
+            Animation.Tweener.Tween(_surrenderButton, new {Opacity = 1.0f}, 0.35f);
         }
     }
 

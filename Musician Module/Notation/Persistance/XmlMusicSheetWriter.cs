@@ -8,19 +8,18 @@ namespace Nekres.Musician_Module.Notation.Persistance
         public void SaveToFile(RawMusicSheet musicSheet, string path)
         {
             var xDocument = new XDocument(
-                new XElement("song",
-                    new XElement("artist", musicSheet.Artist),
-                    new XElement("title", musicSheet.Title),
-                    new XElement("user", musicSheet.User),
-                    new XElement("instrument", musicSheet.Instrument),
-                    new XElement("tempo", musicSheet.Tempo),
-                    new XElement("meter", musicSheet.Meter),
-                    new XElement("algorithm", musicSheet.Algorithm),
-                    new XElement("melody", musicSheet.Melody))
-                );
+                                new XElement("song",
+                                new XElement("artist", musicSheet.Artist),
+                                new XElement("title", musicSheet.Title),
+                                new XElement("user", musicSheet.User),
+                                new XElement("instrument", musicSheet.Instrument),
+                                new XElement("tempo", musicSheet.Tempo),
+                                new XElement("meter", musicSheet.Meter),
+                                new XElement("algorithm", musicSheet.Algorithm),
+                                new XElement("melody", musicSheet.Melody))
+                            );
 
-            using (var fileStream = File.Open(path, FileMode.Create))
-            {
+            using (var fileStream = File.Open(path, FileMode.Create)) {
                 xDocument.Save(fileStream);
             }
         }

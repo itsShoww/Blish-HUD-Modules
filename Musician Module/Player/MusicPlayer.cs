@@ -10,10 +10,9 @@ namespace Nekres.Musician_Module.Player
     {
         public Thread Worker { get; private set; }
         public IPlayAlgorithm Algorithm { get; private set; }
-        public void Dispose()
-        {
-            Algorithm.Dispose();
-        }
+
+        public void Dispose() => Algorithm.Dispose();
+        
         public MusicPlayer(MusicSheet musicSheet, Instrument instrument, IPlayAlgorithm algorithm)
         {
             Algorithm = algorithm;

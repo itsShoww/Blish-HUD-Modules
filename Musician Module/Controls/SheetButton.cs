@@ -19,6 +19,9 @@ namespace Nekres.Musician_Module.Controls {
 
         public string Artist { get; set; }
         public string User { get; set; }
+
+        #region Textures
+
         private readonly Texture2D BeatmaniaSprite;
         private readonly Texture2D GlowBeatmaniaSprite;
         private readonly Texture2D AutoplaySprite;
@@ -31,6 +34,8 @@ namespace Nekres.Musician_Module.Controls {
         private readonly Texture2D DividerSprite;
         private readonly Texture2D IconBoxSprite;
 
+        #endregion
+
         private bool _isPreviewing;
         public bool IsPreviewing
         {
@@ -42,6 +47,8 @@ namespace Nekres.Musician_Module.Controls {
                 Invalidate();
             }
         }
+
+
         private RawMusicSheet _musicSheet;
         public RawMusicSheet MusicSheet
         {
@@ -54,6 +61,8 @@ namespace Nekres.Musician_Module.Controls {
                 OnPropertyChanged();
             }
         }
+
+
         public SheetButton()
         {
             BeatmaniaSprite = BeatmaniaSprite ?? MusicianModule.ModuleInstance.ContentsManager.GetTexture("beatmania.png");
@@ -71,6 +80,9 @@ namespace Nekres.Musician_Module.Controls {
             this.MouseLeft += SheetButton_MouseLeft;
             this.Size = new Point(SHEETBUTTON_WIDTH, SHEETBUTTON_HEIGHT);
         }
+
+        #region Mouse Interaction
+
         private bool _mouseOverPlay = false;
         public bool MouseOverPlay
         {
@@ -106,52 +118,42 @@ namespace Nekres.Musician_Module.Controls {
         }
         private void SheetButton_MouseLeft(object sender, MouseEventArgs e)
         {
-            this.MouseOverPlay = false;
-            this.MouseOverEmulate = false;
+            MouseOverPlay = false;
+            MouseOverEmulate = false;
         }
         private void SheetButton_MouseMoved(object sender, MouseEventArgs e)
         {
-            var relPos = e.MouseState.Position - this.AbsoluteBounds.Location;
+            var relPos = GameService.Input.Mouse.State.Position - AbsoluteBounds.Location;
 
-            if (this.MouseOver && relPos.Y > this.Height - BOTTOMSECTION_HEIGHT) {
-
-                this.MouseOverPreview = relPos.X < (SHEETBUTTON_WIDTH - 36 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 36);
-                this.MouseOverPlay = relPos.X < (SHEETBUTTON_WIDTH - 73 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 73);
-                this.MouseOverEmulate = relPos.X < (SHEETBUTTON_WIDTH - 109 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 109);
+            if (MouseOver && relPos.Y > this.Height - BOTTOMSECTION_HEIGHT) {
+                MouseOverPreview = relPos.X < (SHEETBUTTON_WIDTH - 36 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 36);
+                MouseOverPlay = relPos.X < (SHEETBUTTON_WIDTH - 73 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 73);
+                MouseOverEmulate = relPos.X < (SHEETBUTTON_WIDTH - 109 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 109);
             } else {
-
-                this.MouseOverPlay = false;
-                this.MouseOverEmulate = false;
-                this.MouseOverPreview = false;
+                MouseOverPlay = false;
+                MouseOverEmulate = false;
+                MouseOverPreview = false;
             }
 
-            if (this.MouseOverPlay)
-            {
-
-                this.BasicTooltipText = $"Practice mode (Synthesia)";
-
-            }
-            else if (this.MouseOverEmulate)
-            {
-
-                this.BasicTooltipText = $"Emulate keys (Autoplay)";
-
-            }
-            else if (this.MouseOverPreview)
-            {
-                this.BasicTooltipText = "Preview";
-            } else {
-                this.BasicTooltipText = this.Title;
-            }
+            if (MouseOverPlay)
+                BasicTooltipText = $"Practice mode (Synthesia)";
+            else if (MouseOverEmulate)
+                BasicTooltipText = $"Emulate keys (Autoplay)";
+            else if (MouseOverPreview)
+                BasicTooltipText = "Preview";
+            else
+                BasicTooltipText = Title;
         }
 
         protected override CaptureType CapturesInput() {
             return CaptureType.Mouse | CaptureType.Filter;
         }
 
+        #endregion
+
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds)
         {
-            int iconSize = this.IconSize == DetailsIconSize.Large ? SHEETBUTTON_HEIGHT : SHEETBUTTON_HEIGHT - BOTTOMSECTION_HEIGHT;
+            int iconSize = IconSize == DetailsIconSize.Large ? SHEETBUTTON_HEIGHT : SHEETBUTTON_HEIGHT - BOTTOMSECTION_HEIGHT;
 
             // Draw background
             spriteBatch.DrawOnCtrl(this, BackgroundSprite, bounds, Color.Black * 0.25f);
@@ -160,9 +162,9 @@ namespace Nekres.Musician_Module.Controls {
             spriteBatch.DrawOnCtrl(this, BackgroundSprite, new Rectangle(0, bounds.Height - BOTTOMSECTION_HEIGHT, bounds.Width - BOTTOMSECTION_HEIGHT, BOTTOMSECTION_HEIGHT), Color.Black * 0.1f);
 
             // Draw preview icon
-            if (this._mouseOverPreview)
+            if (_mouseOverPreview)
             {
-                if (this.IsPreviewing) {
+                if (IsPreviewing) {
                     spriteBatch.DrawOnCtrl(this, GlowStopSprite, new Rectangle(SHEETBUTTON_WIDTH - 36, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White);
                 } else {
                 spriteBatch.DrawOnCtrl(this, GlowPlaySprite, new Rectangle(SHEETBUTTON_WIDTH - 36, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White);
@@ -170,40 +172,33 @@ namespace Nekres.Musician_Module.Controls {
             }
             else
             {
-                if (this.IsPreviewing)
-                {
+                if (IsPreviewing)
                     spriteBatch.DrawOnCtrl(this, StopSprite, new Rectangle(SHEETBUTTON_WIDTH - 36, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White);
-                }
                 else
-                {
                     spriteBatch.DrawOnCtrl(this, PlaySprite, new Rectangle(SHEETBUTTON_WIDTH - 36, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White);
-                }
             }
 
             // Draw beatmania icon
-            if (this._mouseOverPlay)
-            {
+            if (_mouseOverPlay)
                 spriteBatch.DrawOnCtrl(this, GlowBeatmaniaSprite, new Rectangle(SHEETBUTTON_WIDTH - 73, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White);
-            } else {
+            else
                 spriteBatch.DrawOnCtrl(this, BeatmaniaSprite, new Rectangle(SHEETBUTTON_WIDTH - 73, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White);
-            }
 
-            if (this._mouseOverEmulate)
-            {
+            if (_mouseOverEmulate)
                 spriteBatch.DrawOnCtrl(this, GlowAutoplaySprite, new Rectangle(SHEETBUTTON_WIDTH - 109, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White);
-            } else {
+            else
                 spriteBatch.DrawOnCtrl(this, AutoplaySprite, new Rectangle(SHEETBUTTON_WIDTH - 109, bounds.Height - BOTTOMSECTION_HEIGHT + 1, 32, 32), Color.White);
-            }
+            
             // Draw bottom section seperator
             spriteBatch.DrawOnCtrl(this, DividerSprite, new Rectangle(0, bounds.Height - 40, bounds.Width, 8), Color.White);
 
             // Draw instrument icon
-            if (this.Icon != null)
-            {
+            if (Icon != null) {
                 spriteBatch.DrawOnCtrl(this, this.Icon, new Rectangle((bounds.Height - BOTTOMSECTION_HEIGHT) / 2 - 32, (bounds.Height - 35) / 2 - 32, 64, 64), Color.White);
                 // Draw icon box
                 spriteBatch.DrawOnCtrl(this, IconBoxSprite, new Rectangle(0, 0, iconSize, iconSize), Color.White);
             }
+
             // Wrap text
             string track = Title + @" - " + Artist;
             string wrappedText = Blish_HUD.DrawUtil.WrapText(Content.DefaultFont14, track, SHEETBUTTON_WIDTH - 40 - iconSize - 20);

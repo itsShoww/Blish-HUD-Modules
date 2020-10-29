@@ -12,6 +12,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Timers;
+using static Blish_HUD.GameService;
 
 namespace Nekres.Random_Generator_Module
 {
@@ -31,76 +32,128 @@ namespace Nekres.Random_Generator_Module
 
         #endregion
 
-        internal List<Texture2D> _dieTextures = new List<Texture2D>();
-        //internal List<Texture2D> _coinTextures = new List<Texture2D>();
-
-        private Panel Die;
-        private SettingEntry<int> DieSides;
-
-        private SettingEntry<bool> ShowDie;
-
         [ImportingConstructor]
-        public RandomGeneratorModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters)
-        {
-            ModuleInstance = this;
-        }
+        public RandomGeneratorModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
 
         protected override void DefineSettings(SettingCollection settings)
         {
+            ShowDie = settings.DefineSetting("ShowDie", true, "Show Die", "Shows a die.");
             var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
-            ShowDie = selfManagedSettings.DefineSetting("ShowDie", true, "Show Die", "Shows a die");
             DieSides = selfManagedSettings.DefineSetting("DieSides", 6, "Die Sides", "Indicates the amount of sides the die has.");
         }
 
+        #region Textures
+
+        private List<Texture2D> _dieTextures = new List<Texture2D>();
+        //private List<Texture2D> _coinTextures = new List<Texture2D>();
+
+        #endregion
+
+        #region Controls
+
+        private Panel Die;
+
+        #endregion
+
+        #region Settings
+
+        private SettingEntry<int> DieSides;
+        private SettingEntry<bool> ShowDie;
+
+        #endregion
+
+
         protected override void Initialize()
         {
+            LoadTextures();
+
+            CreateDie();
+        }
+
+
+        private void LoadTextures() {
             for (var i = 0; i < 7; i++) _dieTextures.Add(ContentsManager.GetTexture($"dice/side{i}.png"));
 
             /*_coinTextures.Add(ContentsManager.GetTexture("coin/heads.png"));
             _coinTextures.Add(ContentsManager.GetTexture("coin/tails.png"));*/
         }
 
-        protected override async Task LoadAsync()
-        {
-            /* NOOP */
-        }
 
         protected override void OnModuleLoaded(EventArgs e)
         {
-            DieSides.Value = DieSides.Value > 100 || DieSides.Value < 2 ? 6 : DieSides.Value;
-            Die = ShowDie.Value ? CreateDie() : null;
+            ShowDie.SettingChanged += OnShowDieSettingChanged;
+
+            Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
+            GameIntegration.IsInGameChanged += OnIsInGameChanged;
 
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
 
-        private Panel CreateDie()
+
+        protected override void Update(GameTime gameTime)
         {
+            if (Die == null) return;
+            Die.Location = new Point(Graphics.SpriteScreen.Width - 480, Graphics.SpriteScreen.Height - Die.Height - 25);
+        }
+
+        /// <inheritdoc />
+        protected override void Unload()
+        {
+            ShowDie.SettingChanged -= OnShowDieSettingChanged;
+            Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
+            GameIntegration.IsInGameChanged -= OnIsInGameChanged;
+            Die?.Dispose();
+            _dieTextures.Clear();
+            _dieTextures = null;
+            // All static members must be manually unset
+            ModuleInstance = null;
+        }
+        
+        private bool IsUiAvailable() => Gw2Mumble.IsAvailable && GameIntegration.IsInGame && !Gw2Mumble.UI.IsMapOpen;
+
+        private void OnIsMapOpenChanged(object o, ValueEventArgs<bool> e) => ToggleControls(!e.Value, 0.45f);
+        private void OnIsInGameChanged(object o, ValueEventArgs<bool> e) => ToggleControls(e.Value, 0.1f);
+        private void OnShowDieSettingChanged(object o, ValueChangedEventArgs<bool> e) => ToggleControls(e.NewValue, 0.1f);
+
+        private void ToggleControls(bool enabled, float tDuration) {
+            if (enabled)
+                CreateDie();
+            else if (Die != null)
+                Animation.Tweener.Tween(Die, new {Opacity = 0.0f}, tDuration).OnComplete(() => Die?.Dispose());
+        }
+
+        private void CreateDie()
+        {
+            Die?.Dispose();
+
+            if (!ShowDie.Value || !IsUiAvailable()) return;
+
+            DieSides.Value = DieSides.Value > 100 || DieSides.Value < 2 ? 6 : DieSides.Value;
+
             var rolling = false;
-            var _die = new Panel
+            Die = new Panel
             {
-                Parent = GameService.Graphics.SpriteScreen,
+                Parent = Graphics.SpriteScreen,
                 Size = new Point(64, 64),
                 Location = new Point(0, 0),
-                Opacity = 0.4f,
-                Visible = false
+                Opacity = 0.0f
             };
             var dieImage = new Image
             {
-                Parent = _die,
+                Parent = Die,
                 Texture = _dieTextures[0],
                 Size = new Point(64, 64),
                 Location = new Point(0, 0)
             };
             var dieLabel = new Label
             {
-                Parent = _die,
-                Size = _die.Size,
+                Parent = Die,
+                Size = Die.Size,
                 Location = new Point(0, 0),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Middle,
-                Font = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size22,
-                    ContentService.FontStyle.Regular),
+                Font = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size22, ContentService.FontStyle.Regular),
                 ShowShadow = true,
                 TextColor = Color.Black,
                 ShadowColor = Color.Black,
@@ -128,18 +181,17 @@ namespace Nekres.Random_Generator_Module
             ApplyDieValue();
 
             var dieSettingsOpen = false;
-            _die.RightMouseButtonPressed += delegate
+            Die.RightMouseButtonPressed += delegate
             {
                 if (rolling || dieSettingsOpen) return;
                 dieSettingsOpen = true;
                 var sidesTotalPanel = new Panel
                 {
-                    Parent = GameService.Graphics.SpriteScreen,
+                    Parent = Graphics.SpriteScreen,
                     Size = new Point(200, 120),
-                    Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - 100,
-                        GameService.Graphics.SpriteScreen.Height / 2 - 60),
+                    Location = new Point(Graphics.SpriteScreen.Width / 2 - 100, Graphics.SpriteScreen.Height / 2 - 60),
                     Opacity = 0.0f,
-                    BackgroundTexture = GameService.Content.GetTexture("controls/window/502049"),
+                    BackgroundTexture = Content.GetTexture("controls/window/502049"),
                     ShowBorder = true,
                     Title = "Die Sides"
                 };
@@ -168,20 +220,22 @@ namespace Nekres.Random_Generator_Module
                     DieSides.Value = counter.Value;
                     dieSettingsOpen = false;
                     ApplyDieValue(true);
-                    GameService.Animation.Tweener.Tween(sidesTotalPanel, new {Opacity = 0.0f}, 0.2f)
-                        .OnComplete(() => { sidesTotalPanel.Dispose(); });
+                    Animation.Tweener.Tween(sidesTotalPanel, new {Opacity = 0.0f}, 0.2f)
+                                     .OnComplete(() => { sidesTotalPanel.Dispose(); });
                 };
-                GameService.Animation.Tweener.Tween(sidesTotalPanel, new {Opacity = 1.0f}, 0.2f);
+                Animation.Tweener.Tween(sidesTotalPanel, new {Opacity = 1.0f}, 0.2f);
             };
-            _die.MouseEntered += delegate
+
+            Die.MouseEntered += delegate
             {
-                GameService.Animation.Tweener.Tween(_die, new {Opacity = 1.0f}, 0.45f);
+                Animation.Tweener.Tween(Die, new {Opacity = 1.0f}, 0.45f);
             };
-            _die.MouseLeft += delegate
+            Die.MouseLeft += delegate
             {
-                GameService.Animation.Tweener.Tween(_die, new {Opacity = 0.4f}, 0.45f);
+                Animation.Tweener.Tween(Die, new {Opacity = 0.4f}, 0.45f);
             };
-            _die.LeftMouseButtonPressed += delegate
+
+            Die.LeftMouseButtonPressed += delegate
             {
                 if (rolling || dieSettingsOpen) return;
                 rolling = true;
@@ -204,10 +258,10 @@ namespace Nekres.Random_Generator_Module
                         interval?.Dispose();
                         duration?.Stop();
                         duration = null;
-                        GameService.GameIntegration.Chat.Send($"/me rolls {value} on a {DieSides.Value} sided die.");
+                        if (!Gw2Mumble.UI.IsTextInputFocused)
+                            GameIntegration.Chat.Send($"/me rolls {value} on a {DieSides.Value} sided die.");
                         ScreenNotification.ShowNotification(
-                            $"{(GameService.Gw2Mumble.IsAvailable ? GameService.Gw2Mumble.PlayerCharacter.Name : "You")} rolls {value} on a {DieSides.Value} sided die.");
-
+                            $"{(Gw2Mumble.IsAvailable ? Gw2Mumble.PlayerCharacter.Name : "You")} rolls {value} on a {DieSides.Value} sided die.");
                         rolling = false;
                         worker.Dispose();
                     }
@@ -215,28 +269,7 @@ namespace Nekres.Random_Generator_Module
                 interval.Start();
                 duration.Start();
             };
-            return _die;
-        }
-
-        protected override void Update(GameTime gameTime)
-        {
-            if (Die != null)
-            {
-                Die.Visible = GameService.GameIntegration.IsInGame;
-                Die.Location = new Point(GameService.Graphics.SpriteScreen.Width - 480,
-                    GameService.Graphics.SpriteScreen.Height - Die.Height - 25);
-            }
-        }
-
-        /// <inheritdoc />
-        protected override void Unload()
-        {
-            // Unload
-            Die?.Dispose();
-            _dieTextures.Clear();
-            _dieTextures = null;
-            // All static members must be manually unset
-            ModuleInstance = null;
+            Animation.Tweener.Tween(Die, new {Opacity = 0.4f}, 0.35f);
         }
     }
 }

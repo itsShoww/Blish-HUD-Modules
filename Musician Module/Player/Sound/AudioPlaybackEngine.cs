@@ -14,10 +14,7 @@ namespace Nekres.Musician_Module.Player.Sound
         public AudioPlaybackEngine()
         {
             _outputDevice = new WaveOutEvent();
-            _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 2))
-            {
-                ReadFully = true
-            };
+            _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(44100, 2)) { ReadFully = true };
 
             _outputDevice.Init(new SampleToWaveProvider(new VolumeSampleProvider(_mixer){ Volume = 0.2f }));
             _outputDevice.Play();
@@ -44,27 +41,18 @@ namespace Nekres.Musician_Module.Player.Sound
         private ISampleProvider ConvertToRightChannelCount(ISampleProvider input)
         {
             if (input.WaveFormat.Channels == _mixer.WaveFormat.Channels)
-            {
                 return input;
-            }
+
             if (input.WaveFormat.Channels == 1 && _mixer.WaveFormat.Channels == 2)
-            {
                 return new MonoToStereoSampleProvider(input);
-            }
 
             throw new NotImplementedException();
         }
 
         private void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                if (_outputDevice != null)
-                {
-                    _outputDevice.Dispose();
-                    _outputDevice = null;
-                }
-            }
+            if (!disposing) return;
+            _outputDevice?.Dispose();
         }
     }
 }
