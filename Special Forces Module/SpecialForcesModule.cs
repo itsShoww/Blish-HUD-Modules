@@ -6,11 +6,11 @@ using Blish_HUD.Input;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
-using Gw2Sharp;
 using Gw2Sharp.Models;
 using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Nekres.Special_Forces_Module.Controls;
 using Nekres.Special_Forces_Module.Persistance;
 using Nekres.Special_Forces_Module.Player;
@@ -21,7 +21,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.Xna.Framework.Input;
 
 namespace Nekres.Special_Forces_Module
 {

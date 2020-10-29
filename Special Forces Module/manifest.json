@@ -7,12 +7,14 @@
 
   "description": "This module helps you maximize your effectiveness.",
   "dependencies": {
-    "bh.blishhud": ">=0.6.0"
+    "bh.blishhud": ">=0.7.0"
   },
   "url": "https://github.com/blish-hud",
-  "author": {
-    "name": "Nekres",
-    "username": "Nekres.1038"
-  },
+  "contributors": [
+    {
+      "name": "Nekres",
+      "username": "Nekres.1038"
+    }
+  ],
   "directories": [ "specialforces" ]
 }

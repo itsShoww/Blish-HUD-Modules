@@ -7,11 +7,13 @@
 
   "description": "Customize the soundtrack of the game. Create dynamic playlists depending on context.",
   "dependencies": {
-    "bh.blishhud": ">=0.6.0"
+    "bh.blishhud": ">=0.7.0"
   },
-  "url": "",
-  "author": {
-    "name": "Nekres",
-    "username": "Nekres.1038"
-  }
+  "url": "https://github.com/blish-hud/",
+  "contributors": [
+    {
+      "name": "Nekres",
+      "username": "Nekres.1038"
+    }
+  ]
 }

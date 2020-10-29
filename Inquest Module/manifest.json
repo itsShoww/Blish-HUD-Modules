@@ -7,11 +7,13 @@
 
   "description": "A set of electronic components used in integrated circuits by the Asuran Inquisition:\n    -Emote Panel\n    -Kill Proof Deceiver\n    -Map Instance Queue\n    -Surrender Button\n    -Skill Frames",
   "dependencies": {
-    "bh.blishhud": ">=0.6.0"
+    "bh.blishhud": ">=0.7.0"
   },
   "url": "https://github.com/blish-hud",
-  "author": {
-    "name": "Nekres",
-    "username": "Nekres.1038"
-  }
+  "contributors": [
+    {
+      "name": "Nekres",
+      "username": "Nekres.1038"
+    }
+  ]
 }

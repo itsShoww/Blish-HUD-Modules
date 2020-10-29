@@ -6,11 +6,16 @@
   "manifest_version": 1,
 
   "description": "Create, share and play sheet music.",
-  "url": "https://github.com/blish-hud/Blish-HUD",
-  "author": {
-    "name": "Nekres",
-    "username": "Nekres.1038"
+  "url": "https://github.com/blish-hud/",
+  "dependencies": {
+    "bh.blishhud": ">=0.7.0"
   },
+  "contributors": [
+    {
+      "name": "Nekres",
+      "username": "Nekres.1038"
+    }
+  ],
   "directories": [ "musician" ],
   "enabled_without_gw2": false,
   "api_permissions": {

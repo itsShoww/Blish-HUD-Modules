@@ -6,11 +6,13 @@
   "manifest_version": 1,
   "description": "Shows tips, Tyrian knowledge, narrations, and character quizzes during the loading screen.",
   "dependencies": {
-    "bh.blishhud": ">=0.6.0"
+    "bh.blishhud": ">=0.7.0"
   },
   "url": "https://github.com/blish-hud/",
-  "author": {
-    "name": "Nekres",
-    "username": "Nekres.1038"
-  }
+  "contributors": [
+    {
+      "name": "Nekres",
+      "username": "Nekres.1038"
+    }
+  ]
 }
