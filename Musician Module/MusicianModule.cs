@@ -76,16 +76,8 @@ namespace Nekres.Musician_Module
 
         internal MusicPlayer MusicPlayer { get; private set; }
 
-
-        /// <summary>
-        /// Ideally you should keep the constructor as is.
-        /// Use <see cref="Initialize"/> to handle initializing the module.
-        /// </summary>
         [ImportingConstructor]
-        public MusicianModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters)
-        {
-            ModuleInstance = this;
-        }
+        public MusicianModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
 
         #region Settings
 
@@ -136,6 +128,7 @@ namespace Nekres.Musician_Module
 
         protected override void Unload()
         {
+            MusicPlayerFactory.Dispose();
             _stopButton?.Dispose();
             Conveyor?.Dispose();
             StopPlayback(null, null);

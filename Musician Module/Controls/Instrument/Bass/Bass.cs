@@ -10,9 +10,10 @@ namespace Nekres.Musician_Module.Controls.Instrument
 {
     public class Bass : Instrument
     {
-        private static readonly TimeSpan NoteTimeout = TimeSpan.FromMilliseconds(5);
-        private static readonly TimeSpan OctaveTimeout = TimeSpan.FromTicks(500);
-        private static readonly Dictionary<BassNote.Keys, GuildWarsControls> NoteMap = new Dictionary<BassNote.Keys, GuildWarsControls>
+        private readonly TimeSpan NoteTimeout = TimeSpan.FromMilliseconds(5);
+        private readonly TimeSpan OctaveTimeout = TimeSpan.FromTicks(500);
+
+        private readonly Dictionary<BassNote.Keys, GuildWarsControls> NoteMap = new Dictionary<BassNote.Keys, GuildWarsControls>
         {
             {BassNote.Keys.Note1, GuildWarsControls.WeaponSkill1},
             {BassNote.Keys.Note2, GuildWarsControls.WeaponSkill2},
@@ -23,8 +24,14 @@ namespace Nekres.Musician_Module.Controls.Instrument
             {BassNote.Keys.Note7, GuildWarsControls.UtilitySkill1},
             {BassNote.Keys.Note8, GuildWarsControls.UtilitySkill2}
         };
+
         private BassNote.Octaves CurrentOctave = BassNote.Octaves.Low;
-        public Bass() { this.Preview = new BassPreview(); }
+
+        public Bass() {
+            Preview = new BassPreview();
+        }
+
+
         public override void PlayNote(Note note)
         {
             var bassNote = BassNote.From(note);
@@ -42,6 +49,7 @@ namespace Nekres.Musician_Module.Controls.Instrument
                 }
             }
         }
+
 
         public override void GoToOctave(Note note)
         {
@@ -65,10 +73,12 @@ namespace Nekres.Musician_Module.Controls.Instrument
             }
         }
 
+
         private static bool RequiresAction(BassNote bassNote)
         {
             return bassNote.Key != BassNote.Keys.None;
         }
+
 
         private BassNote OptimizeNote(BassNote note)
         {
@@ -82,6 +92,7 @@ namespace Nekres.Musician_Module.Controls.Instrument
             }
             return note;
         }
+
 
         private void IncreaseOctave()
         {
@@ -101,6 +112,7 @@ namespace Nekres.Musician_Module.Controls.Instrument
             Thread.Sleep(OctaveTimeout);
         }
 
+
         private void DecreaseOctave()
         {
             switch (CurrentOctave)
@@ -119,11 +131,17 @@ namespace Nekres.Musician_Module.Controls.Instrument
             Thread.Sleep(OctaveTimeout);
         }
 
+
         private void PressNote(GuildWarsControls key)
         {
             PressKey(key, CurrentOctave.ToString());
 
             Thread.Sleep(NoteTimeout);
+        }
+
+
+        public override void Dispose() {
+            Preview?.Dispose();
         }
     }
 }

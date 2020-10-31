@@ -11,7 +11,7 @@ namespace Nekres.Musician_Module.Player.Algorithms
     public class FavorNotesAlgorithm : IPlayAlgorithm
     {
         private bool Abort = false;
-        public void Dispose() { this.Abort = true; }
+        public void Dispose() { Abort = true; }
         public void Play(Instrument instrument, MetronomeMark metronomeMark, ChordOffset[] melody)
         {
             PrepareChordsOctave(instrument, melody[0].Chord);
@@ -21,7 +21,7 @@ namespace Nekres.Musician_Module.Player.Algorithms
 
             for (var strumIndex = 0; strumIndex < melody.Length;)
             {
-                if (this.Abort) return;
+                if (Abort) return;
 
                 var strum = melody[strumIndex];
 

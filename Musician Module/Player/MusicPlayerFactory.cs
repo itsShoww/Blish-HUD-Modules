@@ -1,12 +1,8 @@
-﻿using System;
-using Nekres.Musician_Module.Controls.Instrument;
+﻿using Nekres.Musician_Module.Controls.Instrument;
 using Nekres.Musician_Module.Notation.Parsers;
 using Nekres.Musician_Module.Notation.Persistance;
 using Nekres.Musician_Module.Player.Algorithms;
 using System.Collections.Generic;
-using Blish_HUD.Controls.Intern;
-using Blish_HUD;
-
 namespace Nekres.Musician_Module.Player
 {
     internal static class MusicPlayerFactory
@@ -21,10 +17,22 @@ namespace Nekres.Musician_Module.Player
             { "bell", new Bell() },
             { "bell2", new Bell2() },
         };
+
+
+        internal static void Dispose() {
+            foreach (var instrument in InstrumentRepository)
+                instrument.Value?.Dispose();
+            InstrumentRepository?.Clear();
+            InstrumentRepository = null;
+        }
+
+
         internal static MusicPlayer Create(RawMusicSheet rawMusicSheet, InstrumentMode mode)
         {
             return MusicBoxNotationMusicPlayerFactory(rawMusicSheet, mode);
         }
+
+
         private static MusicPlayer MusicBoxNotationMusicPlayerFactory(RawMusicSheet rawMusicSheet, InstrumentMode mode)
         {
             var musicSheet = new MusicSheetParser(new ChordParser(new NoteParser(), rawMusicSheet.Instrument)).Parse(

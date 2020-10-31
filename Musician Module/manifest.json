@@ -1,6 +1,6 @@
 {
   "name": "Musician",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "namespace": "Nekres.Musician_Module",
   "package": "Musician Module.dll",
   "manifest_version": 1,

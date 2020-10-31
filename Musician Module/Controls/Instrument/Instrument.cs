@@ -1,6 +1,5 @@
 ﻿using System;
 using Nekres.Musician_Module.Domain.Values;
-using Blish_HUD;
 using Blish_HUD.Controls.Intern;
 using System.Collections.Generic;
 using Blish_HUD.Controls.Extern;
@@ -23,7 +22,7 @@ namespace Nekres.Musician_Module.Controls.Instrument
         Emulate
     }
 
-    public abstract class Instrument
+    public abstract class Instrument : IDisposable
     {
         protected static readonly Dictionary<GuildWarsControls, VirtualKeyShort> VirtualKeyShorts = new Dictionary<GuildWarsControls, VirtualKeyShort>
         {
@@ -76,5 +75,6 @@ namespace Nekres.Musician_Module.Controls.Instrument
         }
         public abstract void PlayNote(Note note);
         public abstract void GoToOctave(Note note);
+        public abstract void Dispose();
     }
 }

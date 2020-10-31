@@ -9,9 +9,10 @@ namespace Nekres.Musician_Module.Controls.Instrument
 {
     public class Bell2 : Instrument
     {
-        private static readonly TimeSpan NoteTimeout = TimeSpan.FromMilliseconds(5);
-        private static readonly TimeSpan OctaveTimeout = TimeSpan.FromTicks(500);
-        private static readonly Dictionary<Bell2Note.Keys, GuildWarsControls> NoteMap = new Dictionary<Bell2Note.Keys, GuildWarsControls>
+        private readonly TimeSpan NoteTimeout = TimeSpan.FromMilliseconds(5);
+        private readonly TimeSpan OctaveTimeout = TimeSpan.FromTicks(500);
+
+        private readonly Dictionary<Bell2Note.Keys, GuildWarsControls> NoteMap = new Dictionary<Bell2Note.Keys, GuildWarsControls>
         {
             {Bell2Note.Keys.Note1, GuildWarsControls.WeaponSkill1},
             {Bell2Note.Keys.Note2, GuildWarsControls.WeaponSkill2},
@@ -22,8 +23,14 @@ namespace Nekres.Musician_Module.Controls.Instrument
             {Bell2Note.Keys.Note7, GuildWarsControls.UtilitySkill1},
             {Bell2Note.Keys.Note8, GuildWarsControls.UtilitySkill2}
         };
+
         private Bell2Note.Octaves CurrentOctave = Bell2Note.Octaves.Low;
-        public Bell2(){ this.Preview = new Bell2Preview(); }
+
+        public Bell2(){
+            Preview = new Bell2Preview();
+        }
+
+
         public override void PlayNote(Note note)
         {
             var bell2Note = Bell2Note.From(note);
@@ -41,6 +48,8 @@ namespace Nekres.Musician_Module.Controls.Instrument
                 }
             }
         }
+
+
         public override void GoToOctave(Note note)
         {
             var bell2Note = Bell2Note.From(note);
@@ -62,10 +71,14 @@ namespace Nekres.Musician_Module.Controls.Instrument
                 }
             }
         }
+
+
         private static bool RequiresAction(Bell2Note bell2Note)
         {
             return bell2Note.Key != Bell2Note.Keys.None;
         }
+
+
         private Bell2Note OptimizeNote(Bell2Note note)
         {
             if (note.Equals(new Bell2Note(Bell2Note.Keys.Note1, Bell2Note.Octaves.High)) && CurrentOctave == Bell2Note.Octaves.Low)
@@ -78,6 +91,8 @@ namespace Nekres.Musician_Module.Controls.Instrument
             }
             return note;
         }
+
+
         private void IncreaseOctave()
         {
             switch (CurrentOctave)
@@ -95,6 +110,8 @@ namespace Nekres.Musician_Module.Controls.Instrument
 
             Thread.Sleep(OctaveTimeout);
         }
+
+
         private void DecreaseOctave()
         {
             switch (CurrentOctave)
@@ -112,10 +129,17 @@ namespace Nekres.Musician_Module.Controls.Instrument
 
             Thread.Sleep(OctaveTimeout);
         }
+
+
         private void PressNote(GuildWarsControls key)
         {
             PressKey(key, CurrentOctave.ToString());
             Thread.Sleep(NoteTimeout);
+        }
+
+
+        public override void Dispose() {
+            Preview?.Dispose();
         }
     }
 }

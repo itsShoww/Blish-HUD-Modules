@@ -9,9 +9,10 @@ namespace Nekres.Musician_Module.Controls.Instrument
 {
     public class Horn : Instrument
     {
-        private static readonly TimeSpan NoteTimeout = TimeSpan.FromMilliseconds(5);
-        private static readonly TimeSpan OctaveTimeout = TimeSpan.FromTicks(500);
-        private static readonly Dictionary<HornNote.Keys, GuildWarsControls> NoteMap = new Dictionary<HornNote.Keys, GuildWarsControls>
+        private readonly TimeSpan NoteTimeout = TimeSpan.FromMilliseconds(5);
+        private readonly TimeSpan OctaveTimeout = TimeSpan.FromTicks(500);
+
+        private readonly Dictionary<HornNote.Keys, GuildWarsControls> NoteMap = new Dictionary<HornNote.Keys, GuildWarsControls>
         {
             {HornNote.Keys.Note1, GuildWarsControls.WeaponSkill1},
             {HornNote.Keys.Note2, GuildWarsControls.WeaponSkill2},
@@ -22,8 +23,14 @@ namespace Nekres.Musician_Module.Controls.Instrument
             {HornNote.Keys.Note7, GuildWarsControls.UtilitySkill1},
             {HornNote.Keys.Note8, GuildWarsControls.UtilitySkill2}
         };
+
         private HornNote.Octaves CurrentOctave = HornNote.Octaves.Low;
-        public Horn() { this.Preview = new HornPreview(); }
+
+        public Horn() { 
+            Preview = new HornPreview(); 
+        }
+
+
         public override void PlayNote(Note note)
         {
             var hornNote = HornNote.From(note);
@@ -41,6 +48,8 @@ namespace Nekres.Musician_Module.Controls.Instrument
                 }
             }
         }
+
+
         public override void GoToOctave(Note note)
         {
             var hornNote = HornNote.From(note);
@@ -62,10 +71,14 @@ namespace Nekres.Musician_Module.Controls.Instrument
                 }
             }
         }
+
+
         private static bool RequiresAction(HornNote hornNote)
         {
             return hornNote.Key != HornNote.Keys.None;
         }
+
+
         private HornNote OptimizeNote(HornNote note)
         {
             if (note.Equals(new HornNote(HornNote.Keys.Note1, HornNote.Octaves.High)) && CurrentOctave == HornNote.Octaves.Middle)
@@ -86,6 +99,8 @@ namespace Nekres.Musician_Module.Controls.Instrument
             }
             return note;
         }
+
+
         private void IncreaseOctave()
         {
             switch (CurrentOctave)
@@ -106,6 +121,7 @@ namespace Nekres.Musician_Module.Controls.Instrument
 
             Thread.Sleep(OctaveTimeout);
         }
+
 
         private void DecreaseOctave()
         {
@@ -128,10 +144,16 @@ namespace Nekres.Musician_Module.Controls.Instrument
             Thread.Sleep(OctaveTimeout);
         }
 
+
         private void PressNote(GuildWarsControls key)
         {
             PressKey(key, CurrentOctave.ToString());
             Thread.Sleep(NoteTimeout);
+        }
+
+
+        public override void Dispose() {
+            Preview?.Dispose();
         }
     }
 }

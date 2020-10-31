@@ -1,12 +1,12 @@
+using System;
 using System.Collections.Generic;
 using Blish_HUD.Controls.Intern;
-using Nekres.Musician_Module.Player.Sound;
-using NAudio.Vorbis;
+using CSCore.Codecs.OGG;
 namespace Nekres.Musician_Module.Controls.Instrument
 {
-    public class HornSoundRepository
+    public class HornSoundRepository : IDisposable
     {
-        private static readonly Dictionary<string, string> Map = new Dictionary<string, string>
+        private readonly Dictionary<string, string> Map = new Dictionary<string, string>
         {
             // Low Octave
             {$"{GuildWarsControls.WeaponSkill1}{HornNote.Octaves.Low}", "E3"},
@@ -37,40 +37,50 @@ namespace Nekres.Musician_Module.Controls.Instrument
             {$"{GuildWarsControls.UtilitySkill2}{HornNote.Octaves.High}", "E6"}
         };
 
-        private static readonly Dictionary<string, CachedSound> Sound = new Dictionary<string, CachedSound>
+
+        private readonly Dictionary<string, OggSource> Sound = new Dictionary<string, OggSource>
         {
-            {"E3", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\E3.ogg"))))},
-            {"F3", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\F3.ogg"))))},
-            {"G3", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\G3.ogg"))))},
-            {"A3", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\A3.ogg"))))},
-            {"B3", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\B3.ogg"))))},
-            {"C4", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\C4.ogg"))))},
-            {"D4", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\D4.ogg"))))},
-            {"E4", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\E4.ogg"))))},
-            {"F4", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\F4.ogg"))))},
-            {"G4", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\G4.ogg"))))},
-            {"A4", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\A4.ogg"))))},
-            {"B4", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\B4.ogg"))))},
-            {"C5", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\C5.ogg"))))},
-            {"D5", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\D5.ogg"))))},
-            {"E5", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\E5.ogg"))))},
-            {"F5", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\F5.ogg"))))},
-            {"G5", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\G5.ogg"))))},
-            {"A5", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\A5.ogg"))))},
-            {"B5", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\B5.ogg"))))},
-            {"C6", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\C6.ogg"))))},
-            {"D6", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\D6.ogg"))))},
-            {"E6", new CachedSound(new AutoDisposeFileReader(new VorbisWaveReader(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\E6.ogg"))))}
+            {"E3", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\E3.ogg"))},
+            {"F3", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\F3.ogg"))},
+            {"G3", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\G3.ogg"))},
+            {"A3", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\A3.ogg"))},
+            {"B3", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\B3.ogg"))},
+            {"C4", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\C4.ogg"))},
+            {"D4", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\D4.ogg"))},
+            {"E4", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\E4.ogg"))},
+            {"F4", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\F4.ogg"))},
+            {"G4", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\G4.ogg"))},
+            {"A4", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\A4.ogg"))},
+            {"B4", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\B4.ogg"))},
+            {"C5", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\C5.ogg"))},
+            {"D5", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\D5.ogg"))},
+            {"E5", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\E5.ogg"))},
+            {"F5", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\F5.ogg"))},
+            {"G5", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\G5.ogg"))},
+            {"A5", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\A5.ogg"))},
+            {"B5", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\B5.ogg"))},
+            {"C6", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\C6.ogg"))},
+            {"D6", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\D6.ogg"))},
+            {"E6", new OggSource(MusicianModule.ModuleInstance.ContentsManager.GetFileStream(@"instruments\Horn\E6.ogg"))}
         };
 
-        public CachedSound Get(string id)
+
+        public OggSource Get(string id)
         {
             return Sound[id];
         }
 
-        public CachedSound Get(GuildWarsControls key, HornNote.Octaves octave)
+
+        public OggSource Get(GuildWarsControls key, HornNote.Octaves octave)
         {
             return Sound[Map[$"{key}{octave}"]];
+        }
+
+
+        public void Dispose() {
+            Map?.Clear();
+            foreach (var snd in Sound)
+                snd.Value?.Dispose();
         }
     }
 }

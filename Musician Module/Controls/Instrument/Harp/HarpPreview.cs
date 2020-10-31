@@ -1,7 +1,6 @@
 ﻿using System;
-using Blish_HUD;
 using Blish_HUD.Controls.Intern;
-using Nekres.Musician_Module.Player.Sound;
+using static Nekres.Musician_Module.MusicianModule;
 namespace Nekres.Musician_Module.Controls.Instrument
 {
     public class HarpPreview : IInstrumentPreview
@@ -22,7 +21,7 @@ namespace Nekres.Musician_Module.Controls.Instrument
                 case GuildWarsControls.HealingSkill:
                 case GuildWarsControls.UtilitySkill1:
                 case GuildWarsControls.UtilitySkill2:
-                    AudioPlaybackEngine.Instance.PlaySound(_soundRepository.Get(key, _octave));
+                    ModuleInstance.MusicPlayer.PlaySound(_soundRepository.Get(key, _octave));
                     break;
                 case GuildWarsControls.UtilitySkill3:
                     DecreaseOctave();
@@ -34,6 +33,7 @@ namespace Nekres.Musician_Module.Controls.Instrument
                     throw new ArgumentOutOfRangeException();
             }
         }
+
 
         private void IncreaseOctave()
         {
@@ -54,6 +54,7 @@ namespace Nekres.Musician_Module.Controls.Instrument
             }
         }
 
+
         private void DecreaseOctave()
         {
             switch (_octave)
@@ -71,6 +72,11 @@ namespace Nekres.Musician_Module.Controls.Instrument
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+
+        public void Dispose() {
+            _soundRepository?.Dispose();
         }
     }
 }

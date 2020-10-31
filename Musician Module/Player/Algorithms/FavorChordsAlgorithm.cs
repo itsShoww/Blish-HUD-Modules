@@ -10,15 +10,14 @@ namespace Nekres.Musician_Module.Player.Algorithms
     public class FavorChordsAlgorithm : IPlayAlgorithm
     {
         private bool Abort = false;
-        public void Dispose() { this.Abort = true; }
-        public void Play(Instrument instrument, MetronomeMark metronomeMark, ChordOffset[] melody)
-        {
+        public void Dispose() { Abort = true; }
+        public void Play(Instrument instrument, MetronomeMark metronomeMark, ChordOffset[] melody) {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
 
             for (var strumIndex = 0; strumIndex < melody.Length;)
             {
-                if (this.Abort) return;
+                if (Abort) return;
 
                 var strum = melody[strumIndex];
 
