@@ -76,9 +76,10 @@ namespace Nekres.Musician_Module.Controls {
             BackgroundSprite = BackgroundSprite ?? ContentService.Textures.Pixel;
             DividerSprite = DividerSprite ?? ContentService.Content.GetTexture("157218");
             IconBoxSprite = IconBoxSprite ?? ContentService.Content.GetTexture("controls/detailsbutton/605003");
-            this.MouseMoved += SheetButton_MouseMoved;
-            this.MouseLeft += SheetButton_MouseLeft;
-            this.Size = new Point(SHEETBUTTON_WIDTH, SHEETBUTTON_HEIGHT);
+
+            MouseMoved += SheetButton_MouseMoved;
+            MouseLeft += SheetButton_MouseLeft;
+            Size = new Point(SHEETBUTTON_WIDTH, SHEETBUTTON_HEIGHT);
         }
 
         #region Mouse Interaction
@@ -121,11 +122,14 @@ namespace Nekres.Musician_Module.Controls {
             MouseOverPlay = false;
             MouseOverEmulate = false;
         }
+
         private void SheetButton_MouseMoved(object sender, MouseEventArgs e)
         {
-            var relPos = GameService.Input.Mouse.State.Position - AbsoluteBounds.Location;
+#pragma warning disable CS0618 // Type or member is obsolete
+            var relPos = e.MouseState.Position - AbsoluteBounds.Location;
+#pragma warning restore CS0618 // Type or member is obsolete
 
-            if (MouseOver && relPos.Y > this.Height - BOTTOMSECTION_HEIGHT) {
+            if (MouseOver && relPos.Y > Height - BOTTOMSECTION_HEIGHT) {
                 MouseOverPreview = relPos.X < (SHEETBUTTON_WIDTH - 36 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 36);
                 MouseOverPlay = relPos.X < (SHEETBUTTON_WIDTH - 73 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 73);
                 MouseOverEmulate = relPos.X < (SHEETBUTTON_WIDTH - 109 + 32) && relPos.X > (SHEETBUTTON_WIDTH - 109);

@@ -262,6 +262,9 @@ namespace Nekres.Musician_Module
                     }
                     if (melody.MouseOverPreview)
                     {
+                        //TODO: Emulation using CSCore
+                        ScreenNotification.ShowNotification("Preview is not yet implemented.", ScreenNotification.NotificationType.Info);
+                        /*
                         if (melody.IsPreviewing)
                             StopPlayback(null, null);
                         else
@@ -273,7 +276,7 @@ namespace Nekres.Musician_Module
                                 InstrumentMode.Preview
                             );
                             MusicPlayer.Worker.Start();
-                        }
+                        }*/
                     }
                 };
             }
