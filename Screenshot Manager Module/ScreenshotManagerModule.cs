@@ -28,6 +28,128 @@ namespace Nekres.Screenshot_Manager_Module
     [Export(typeof(Module))]
     public class ScreenshotManagerModule : Module
     {
+        private static readonly Logger Logger = Logger.GetLogger(typeof(ScreenshotManagerModule));
+
+        internal static ScreenshotManagerModule ModuleInstance;
+
+        #region Service Managers
+
+        internal SettingsManager SettingsManager => ModuleParameters.SettingsManager;
+        internal ContentsManager ContentsManager => ModuleParameters.ContentsManager;
+        internal DirectoriesManager DirectoriesManager => ModuleParameters.DirectoriesManager;
+        internal Gw2ApiManager Gw2ApiManager => ModuleParameters.Gw2ApiManager;
+
+        #endregion
+
+        [ImportingConstructor]
+        public ScreenshotManagerModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
+
+        protected override void DefineSettings(SettingCollection settings)
+        {
+            var keyBindingCol = settings.AddSubCollection("Screenshot", true, false);
+            ScreenshotNormalBinding = keyBindingCol.DefineSetting("NormalKey", new KeyBinding(Keys.PrintScreen),
+                "Normal", "Take a normal screenshot.");
+            ScreenshotStereoscopicBinding = keyBindingCol.DefineSetting("StereoscopicKey", new KeyBinding(Keys.None),
+                "Stereoscopic", "Take a stereoscopic screenshot.");
+
+            var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
+            _favorites = selfManagedSettings.DefineSetting("favorites", new List<string>());
+        }
+
+        #region Textures
+
+        private Texture2D _icon64;
+        //private Texture2D _icon128;
+
+        private Texture2D _completeHeartIcon;
+        private Texture2D _incompleteHeartIcon;
+
+        private Texture2D _deleteSearchBoxContentIcon;
+
+        internal Texture2D _notificationBackroundTexture;
+        internal Texture2D _inspectIcon;
+
+        private Texture2D _trashcanClosedIcon64;
+        private Texture2D _trashcanOpenIcon64;
+        //private Texture2D _trashcanClosedIcon128;
+        //private Texture2D _trashcanOpenIcon128;
+
+        //private Texture2D _portaitModeIcon128;
+        //private Texture2D _portaitModeIcon512;
+
+        #endregion
+
+        #region Controls
+
+        private FlowPanel thumbnailFlowPanel;
+        private Dictionary<string, Panel> displayedThumbnails;
+
+        private CornerIcon moduleCornerIcon;
+        private WindowTab moduleTab;
+        internal Panel modulePanel;
+
+        #endregion
+
+        #region Settings
+
+        private SettingEntry<List<string>> _favorites;
+        private SettingEntry<KeyBinding> ScreenshotNormalBinding;
+        private SettingEntry<KeyBinding> ScreenshotStereoscopicBinding;
+
+        #endregion
+
+        #region Localization Strings
+
+        private string FailedToDeleteFileNotification;
+        private string FailedToRenameFileNotification;
+        private string ReasonFileInUse;
+        private string ReasonFileNotExisting;
+        private string ReasonDublicateFileName;
+        private string ReasonEmptyFileName;
+        private string ReasonInvalidFileName;
+        private string PromptChangeFileName;
+        private string InvalidFileNameCharactersHint;
+        private string FileDeletionPrompt;
+        private string RenameFileTooltipText;
+        private string ZoomInThumbnailTooltipText;
+        private string SearchBoxPlaceHolder;
+        private string FavoriteMarkerTooltip;
+        private string UnfavoriteMarkerTooltip;
+        private string ScreenshotCreated;
+
+        private void ChangeLocalization(object sender, EventArgs e)
+        {
+            FailedToDeleteFileNotification = Resources.Failed_to_delete_image___0_;
+            FailedToRenameFileNotification = Resources.Unable_to_rename_image___0_;
+            ReasonFileInUse = Resources.The_image_file_is_in_use_by_another_process_;
+            ReasonFileNotExisting = Resources.The_image_file_doesn_t_exist_anymore_;
+            ReasonDublicateFileName = Resources.A_duplicate_image_name_was_specified_;
+            ReasonEmptyFileName = Resources.Image_name_cannot_be_empty_;
+            ReasonInvalidFileName = Resources.The_image_name_contains_invalid_characters_;
+            PromptChangeFileName = Resources.Please_enter_a_different_image_name_;
+            InvalidFileNameCharactersHint = Resources.The_following_characters_are_not_allowed___0_;
+            FileDeletionPrompt = Resources.Delete_Image_;
+            RenameFileTooltipText = Resources.Rename_Image;
+            ZoomInThumbnailTooltipText = Resources.Click_To_Zoom;
+            SearchBoxPlaceHolder = Resources.Search___;
+            FavoriteMarkerTooltip = Resources.Favourite;
+            UnfavoriteMarkerTooltip = Resources.Unfavourite;
+            ScreenshotCreated = Resources.Screenshot_Created_;
+
+            //TODO: Implement as View so panel reloads automatically.
+            modulePanel?.Dispose();
+            modulePanel = BuildModulePanel(GameService.Overlay.BlishHudWindow);
+
+            if (moduleTab != null)
+                GameService.Overlay.BlishHudWindow.RemoveTab(moduleTab);
+
+            moduleTab = GameService.Overlay.BlishHudWindow.AddTab(Name, _icon64, modulePanel, 0);
+        }
+
+        #endregion
+
+        #region Constants
+
         private const int WindowWidth = 1024;
         private const int WindowHeight = 780;
         private const int PanelMargin = 5;
@@ -35,62 +157,55 @@ namespace Nekres.Screenshot_Manager_Module
         private const int NewFileNotificationDelay = 300;
         private const int MaxFileNameLength = 50;
 
-        private static readonly Logger Logger = Logger.GetLogger(typeof(ScreenshotManagerModule));
-
-        internal static ScreenshotManagerModule ModuleInstance;
+       #endregion
 
         private readonly string[] _imageFilters = {"*.bmp", "*.jpg", "*.png"};
-        private readonly IEnumerable<char> _invalidFileNameCharacters;
-        internal readonly Point _thumbnailSize = new Point(306, 175);
-        private Texture2D _completeHeartIcon;
-        private Texture2D _deleteSearchBoxContentIcon;
+        private readonly IEnumerable<char> _invalidFileNameCharacters = Path.GetInvalidFileNameChars().Union(Path.GetInvalidPathChars());
+        private readonly Point _thumbnailSize = new Point(306, 175);
 
-        private Texture2D _icon64;
-
-        private Texture2D _incompleteHeartIcon;
-
-        //private Texture2D _trashcanClosedIcon128;
-        //private Texture2D _trashcanOpenIcon128;
-        internal Texture2D _inspectIcon;
-
-        internal Texture2D _notificationBackroundTexture;
-
-        //private Texture2D _icon128;
-        //private Texture2D _portaitModeIcon128;
-        // private Texture2D _portaitModeIcon512;
-        private Texture2D _trashcanClosedIcon64;
-        private Texture2D _trashcanOpenIcon64;
-        private Dictionary<string, Panel> displayedThumbnails;
-
-        #region Settings
-
-        private SettingEntry<List<string>> favorites;
-
-        #endregion
-
-        private CornerIcon moduleCornerIcon;
-        internal Panel modulePanel;
-        private WindowTab moduleTab;
-        private KeyBinding printScreenKey;
         private List<FileSystemWatcher> screensPathWatchers;
+
         private bool isLoadingThumbnails;
         private bool isDisposingThumbnails;
 
-        private FlowPanel thumbnailFlowPanel;
-
-        [ImportingConstructor]
-        public ScreenshotManagerModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(
-            moduleParameters)
+        protected override void Initialize()
         {
-            ModuleInstance = this;
-            _invalidFileNameCharacters = Path.GetInvalidFileNameChars().Union(Path.GetInvalidPathChars());
+            screensPathWatchers = new List<FileSystemWatcher>();
+            displayedThumbnails = new Dictionary<string, Panel>();
+
+            LoadTextures();
+            ChangeLocalization(null, null);
+
+            GameService.Overlay.UserLocaleChanged += ChangeLocalization;
+
+            foreach (var f in _imageFilters)
+            {
+                var w = new FileSystemWatcher
+                {
+                    Path = DirectoryUtil.ScreensPath,
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName,
+                    Filter = f,
+                    EnableRaisingEvents = true
+                };
+                w.Created += OnScreenshotCreated;
+                w.Deleted += OnScreenshotDeleted;
+                w.Renamed += OnScreenshotRenamed;
+                screensPathWatchers.Add(w);
+            }
+
+            moduleCornerIcon = new CornerIcon
+            {
+                IconName = Name,
+                Icon = _icon64,
+                Priority = Name.GetHashCode()
+            };
+            moduleCornerIcon.Click += delegate
+            {
+                GameService.Overlay.BlishHudWindow.Show();
+                GameService.Overlay.BlishHudWindow.Navigate(modulePanel);
+            };
         }
 
-        protected override void DefineSettings(SettingCollection settings)
-        {
-            var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
-            favorites = selfManagedSettings.DefineSetting("favorites", new List<string>());
-        }
 
         protected void LoadTextures()
         {
@@ -108,6 +223,19 @@ namespace Nekres.Screenshot_Manager_Module
             _deleteSearchBoxContentIcon = ContentsManager.GetTexture("784262.png");
             _notificationBackroundTexture = ContentsManager.GetTexture("ns-button.png");
         }
+
+
+        protected override void OnModuleLoaded(EventArgs e)
+        {
+            ScreenshotNormalBinding.Value.Activated += ScreenshotNotify;
+            ScreenshotStereoscopicBinding.Value.Activated += ScreenshotNotify;
+            ScreenshotNormalBinding.Value.Enabled = true;
+            ScreenshotStereoscopicBinding.Value.Enabled = true;
+
+            // Base handler must be called
+            base.OnModuleLoaded(e);
+        }
+
 
         private async void ScreenshotNotify(object sender, EventArgs e)
         {
@@ -137,43 +265,6 @@ namespace Nekres.Screenshot_Manager_Module
             });
         }
 
-        protected override void Initialize()
-        {
-            LoadTextures();
-            GameService.Overlay.UserLocaleChanged += ChangeLocalization;
-            ChangeLocalization(null, null);
-            printScreenKey = new KeyBinding(Keys.PrintScreen);
-            printScreenKey.Activated += ScreenshotNotify;
-            printScreenKey.Enabled = true;
-            screensPathWatchers = new List<FileSystemWatcher>();
-            displayedThumbnails = new Dictionary<string, Panel>();
-            foreach (var f in _imageFilters)
-            {
-                var w = new FileSystemWatcher
-                {
-                    Path = DirectoryUtil.ScreensPath,
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName,
-                    Filter = f,
-                    EnableRaisingEvents = true
-                };
-                w.Created += OnScreenshotCreated;
-                w.Deleted += OnScreenshotDeleted;
-                w.Renamed += OnScreenshotRenamed;
-                screensPathWatchers.Add(w);
-            }
-            moduleCornerIcon = new CornerIcon
-            {
-                IconName = Name,
-                Icon = _icon64,
-                Priority = Name.GetHashCode()
-            };
-            moduleCornerIcon.Click += delegate
-            {
-                GameService.Overlay.BlishHudWindow.Show();
-                GameService.Overlay.BlishHudWindow.Navigate(modulePanel);
-                //TODO: Select the correct tab.
-            };
-        }
 
         private void ToggleFileSystemWatchers(object sender, EventArgs e)
         {
@@ -181,6 +272,7 @@ namespace Nekres.Screenshot_Manager_Module
             foreach (var fsw in screensPathWatchers)
                 fsw.EnableRaisingEvents = GameService.GameIntegration.Gw2HasFocus;
         }
+
 
         private Texture2D GetScreenshot(string filePath)
         {
@@ -224,6 +316,8 @@ namespace Nekres.Screenshot_Manager_Module
 
             return texture;
         }
+
+
         internal Texture2D GetThumbnail(string filePath) {
             Texture2D texture = null;
             var completed = false;
@@ -260,6 +354,8 @@ namespace Nekres.Screenshot_Manager_Module
 
             return texture;
         }
+
+
         internal Panel CreateInspectionPanel(string filePath)
         {
             var texture = GetScreenshot(filePath);
@@ -290,6 +386,7 @@ namespace Nekres.Screenshot_Manager_Module
             };
             return inspectPanel;
         }
+
 
         private void AddThumbnail(string filePath)
         {
@@ -350,26 +447,26 @@ namespace Nekres.Screenshot_Manager_Module
                 Parent = thumbnail,
                 Location = new Point(thumbnail.Size.X - 30 - PanelMargin, PanelMargin),
                 Size = new Point(30, 30),
-                BasicTooltipText = favorites.Value.Contains(filePath) ? UnfavoriteMarkerTooltip : FavoriteMarkerTooltip,
-                Texture = favorites.Value.Contains(filePath) ? _completeHeartIcon : _incompleteHeartIcon,
+                BasicTooltipText = _favorites.Value.Contains(filePath) ? UnfavoriteMarkerTooltip : FavoriteMarkerTooltip,
+                Texture = _favorites.Value.Contains(filePath) ? _completeHeartIcon : _incompleteHeartIcon,
                 Opacity = 0.5f
             };
             favoriteMarker.Click += delegate
             {
                 var currentFilePath = thumbnail.BasicTooltipText;
-                if (favorites.Value.Contains(currentFilePath))
+                if (_favorites.Value.Contains(currentFilePath))
                 {
-                    var copy = new List<string>(favorites.Value);
+                    var copy = new List<string>(_favorites.Value);
                     copy.Remove(currentFilePath);
-                    favorites.Value = copy;
+                    _favorites.Value = copy;
                     favoriteMarker.Texture = _incompleteHeartIcon;
                     favoriteMarker.BasicTooltipText = FavoriteMarkerTooltip;
                 }
                 else
                 {
-                    var copy = new List<string>(favorites.Value)
+                    var copy = new List<string>(_favorites.Value)
                         {currentFilePath};
-                    favorites.Value = copy;
+                    _favorites.Value = copy;
                     favoriteMarker.Texture = _completeHeartIcon;
                     favoriteMarker.BasicTooltipText = UnfavoriteMarkerTooltip;
                 }
@@ -588,10 +685,10 @@ namespace Nekres.Screenshot_Manager_Module
                 if (displayedThumbnails.ContainsKey(oldFilePath))
                     displayedThumbnails.Remove(oldFilePath);
 
-                if (!favorites.Value.Contains(oldFilePath)) return;
-                var copy = new List<string>(favorites.Value);
+                if (!_favorites.Value.Contains(oldFilePath)) return;
+                var copy = new List<string>(_favorites.Value);
                 copy.Remove(oldFilePath);
-                favorites.Value = copy;
+                _favorites.Value = copy;
             };
             try
             {
@@ -604,6 +701,7 @@ namespace Nekres.Screenshot_Manager_Module
                 thumbnail.Dispose();
             }
         }
+
 
         private void SortThumbnails()
         {
@@ -656,6 +754,8 @@ namespace Nekres.Screenshot_Manager_Module
             fileNameTextBox.BasicTooltipText = Path.GetFileNameWithoutExtension(e.FullPath);
             thumbnail.BasicTooltipText = e.FullPath;
         }
+
+
 
         private Panel BuildModulePanel(WindowBase wnd)
         {
@@ -751,11 +851,13 @@ namespace Nekres.Screenshot_Manager_Module
                 });
             };
             homePanel.Hidden += ToggleFileSystemWatchers;
-            homePanel.Hidden += ToggleFileSystemWatchers;
+            homePanel.Shown += ToggleFileSystemWatchers;
             homePanel.Shown += LoadImages;
             homePanel.Hidden += DisposeDisplayedThumbnails;
             return homePanel;
         }
+
+
         private async void DisposeDisplayedThumbnails(object sender, EventArgs e)
         {
             if (isLoadingThumbnails || displayedThumbnails == null || displayedThumbnails.Count == 0) return;
@@ -773,6 +875,8 @@ namespace Nekres.Screenshot_Manager_Module
                 return false;
             });
         }
+
+
         private async void LoadImages(object sender, EventArgs e)
         {
             if (isLoadingThumbnails || !Directory.Exists(DirectoryUtil.ScreensPath)) return;
@@ -795,50 +899,39 @@ namespace Nekres.Screenshot_Manager_Module
             });
         }
 
-        protected override async Task LoadAsync()
-        {
-            /* NOOP */
-        }
-
-        protected override void OnModuleLoaded(EventArgs e)
-        {
-            // Base handler must be called
-            base.OnModuleLoaded(e);
-        }
-
-        protected override void Update(GameTime gameTime)
-        {
-            /* NOOP */
-        }
 
         private void CleanFavorites()
         {
-            var copy = new List<string>(favorites.Value);
-            foreach (var path in favorites.Value)
+            var copy = new List<string>(_favorites.Value);
+            foreach (var path in _favorites.Value)
             {
                 if (File.Exists(path)) continue;
                 copy.Remove(path);
             }
 
-            favorites.Value = copy;
+            _favorites.Value = copy;
         }
 
         /// <inheritdoc />
         protected override void Unload()
         {
-            // Unload
             CleanFavorites();
+
             GameService.Overlay.UserLocaleChanged -= ChangeLocalization;
-            printScreenKey.Enabled = false;
-            printScreenKey.Activated -= ScreenshotNotify;
-            printScreenKey = null;
+
+            ScreenshotNormalBinding.Value.Enabled = false;
+            ScreenshotStereoscopicBinding.Value.Enabled = false;
+            ScreenshotNormalBinding.Value.Activated -= ScreenshotNotify;
+            ScreenshotStereoscopicBinding.Value.Activated -= ScreenshotNotify;
+
+            GameService.Overlay.BlishHudWindow.RemoveTab(moduleTab);
+            moduleTab = null;
             modulePanel.Hidden -= ToggleFileSystemWatchers;
             modulePanel.Shown -= ToggleFileSystemWatchers;
             modulePanel.Shown -= LoadImages;
-            GameService.Overlay.BlishHudWindow.RemoveTab(moduleTab);
-            moduleTab = null;
-            modulePanel?.Dispose();
+            modulePanel.Hidden -= DisposeDisplayedThumbnails;
             moduleCornerIcon?.Dispose();
+            modulePanel?.Dispose();
             thumbnailFlowPanel?.Dispose();
             // avoiding resource leak
             for (var i = 0; i < screensPathWatchers.Count; i++)
@@ -850,70 +943,10 @@ namespace Nekres.Screenshot_Manager_Module
                 screensPathWatchers[i].Dispose();
                 screensPathWatchers[i] = null;
             }
-
             displayedThumbnails.Clear();
             displayedThumbnails = null;
             // All static members must be manually unset
             ModuleInstance = null;
         }
-
-        #region Service Managers
-
-        internal SettingsManager SettingsManager => ModuleParameters.SettingsManager;
-        internal ContentsManager ContentsManager => ModuleParameters.ContentsManager;
-        internal DirectoriesManager DirectoriesManager => ModuleParameters.DirectoriesManager;
-        internal Gw2ApiManager Gw2ApiManager => ModuleParameters.Gw2ApiManager;
-
-        #endregion
-
-        #region Localization Strings
-
-        private string FailedToDeleteFileNotification;
-        private string FailedToRenameFileNotification;
-        private string ReasonFileInUse;
-        private string ReasonFileNotExisting;
-        private string ReasonDublicateFileName;
-        private string ReasonEmptyFileName;
-        private string ReasonInvalidFileName;
-        private string PromptChangeFileName;
-        private string InvalidFileNameCharactersHint;
-        private string FileDeletionPrompt;
-        private string RenameFileTooltipText;
-        private string ZoomInThumbnailTooltipText;
-        private string SearchBoxPlaceHolder;
-        private string FavoriteMarkerTooltip;
-        private string UnfavoriteMarkerTooltip;
-        private string ScreenshotCreated;
-
-        private void ChangeLocalization(object sender, EventArgs e)
-        {
-            FailedToDeleteFileNotification = Resources.Failed_to_delete_image___0_;
-            FailedToRenameFileNotification = Resources.Unable_to_rename_image___0_;
-            ReasonFileInUse = Resources.The_image_file_is_in_use_by_another_process_;
-            ReasonFileNotExisting = Resources.The_image_file_doesn_t_exist_anymore_;
-            ReasonDublicateFileName = Resources.A_duplicate_image_name_was_specified_;
-            ReasonEmptyFileName = Resources.Image_name_cannot_be_empty_;
-            ReasonInvalidFileName = Resources.The_image_name_contains_invalid_characters_;
-            PromptChangeFileName = Resources.Please_enter_a_different_image_name_;
-            InvalidFileNameCharactersHint = Resources.The_following_characters_are_not_allowed___0_;
-            FileDeletionPrompt = Resources.Delete_Image_;
-            RenameFileTooltipText = Resources.Rename_Image;
-            ZoomInThumbnailTooltipText = Resources.Click_To_Zoom;
-            SearchBoxPlaceHolder = Resources.Search___;
-            FavoriteMarkerTooltip = Resources.Favourite;
-            UnfavoriteMarkerTooltip = Resources.Unfavourite;
-            ScreenshotCreated = Resources.Screenshot_Created_;
-
-            //TODO: Implement as View so panel reloads automatically.
-            modulePanel?.Dispose();
-            modulePanel = BuildModulePanel(GameService.Overlay.BlishHudWindow);
-
-            if (moduleTab != null)
-                GameService.Overlay.BlishHudWindow.RemoveTab(moduleTab);
-
-            moduleTab = GameService.Overlay.BlishHudWindow.AddTab(Name, _icon64, modulePanel, 0);
-        }
-
-    #endregion
     }
 }

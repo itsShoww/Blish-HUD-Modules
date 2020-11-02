@@ -26,8 +26,9 @@ namespace Nekres.Screenshot_Manager_Module.Controls
         private ScreenshotNotification(string filePath, string message)
         {
             _filePath = filePath;
+
+            _thumbnailSize = new Point(306, 175);
             _thumbnail = ScreenshotManagerModule.ModuleInstance.GetThumbnail(_filePath);
-            _thumbnailSize = ScreenshotManagerModule.ModuleInstance._thumbnailSize;
             _inspectIcon = ScreenshotManagerModule.ModuleInstance._inspectIcon;
 
             Opacity = 0f;
