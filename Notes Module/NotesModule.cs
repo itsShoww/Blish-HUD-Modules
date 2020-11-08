@@ -1,13 +1,13 @@
-﻿using System;
-using System.ComponentModel.Composition;
-using System.Threading.Tasks;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.ComponentModel.Composition;
+using System.Threading.Tasks;
 
 namespace Nekres.Notes_Module
 {
@@ -16,7 +16,7 @@ namespace Nekres.Notes_Module
     public class NotesModule : Module
     {
 
-        private static readonly Logger Logger = Logger.GetLogger(typeof(NotesModule));
+        internal static readonly Logger Logger = Logger.GetLogger(typeof(NotesModule));
 
         internal static NotesModule ModuleInstance;
 
@@ -56,7 +56,6 @@ namespace Nekres.Notes_Module
         }
 
         protected override async Task LoadAsync() {
-
         }
 
         protected override void OnModuleLoaded(EventArgs e) {
@@ -71,7 +70,6 @@ namespace Nekres.Notes_Module
 
         /// <inheritdoc />
         protected override void Unload() {
-            // Unload
 
             // All static members must be manually unset
             ModuleInstance = null;

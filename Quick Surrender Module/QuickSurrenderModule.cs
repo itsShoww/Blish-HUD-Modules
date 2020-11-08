@@ -1,5 +1,6 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
+using Blish_HUD.Controls.Extern;
 using Blish_HUD.Input;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
@@ -10,6 +11,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.ComponentModel.Composition;
+using System.Runtime.InteropServices;
 using static Blish_HUD.GameService;
 
 namespace Nekres.Quick_Surrender_Module
@@ -40,6 +42,18 @@ namespace Nekres.Quick_Surrender_Module
             SurrenderBinding = keyBindingCol.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.None),
                 "Surrender", "Defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
         }
+
+        #region PInvoke
+
+            [DllImport("USER32.dll")]
+            private static extern short GetKeyState(uint vk);
+            private const int KEY_PRESSED = 0x8000;
+
+            internal bool IsPressed(VirtualKeyShort key){
+                return Convert.ToBoolean(GetKeyState((uint)key) & KEY_PRESSED);
+            }
+
+        #endregion
 
         #region Textures
 
@@ -148,7 +162,7 @@ namespace Nekres.Quick_Surrender_Module
         {
             _surrenderButton?.Dispose();
 
-            if (!SurrenderButtonEnabled.Value || !IsUiAvailable() || Gw2Mumble.CurrentMap.Type != MapType.Instance) return;
+            //if (!SurrenderButtonEnabled.Value || !IsUiAvailable() || Gw2Mumble.CurrentMap.Type != MapType.Instance) return;
 
             var tooltip_size = new Point(_surrenderTooltip_texture.Width, _surrenderTooltip_texture.Height);
             var surrenderButtonTooltip = new Tooltip
@@ -186,8 +200,25 @@ namespace Nekres.Quick_Surrender_Module
                 _surrenderButton.Texture = _surrenderFlag;
             };
 
-            _surrenderButton.Click += OnSurrenderBindingActivated;
+            _surrenderButton.RightMouseButtonPressed += delegate (object o, MouseEventArgs e) {
+                _surrenderButton.Size = new Point(43, 43);
+                _surrenderButton.Texture = _surrenderFlag_pressed;
+            };
 
+            _surrenderButton.RightMouseButtonReleased += delegate
+            {
+                _surrenderButton.Size = new Point(45, 45);
+                _surrenderButton.Texture = _surrenderFlag;
+
+                GameIntegration.Chat.Send(" /gg");
+            };
+
+            _surrenderButton.Click += delegate (object o, MouseEventArgs e) {
+                if (IsPressed(VirtualKeyShort.LCONTROL))
+                    GameIntegration.Chat.Send("[Surrender]"); // new SkillChatLink(){ SkillId = 50347 }.ToString()
+                else
+                    OnSurrenderBindingActivated(o, e);
+            };
             Animation.Tweener.Tween(_surrenderButton, new {Opacity = 1.0f}, 0.35f);
         }
     }
