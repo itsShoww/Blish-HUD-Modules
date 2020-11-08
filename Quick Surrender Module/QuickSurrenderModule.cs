@@ -5,6 +5,7 @@ using Blish_HUD.Input;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
+using Gw2Sharp.ChatLinks;
 using Gw2Sharp.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -47,11 +48,12 @@ namespace Nekres.Quick_Surrender_Module
 
             [DllImport("USER32.dll")]
             private static extern short GetKeyState(uint vk);
-            private const int KEY_PRESSED = 0x8000;
-
-            internal bool IsPressed(VirtualKeyShort key){
-                return Convert.ToBoolean(GetKeyState((uint)key) & KEY_PRESSED);
+            internal bool IsPressed(uint key){
+                return Convert.ToBoolean(GetKeyState(key) & KEY_PRESSED);
             }
+            private const uint KEY_PRESSED = 0x8000;
+            private const uint VK_LCONTROL = 0xA2;
+            private const uint VK_LSHIFT = 0xA0;
 
         #endregion
 
@@ -214,8 +216,8 @@ namespace Nekres.Quick_Surrender_Module
             };
 
             _surrenderButton.Click += delegate (object o, MouseEventArgs e) {
-                if (IsPressed(VirtualKeyShort.LCONTROL))
-                    GameIntegration.Chat.Send("[Surrender]"); // new SkillChatLink(){ SkillId = 50347 }.ToString()
+                if (IsPressed(VK_LCONTROL))
+                    GameIntegration.Chat.Send(new SkillChatLink(){ SkillId = 50347 }.ToString());
                 else
                     OnSurrenderBindingActivated(o, e);
             };
