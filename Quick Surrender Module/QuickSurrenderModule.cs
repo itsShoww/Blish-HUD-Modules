@@ -48,7 +48,7 @@ namespace Nekres.Quick_Surrender_Module
 
             [DllImport("USER32.dll")]
             private static extern short GetKeyState(uint vk);
-            internal bool IsPressed(uint key){
+            private bool IsPressed(uint key){
                 return Convert.ToBoolean(GetKeyState(key) & KEY_PRESSED);
             }
             private const uint KEY_PRESSED = 0x8000;
@@ -81,12 +81,14 @@ namespace Nekres.Quick_Surrender_Module
 
         private DateTime _lastSurrenderTime;
         private int _cooldown; //in milliseconds
+        private int _skillId; //used when pinging the surrender skill with [Ctrl] + [LeftMouse].
 
         protected override void Initialize() {
             LoadTextures();
 
             _lastSurrenderTime = DateTime.Now;
             _cooldown = 2000;
+            _skillId = 50347;
 
             BuildSurrenderButton();
         }
@@ -164,7 +166,7 @@ namespace Nekres.Quick_Surrender_Module
         {
             _surrenderButton?.Dispose();
 
-            //if (!SurrenderButtonEnabled.Value || !IsUiAvailable() || Gw2Mumble.CurrentMap.Type != MapType.Instance) return;
+            if (!SurrenderButtonEnabled.Value || !IsUiAvailable() || Gw2Mumble.CurrentMap.Type != MapType.Instance) return;
 
             var tooltip_size = new Point(_surrenderTooltip_texture.Width, _surrenderTooltip_texture.Height);
             var surrenderButtonTooltip = new Tooltip
@@ -217,10 +219,11 @@ namespace Nekres.Quick_Surrender_Module
 
             _surrenderButton.Click += delegate (object o, MouseEventArgs e) {
                 if (IsPressed(VK_LCONTROL))
-                    GameIntegration.Chat.Send(new SkillChatLink(){ SkillId = 50347 }.ToString());
+                    GameIntegration.Chat.Send(new SkillChatLink(){ SkillId = _skillId }.ToString());
                 else
                     OnSurrenderBindingActivated(o, e);
             };
+
             Animation.Tweener.Tween(_surrenderButton, new {Opacity = 1.0f}, 0.35f);
         }
     }
