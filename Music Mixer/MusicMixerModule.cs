@@ -84,7 +84,7 @@ namespace Nekres.Music_Mixer
         }
 
 
-        private void ExtractFiles(string filePath) {
+        private void ExtractFile(string filePath) {
             var fullPath = Path.Combine(_moduleDirectory, filePath);
             if (File.Exists(fullPath)) return;
             using (var fs = ContentsManager.GetFileStream(filePath)) {
@@ -103,16 +103,15 @@ namespace Nekres.Music_Mixer
 
             _outputDevice = new WasapiOut();
 
-            ExtractFiles(_FFmpegPath);
-            ExtractFiles(_youtubeDLPath);
+            ExtractFile(_FFmpegPath);
+            ExtractFile(_youtubeDLPath);
 
             _youtubeDL = new YoutubeDL();
             _youtubeDLOptions = new OptionSet()
             {
                 NoContinue = true,
                 Format = "best",
-                NoPart = true,
-                ExtractAudio = true
+                NoPart = true
             };
             _youtubeDL.FFmpegPath = Path.Combine(_moduleDirectory, _FFmpegPath);
             _youtubeDL.YoutubeDLPath = Path.Combine(_moduleDirectory, _youtubeDLPath);
@@ -125,11 +124,10 @@ namespace Nekres.Music_Mixer
         }
 
 
-        private async Task<string> DownloadTrack(string youtubeId, IProgress<DownloadProgress> progress = null) {
+        private async void DownloadTrack(string youtubeId, IProgress<DownloadProgress> progress = null) {
             var url = "https://youtu.be/" + youtubeId;
             var dir = Directory.CreateDirectory(Path.Combine(_youtubeDL.OutputFolder, youtubeId)).FullName;
 
-            var result = "";
             await _youtubeDL.RunAudioDownload(url, AudioConversionFormat.Mp3, default, progress, null, _youtubeDLOptions).ContinueWith(response => {
                 if (response.IsFaulted || !response.Result.Success) return;
 
@@ -139,7 +137,6 @@ namespace Nekres.Music_Mixer
                 if (File.Exists(newPath)) File.Delete(newPath);
                 File.Move(filePath, Path.Combine(dir, Path.GetFileName(filePath)));
             });
-            return result;
         }
 
         private async void FetchTrack(string youtubeId) {
@@ -153,7 +150,6 @@ namespace Nekres.Music_Mixer
                 var filePath = Path.Combine(dir, Path.GetFileNameWithoutExtension(FileUtil.Sanitize(result.Data.Title)) + ".mp3");
                 
                 if (File.Exists(filePath)) return;
-                await DownloadTrack(youtubeId);
 
             });
         }
@@ -168,7 +164,7 @@ namespace Nekres.Music_Mixer
 
                 var file = dir.GetFiles().FirstOrDefault(x => x.Extension.Equals(".mp3"));
                 if (file == null) {
-                    FetchTrack(id);
+                    DownloadTrack(id);
                     return;
                 } else
                     uri = file.FullName;
@@ -245,6 +241,15 @@ namespace Nekres.Music_Mixer
 
         /// <inheritdoc />
         protected override void Unload() { 
+            GameIntegration.Gw2Closed -= OnGw2Closed;
+            GameIntegration.Gw2Started -= OnGw2Started;
+            ArcDps.RawCombatEvent -= CombatEventReceived;
+            Gw2Mumble.PlayerCharacter.CurrentMountChanged -= OnMountChanged;
+            Gw2Mumble.PlayerCharacter.IsInCombatChanged -= OnIsInCombatChanged;
+            Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
+            Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
+            GameIntegration.IsInGameChanged -= OnIsInGameChanged;
+
             _outputDevice.Stop();
             _outputDevice.Dispose();
             _outputDevice = null;
