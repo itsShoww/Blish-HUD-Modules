@@ -10,6 +10,7 @@
     "bh.blishhud": ">=0.7.0"
   },
   "url": "https://github.com/blish-hud/",
+  "directories": [ "music_mixer" ],
   "contributors": [
     {
       "name": "Nekres",
