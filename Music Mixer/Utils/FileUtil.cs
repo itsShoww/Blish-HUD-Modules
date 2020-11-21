@@ -2,7 +2,7 @@
 
 namespace Nekres.Music_Mixer
 {
-    public static class FileUtil
+    internal static class FileUtil
     {
         public static bool IsLocalPath(string p)
         {
