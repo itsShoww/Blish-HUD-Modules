@@ -41,24 +41,24 @@ namespace Nekres.Music_Mixer
         [JsonProperty("skyscale")]
         public IList<Track> Skyscale { get; set; }
 
-        public IReadOnlyList<string> GetTracks(MountType mount, TyrianTime time = TyrianTime.None, int mapId = -1) {
+        public IList<Track> GetPlaylist(MountType mount) {
             switch (mount) {
                 case MountType.Jackal:
-                    return Jackal.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                    return Jackal;
                 case MountType.Griffon:
-                    return Griffon.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                    return Griffon;
                 case MountType.Springer:
-                    return Springer.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                    return Springer;
                 case MountType.Skimmer:
-                    return Skimmer.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                    return Skimmer;
                 case MountType.Raptor:
-                    return Raptor.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                    return Raptor;
                 case MountType.RollerBeetle:
-                    return Rollerbeetle.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                    return Rollerbeetle;
                 case MountType.Warclaw:
-                    return Warclaw.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                    return Warclaw;
                 case MountType.Skyscale:
-                    return Skyscale.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                    return Skyscale;
                 default: return null;
             }
         }

@@ -1,21 +1,15 @@
 ﻿using Blish_HUD;
-using Blish_HUD.ArcDps;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
-using CSCore.Codecs.MP3;
-using CSCore.SoundOut;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
-using Stateless;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using YoutubeDLSharp;
-using YoutubeDLSharp.Options;
+using System.Threading.Tasks;
+using System.Timers;
 using static Blish_HUD.GameService;
 using static Nekres.Music_Mixer.Gw2StateService;
 
@@ -55,6 +49,9 @@ namespace Nekres.Music_Mixer
 
         private const string _FFmpegPath = "bin/ffmpeg.exe";
         private const string _youtubeDLPath = "bin/youtube-dl.exe";
+
+        private Timer _combatDelay;
+        private int _combatDelayMs = 5000;
 
         protected override void DefineSettings(SettingCollection settings) {
             _masterVolume = settings.DefineSetting("MasterVolume.", 50.0f, "Master Volume", "Sets the audio volume.");
@@ -112,36 +109,48 @@ namespace Nekres.Music_Mixer
 
 
         private void OnStateChanged(object sender, ValueEventArgs<State> e) {
-            switch (e.Value) {
+            _musicPlayer.Stop();
+            switch (_gw2State.CurrentState) {
                 case State.StandBy:
-                    _musicPlayer.Stop();
                     break;
                 case State.Mounted:
-                    //PlayMountTrack();
+                    _musicPlayer.PlayMountTrack(Gw2Mumble.PlayerCharacter.CurrentMount);
                     break;
                 case State.OpenWorld:
-                    //PlayOpenWorldTrack();
+                    _musicPlayer.PlayOpenWorldTrack();
                     break;
                 case State.Combat:
-                    //PlayCombatTrack();
+                    _combatDelay?.Dispose();
+                    _combatDelay = new Timer(_combatDelayMs);
+                    _combatDelay.Elapsed += delegate {
+                        if (_gw2State.CurrentState == State.Combat) {
+                            _musicPlayer.Stop();
+                            _musicPlayer.PlayCombatTrack();
+                        }
+                        _combatDelay.Dispose();
+                    };
+                    _combatDelay.Start();
                     break;
                 case State.CompetitiveMode:
-                    //PlayCompetitiveTrack();
+                    _musicPlayer.PlayCompetitiveTrack();
                     break;
                 case State.WorldVsWorld:
-                    //PlayWorldVsWorldTrack();
+                    _musicPlayer.PlayWorldVsWorldTrack();
                     break;
                 case State.StoryInstance:
-                    //PlayWorldVsWorldTrack();
+                    _musicPlayer.PlayInstanceTrack();
                     break;
                 case State.Submerged:
+                    _musicPlayer.PlaySubmergedTrack();
                     break;
+                default: return;
             }
         }
 
         /// <inheritdoc />
         protected override void Unload() { 
             _musicPlayer.Dispose();
+            _gw2State.StateChanged -= OnStateChanged;
             _gw2State.Unload();
             // All static members must be manually unset
             ModuleInstance = null;

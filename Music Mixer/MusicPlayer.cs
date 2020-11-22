@@ -11,6 +11,7 @@ using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
 using Gw2Sharp.Models;
 using static Blish_HUD.GameService;
+using Blish_HUD;
 
 namespace Nekres.Music_Mixer
 {
@@ -34,6 +35,8 @@ namespace Nekres.Music_Mixer
         private IList<Track> _submergedPlaylist;
 
         #endregion
+
+        public bool IsFading { get; private set; }
 
         public MusicPlayer(string _playlistDirectory, string _FFmpegPath, string _youtubeDLPath) {
            _outputDevice = new WasapiOut();
@@ -66,12 +69,13 @@ namespace Nekres.Music_Mixer
 
 
         public void SetVolume(float volume) {
-            if (_outputDevice != null && _outputDevice.PlaybackState != PlaybackState.Stopped)
+            if (_outputDevice != null && _outputDevice.PlaybackState != PlaybackState.Stopped && !IsFading)
                 _outputDevice.Volume = MathHelper.Clamp(volume, 0, 1);
         }
 
 
         public void PlayTrack(string uri) {
+            if (uri == null || uri.Equals("")) return;
             if (!FileUtil.IsLocalPath(uri)) {
                 var youtubeMatch = _youtubeVideoID.Match(uri);
                 if (!youtubeMatch.Success) return;
@@ -116,7 +120,7 @@ namespace Nekres.Music_Mixer
 
 
        private T LoadPlaylist<T>(string url) {
-            if (!File.Exists(url)) return (T)new object();
+            if (!File.Exists(url)) return default;
             using (var fs = File.OpenRead(url)) {
                 fs.Position = 0;
                 using (var jsonReader = new JsonTextReader(new StreamReader(fs)))
@@ -128,10 +132,34 @@ namespace Nekres.Music_Mixer
         }
 
 
-        public void SelectTrack(int playlistId, TyrianTime time = TyrianTime.None, int mapId = -1) {
-            //TODO select track
+        private string SelectTrack(IList<Track> playlist) {
+            if (playlist == null) return "";
+
+            var mapId = Gw2Mumble.CurrentMap.Id;
+            var time = TyrianTimeUtil.GetCurrentDayCycle();
+
+            var mapTracks = playlist.Where(x => x.MapId == mapId);
+            if (mapTracks.Count() == 0)
+                mapTracks = playlist.Where(x => x.MapId == -1);
+
+            var timeTracks = mapTracks.Where(x => x.DayTime == time);
+            if (timeTracks.Count() == 0)
+                timeTracks = mapTracks.Where(x => x.DayTime == TyrianTime.None);
+
+            var filter = timeTracks.Select(x => x.Uri).ToList();
+            var count = filter.Count;
+            if (count == 0) return "";
+            var track = filter[RandomUtil.GetRandom(0, count - 1)];
+            return track;
         }
 
+        public void PlayMountTrack(MountType mount) => PlayTrack(SelectTrack(_mountedPlaylist.GetPlaylist(mount)));
+        public void PlayOpenWorldTrack() => PlayTrack(SelectTrack(_openWorldPlaylist));
+        public void PlayCombatTrack() => PlayTrack(SelectTrack(_combatPlaylist));
+        public void PlayCompetitiveTrack() => PlayTrack(SelectTrack(_pvpPlaylist));
+        public void PlayWorldVsWorldTrack() => PlayTrack(SelectTrack(_wvwPlaylist));
+        public void PlayInstanceTrack() => PlayTrack(SelectTrack(_instancePlaylist));
+        public void PlaySubmergedTrack() => PlayTrack(SelectTrack(_submergedPlaylist));
 
         public void Dispose() {
             _outputDevice.Stop();

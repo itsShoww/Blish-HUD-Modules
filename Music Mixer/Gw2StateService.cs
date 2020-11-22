@@ -59,14 +59,17 @@ namespace Nekres.Music_Mixer
             }
         }
 
+
+
         private StateMachine<State, Trigger> _stateMachine;
 
         private IReadOnlyList<EncounterData> _encounterData;
         private Encounter _currentEncounter;
 
+        public State CurrentState => _stateMachine?.State ?? State.StandBy;
+
         public Gw2StateService(IReadOnlyList<EncounterData> encounterData) {
             _encounterData = encounterData;
-
             InitializeStateMachine();
 
             ArcDps_OnFinishedLoading(null, null);
@@ -98,42 +101,46 @@ namespace Nekres.Music_Mixer
                 Logger.Info($"Warning: Trigger '{t}' was fired from state '{s}', but has no valid leaving transitions.");
             });
             _stateMachine.Configure(State.StandBy)
-                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.StandBy)))
-                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector);
+                        .OnEntry(() => StateChanged?.Invoke(this, new ValueEventArgs<State>(State.StandBy)))
+                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
+                        .Ignore(Trigger.Submerging);
 
             _stateMachine.Configure(State.OpenWorld)
-                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.OpenWorld)))
+                        .OnEntry(() => StateChanged?.Invoke(this, new ValueEventArgs<State>(State.OpenWorld)))
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
                         .Permit(Trigger.Submerging, State.Submerged);
 
             _stateMachine.Configure(State.Mounted)
-                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.Mounted)))
-                        .PermitDynamic(Trigger.Unmounting, GameModeStateSelector);
+                        .OnEntry(() => StateChanged?.Invoke(this, new ValueEventArgs<State>(State.Mounted)))
+                        .PermitDynamic(Trigger.Unmounting, GameModeStateSelector)
+                        .Ignore(Trigger.Submerging);
 
             _stateMachine.Configure(State.Combat)
-                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.Combat)))
-                        .PermitDynamicIf(Trigger.OutOfCombat, GameModeStateSelector);
+                        .OnEntry(() => StateChanged?.Invoke(this, new ValueEventArgs<State>(State.Combat)))
+                        .PermitDynamicIf(Trigger.OutOfCombat, GameModeStateSelector)
+                        .Ignore(Trigger.Submerging);
 
             _stateMachine.Configure(State.CompetitiveMode)
-                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.CompetitiveMode)))
-                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector);
+                        .OnEntry(() => StateChanged?.Invoke(this, new ValueEventArgs<State>(State.CompetitiveMode)))
+                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
+                        .Ignore(Trigger.Submerging);
 
             _stateMachine.Configure(State.StoryInstance)
-                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.StoryInstance)))
+                        .OnEntry(() => StateChanged?.Invoke(this, new ValueEventArgs<State>(State.StoryInstance)))
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.InCombat, State.Combat)
                         .Permit(Trigger.Submerging, State.Submerged);
 
             _stateMachine.Configure(State.WorldVsWorld)
-                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.WorldVsWorld)))
+                        .OnEntry(() => StateChanged?.Invoke(this, new ValueEventArgs<State>(State.WorldVsWorld)))
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
                         .Permit(Trigger.Submerging, State.Submerged);
 
             _stateMachine.Configure(State.Submerged)
-                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.Submerged)))
+                        .OnEntry(() => StateChanged?.Invoke(this, new ValueEventArgs<State>(State.Submerged)))
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
