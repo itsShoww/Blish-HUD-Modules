@@ -16,14 +16,15 @@ namespace Nekres.Music_Mixer
 
         #region _Enums
 
-        private enum State {
+        public enum State {
             StandBy,
             Mounted,
             OpenWorld,
             Combat,
             CompetitiveMode,
             WorldVsWorld,
-            StoryInstance
+            StoryInstance,
+            Submerged
         }
         private enum Trigger
         {
@@ -31,7 +32,9 @@ namespace Nekres.Music_Mixer
             InCombat,
             OutOfCombat,
             Mounting,
-            Unmounting
+            Unmounting,
+            Submerging,
+            Emerging
         }
 
         #endregion
@@ -40,8 +43,8 @@ namespace Nekres.Music_Mixer
         /// <summary>
         /// Fires when the Tyrian time of day changes.
         /// </summary>
-        public static event EventHandler<ValueEventArgs<TyrianTime>> TyrianTimeChanged;
-
+        public event EventHandler<ValueEventArgs<TyrianTime>> TyrianTimeChanged;
+        public event EventHandler<ValueEventArgs<State>> StateChanged;
         #endregion
 
         private TyrianTime _prevTyrianTime = TyrianTime.None;
@@ -95,29 +98,55 @@ namespace Nekres.Music_Mixer
                 Logger.Info($"Warning: Trigger '{t}' was fired from state '{s}', but has no valid leaving transitions.");
             });
             _stateMachine.Configure(State.StandBy)
-                        .PermitDynamic(Trigger.MapChanged, () => GameModeStateSelector());
+                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.StandBy)))
+                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector);
 
             _stateMachine.Configure(State.OpenWorld)
+                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.OpenWorld)))
                         .Permit(Trigger.Mounting, State.Mounted)
-                        .Permit(Trigger.InCombat, State.Combat);
+                        .Permit(Trigger.InCombat, State.Combat)
+                        .Permit(Trigger.Submerging, State.Submerged);
 
             _stateMachine.Configure(State.Mounted)
-                        .PermitDynamic(Trigger.Unmounting, () => GameModeStateSelector());
+                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.Mounted)))
+                        .PermitDynamic(Trigger.Unmounting, GameModeStateSelector);
 
             _stateMachine.Configure(State.Combat)
-                        .PermitDynamicIf(Trigger.OutOfCombat, () => GameModeStateSelector());
+                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.Combat)))
+                        .PermitDynamicIf(Trigger.OutOfCombat, GameModeStateSelector);
 
             _stateMachine.Configure(State.CompetitiveMode)
-                        .PermitDynamic(Trigger.MapChanged, () => GameModeStateSelector());
+                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.CompetitiveMode)))
+                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector);
 
             _stateMachine.Configure(State.StoryInstance)
-                        .PermitDynamic(Trigger.MapChanged, () => GameModeStateSelector())
-                        .Permit(Trigger.InCombat, State.Combat);
+                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.StoryInstance)))
+                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
+                        .Permit(Trigger.InCombat, State.Combat)
+                        .Permit(Trigger.Submerging, State.Submerged);
 
             _stateMachine.Configure(State.WorldVsWorld)
-                        .PermitDynamic(Trigger.MapChanged, () => GameModeStateSelector())
+                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.WorldVsWorld)))
+                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
-                        .Permit(Trigger.InCombat, State.Combat);
+                        .Permit(Trigger.InCombat, State.Combat)
+                        .Permit(Trigger.Submerging, State.Submerged);
+
+            _stateMachine.Configure(State.Submerged)
+                        .OnEntry(() => StateChanged.Invoke(this, new ValueEventArgs<State>(State.Submerged)))
+                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
+                        .Permit(Trigger.Mounting, State.Mounted)
+                        .Permit(Trigger.InCombat, State.Combat)
+                        .PermitDynamic(Trigger.Emerging, GameModeStateSelector);
+        }
+
+
+        public void CheckWaterLevel() {
+            var zloc = Gw2Mumble.PlayerCharacter.Position.Z;
+            if (zloc <= 0 && !_stateMachine.IsInState(State.Submerged))
+                _stateMachine.Fire(Trigger.Submerging);
+            else if (zloc > 0 && _stateMachine.IsInState(State.Submerged))
+                _stateMachine.Fire(Trigger.Emerging);
         }
 
 
@@ -181,8 +210,6 @@ namespace Nekres.Music_Mixer
 
 
         private void Mumble_OnFinishedLoading(object o, EventArgs e) {
-            InitializeStateMachine();
-
             Gw2Mumble.PlayerCharacter.CurrentMountChanged += OnMountChanged;
             Gw2Mumble.PlayerCharacter.IsInCombatChanged += OnIsInCombatChanged;
             Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
@@ -196,6 +223,7 @@ namespace Nekres.Music_Mixer
 
         private State GameModeStateSelector() {
             if (Gw2Mumble.PlayerCharacter.IsInCombat) return State.Combat;
+            if (Gw2Mumble.PlayerCharacter.Position.Z <= 0) return State.Submerged;
             switch (Gw2Mumble.CurrentMap.Type) {
                 case Gw2Sharp.Models.MapType.Unknown:
                     return State.StandBy;

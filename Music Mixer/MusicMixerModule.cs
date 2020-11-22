@@ -17,6 +17,7 @@ using System.Text.RegularExpressions;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
 using static Blish_HUD.GameService;
+using static Nekres.Music_Mixer.Gw2StateService;
 
 namespace Nekres.Music_Mixer
 {
@@ -98,13 +99,44 @@ namespace Nekres.Music_Mixer
 
         protected override void Update(GameTime gameTime) {
             _gw2State.TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
+            _gw2State.CheckWaterLevel();
             _musicPlayer.SetVolume(_masterVolume.Value / 100);
         }
 
 
         protected override void OnModuleLoaded(EventArgs e) {
+            _gw2State.StateChanged += OnStateChanged;
             // Base handler must be called
             base.OnModuleLoaded(e);
+        }
+
+
+        private void OnStateChanged(object sender, ValueEventArgs<State> e) {
+            switch (e.Value) {
+                case State.StandBy:
+                    _musicPlayer.Stop();
+                    break;
+                case State.Mounted:
+                    //PlayMountTrack();
+                    break;
+                case State.OpenWorld:
+                    //PlayOpenWorldTrack();
+                    break;
+                case State.Combat:
+                    //PlayCombatTrack();
+                    break;
+                case State.CompetitiveMode:
+                    //PlayCompetitiveTrack();
+                    break;
+                case State.WorldVsWorld:
+                    //PlayWorldVsWorldTrack();
+                    break;
+                case State.StoryInstance:
+                    //PlayWorldVsWorldTrack();
+                    break;
+                case State.Submerged:
+                    break;
+            }
         }
 
         /// <inheritdoc />

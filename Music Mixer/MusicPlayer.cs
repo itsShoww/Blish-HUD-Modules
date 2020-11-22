@@ -3,11 +3,13 @@ using CSCore.SoundOut;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
+using Gw2Sharp.Models;
 using static Blish_HUD.GameService;
 
 namespace Nekres.Music_Mixer
@@ -22,12 +24,14 @@ namespace Nekres.Music_Mixer
 
         #region Playlists
         
-        private Combat _combatPlaylist;
-        private StoryInstance _instancePlaylist;
-        private Mounted _mountedPlaylist;
-        private CompetitiveMode _pvpPlaylist;
-        private OpenWorld _openWorldPlaylist;
-        private WorldVsWorld _wvwPlaylist;
+        private IList<Track> _combatPlaylist;
+        private IList<EncounterTrack> _encounterPlaylist;
+        private IList<Track> _instancePlaylist;
+        private MountPlaylists _mountedPlaylist;
+        private IList<Track> _pvpPlaylist;
+        private IList<Track> _openWorldPlaylist;
+        private IList<Track> _wvwPlaylist;
+        private IList<Track> _submergedPlaylist;
 
         #endregion
 
@@ -45,12 +49,19 @@ namespace Nekres.Music_Mixer
             _youtubeDL.YoutubeDLPath = Path.Combine(_playlistDirectory, _youtubeDLPath);
             _youtubeDL.OutputFolder = Directory.CreateDirectory(Path.Combine(_playlistDirectory, "cache")).FullName;
 
-            _combatPlaylist = LoadPlaylist<Combat>(Path.Combine(_playlistDirectory, "combat.json"));
-            _instancePlaylist = LoadPlaylist<StoryInstance>(Path.Combine(_playlistDirectory, "instance.json"));
-            _mountedPlaylist = LoadPlaylist<Mounted>(Path.Combine(_playlistDirectory, "mounted.json"));
-            _pvpPlaylist = LoadPlaylist<CompetitiveMode>(Path.Combine(_playlistDirectory, "pvp.json"));
-            _openWorldPlaylist = LoadPlaylist<OpenWorld>(Path.Combine(_playlistDirectory, "world.json"));
-            _wvwPlaylist = LoadPlaylist<WorldVsWorld>(Path.Combine(_playlistDirectory, "wvw.json"));
+            _combatPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "combat.json"));
+            _encounterPlaylist = LoadPlaylist<List<EncounterTrack>>(Path.Combine(_playlistDirectory, "encounter.json"));
+            _instancePlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "instance.json"));
+            _mountedPlaylist = LoadPlaylist<MountPlaylists>(Path.Combine(_playlistDirectory, "mounted.json"));
+            _pvpPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "pvp.json"));
+            _openWorldPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "world.json"));
+            _wvwPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "wvw.json"));
+            _submergedPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "submerged.json"));
+        }
+
+
+        public void Stop() {
+            _outputDevice.Stop();
         }
 
 
@@ -114,6 +125,11 @@ namespace Nekres.Music_Mixer
                     return serializer.Deserialize<T>(jsonReader);
                 }
             }
+        }
+
+
+        public void SelectTrack(int playlistId, TyrianTime time = TyrianTime.None, int mapId = -1) {
+            //TODO select track
         }
 
 

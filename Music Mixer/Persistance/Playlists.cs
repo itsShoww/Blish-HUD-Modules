@@ -1,14 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Gw2Sharp.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nekres.Music_Mixer
 {
-    public class MapTrack
+    public class Track
     {
         [JsonProperty("mapId")]
         public int MapId { get; set; }
@@ -24,50 +22,45 @@ namespace Nekres.Music_Mixer
         [JsonProperty("uris")]
         public IReadOnlyList<string> Uris { get; set; }
     }
-    public class Mounted
+    public class MountPlaylists
     {
         [JsonProperty("raptor")]
-        public IList<MapTrack> Raptor { get; set; }
+        public IList<Track> Raptor { get; set; }
         [JsonProperty("springer")]
-        public IList<MapTrack> Springer { get; set; }
+        public IList<Track> Springer { get; set; }
         [JsonProperty("skimmer")]
-        public IList<MapTrack> Skimmer { get; set; }
+        public IList<Track> Skimmer { get; set; }
         [JsonProperty("jackal")]
-        public IList<MapTrack> Jackal { get; set; }
+        public IList<Track> Jackal { get; set; }
         [JsonProperty("griffon")]
-        public IList<MapTrack> Griffon { get; set; }
+        public IList<Track> Griffon { get; set; }
         [JsonProperty("rollerbeetle")]
-        public IList<MapTrack> Rollerbeetle { get; set; }
+        public IList<Track> Rollerbeetle { get; set; }
         [JsonProperty("warclaw")]
-        public IList<MapTrack> Warclaw { get; set; }
+        public IList<Track> Warclaw { get; set; }
         [JsonProperty("skyscale")]
-        public IList<MapTrack> Skyscale { get; set; }
-    }
-    public class CompetitiveMode
-    {
-        [JsonProperty("tracks")]
-        public IList<MapTrack> Tracks { get; set; }
-    }
-    public class WorldVsWorld
-    {
-        [JsonProperty("tracks")]
-        public IList<MapTrack> Tracks { get; set; }
-    }
-    public class StoryInstance
-    {
-        [JsonProperty("tracks")]
-        public IList<MapTrack> Tracks { get; set; }
-    }
-    public class OpenWorld
-    {
-        [JsonProperty("tracks")]
-        public IList<MapTrack> Tracks;
-    }
-    public class Combat
-    {
-        [JsonProperty("tracks")]
-        public IList<MapTrack> Tracks { get; set; }
-        [JsonProperty("encounterTracks")]
-        public IList<EncounterTrack> EncounterTracks;
+        public IList<Track> Skyscale { get; set; }
+
+        public IReadOnlyList<string> GetTracks(MountType mount, TyrianTime time = TyrianTime.None, int mapId = -1) {
+            switch (mount) {
+                case MountType.Jackal:
+                    return Jackal.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                case MountType.Griffon:
+                    return Griffon.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                case MountType.Springer:
+                    return Springer.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                case MountType.Skimmer:
+                    return Skimmer.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                case MountType.Raptor:
+                    return Raptor.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                case MountType.RollerBeetle:
+                    return Rollerbeetle.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                case MountType.Warclaw:
+                    return Warclaw.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                case MountType.Skyscale:
+                    return Skyscale.Where(x => x.MapId == mapId).Where(x => x.DayTime == time).Select(x => x.Uri).ToList();
+                default: return null;
+            }
+        }
     }
 }
