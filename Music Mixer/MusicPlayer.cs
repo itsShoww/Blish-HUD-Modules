@@ -12,6 +12,7 @@ using YoutubeDLSharp.Options;
 using Gw2Sharp.Models;
 using static Blish_HUD.GameService;
 using Blish_HUD;
+using System.Diagnostics;
 
 namespace Nekres.Music_Mixer
 {
@@ -36,10 +37,8 @@ namespace Nekres.Music_Mixer
 
         #endregion
 
-        public bool IsFading { get; private set; }
-
         public MusicPlayer(string _playlistDirectory, string _FFmpegPath, string _youtubeDLPath) {
-           _outputDevice = new WasapiOut();
+            _outputDevice = new WasapiOut();
 
             _youtubeDL = new YoutubeDL();
             _youtubeDLOptions = new OptionSet()
@@ -69,8 +68,8 @@ namespace Nekres.Music_Mixer
 
 
         public void SetVolume(float volume) {
-            if (_outputDevice != null && _outputDevice.PlaybackState != PlaybackState.Stopped && !IsFading)
-                _outputDevice.Volume = MathHelper.Clamp(volume, 0, 1);
+            if (_outputDevice != null && _outputDevice.PlaybackState != PlaybackState.Stopped)
+                _outputDevice.Volume = MathHelper.Clamp(volume, 0f, 1f);
         }
 
 

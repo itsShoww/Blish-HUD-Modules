@@ -8,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Threading.Tasks;
-using System.Timers;
 using static Blish_HUD.GameService;
 using static Nekres.Music_Mixer.Gw2StateService;
 
@@ -49,9 +47,6 @@ namespace Nekres.Music_Mixer
 
         private const string _FFmpegPath = "bin/ffmpeg.exe";
         private const string _youtubeDLPath = "bin/youtube-dl.exe";
-
-        private Timer _combatDelay;
-        private int _combatDelayMs = 5000;
 
         protected override void DefineSettings(SettingCollection settings) {
             _masterVolume = settings.DefineSetting("MasterVolume.", 50.0f, "Master Volume", "Sets the audio volume.");
@@ -120,16 +115,7 @@ namespace Nekres.Music_Mixer
                     _musicPlayer.PlayOpenWorldTrack();
                     break;
                 case State.Combat:
-                    _combatDelay?.Dispose();
-                    _combatDelay = new Timer(_combatDelayMs);
-                    _combatDelay.Elapsed += delegate {
-                        if (_gw2State.CurrentState == State.Combat) {
-                            _musicPlayer.Stop();
-                            _musicPlayer.PlayCombatTrack();
-                        }
-                        _combatDelay.Dispose();
-                    };
-                    _combatDelay.Start();
+                    _musicPlayer.PlayCombatTrack();
                     break;
                 case State.CompetitiveMode:
                     _musicPlayer.PlayCompetitiveTrack();
