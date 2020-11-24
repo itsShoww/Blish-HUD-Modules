@@ -36,7 +36,7 @@ namespace Nekres.Music_Mixer
 
         #region Settings
 
-        private SettingEntry<float> _masterVolume;
+        internal SettingEntry<float> MasterVolume;
 
         #endregion
 
@@ -49,7 +49,7 @@ namespace Nekres.Music_Mixer
         private const string _youtubeDLPath = "bin/youtube-dl.exe";
 
         protected override void DefineSettings(SettingCollection settings) {
-            _masterVolume = settings.DefineSetting("MasterVolume.", 50.0f, "Master Volume", "Sets the audio volume.");
+            MasterVolume = settings.DefineSetting("MasterVolume", 50.0f, "Master Volume", "Sets the audio volume.");
         }
 
 
@@ -86,13 +86,17 @@ namespace Nekres.Music_Mixer
 
             _musicPlayer = new MusicPlayer(_moduleDirectory, _FFmpegPath, _youtubeDLPath);
             _gw2State = new Gw2StateService(LoadEncounterData());
+
+            MasterVolume.SettingChanged += OnMasterVolumeSettingChanged;
         }
 
+        private void OnMasterVolumeSettingChanged(object o, ValueChangedEventArgs<float> e) {
+            _musicPlayer.SetVolume(e.NewValue / 100);
+        }
 
         protected override void Update(GameTime gameTime) {
             _gw2State.TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
             _gw2State.CheckWaterLevel();
-            _musicPlayer.SetVolume(_masterVolume.Value / 100);
         }
 
 
@@ -103,11 +107,31 @@ namespace Nekres.Music_Mixer
         }
 
 
-        private void OnStateChanged(object sender, ValueEventArgs<State> e) {
-            _musicPlayer.Stop();
-            switch (_gw2State.CurrentState) {
-                case State.StandBy:
+        private void OnStateChanged(object sender, ValueChangedEventArgs<State> e) {
+            /**
+             * Stop or fade depending on previous state.
+             */
+            switch (e.PreviousValue) {
+                case State.Mounted:
+                    _musicPlayer.FadeOut();
                     break;
+                case State.Combat:
+                    _musicPlayer.FadeOut();
+                    break;
+                case State.Encounter:
+                    _musicPlayer.FadeOut();
+                    break;
+                case State.Submerged:
+                    _musicPlayer.FadeOut();
+                    break;
+                default: 
+                    _musicPlayer.Stop(); 
+                    break;
+            }
+            /**
+             * Start playing a track.
+             */
+            switch (e.NewValue) {
                 case State.Mounted:
                     _musicPlayer.PlayMountTrack(Gw2Mumble.PlayerCharacter.CurrentMount);
                     break;
@@ -129,19 +153,18 @@ namespace Nekres.Music_Mixer
                 case State.Submerged:
                     _musicPlayer.PlaySubmergedTrack();
                     break;
-                default: return;
+                default: break;
             }
         }
 
         /// <inheritdoc />
         protected override void Unload() { 
-            _musicPlayer.Dispose();
+            MasterVolume.SettingChanged -= OnMasterVolumeSettingChanged;
             _gw2State.StateChanged -= OnStateChanged;
             _gw2State.Unload();
+            _musicPlayer.Dispose();
             // All static members must be manually unset
             ModuleInstance = null;
         }
-
     }
-
 }

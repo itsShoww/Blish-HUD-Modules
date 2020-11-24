@@ -1,28 +1,34 @@
-﻿using CSCore.Codecs.MP3;
+﻿using Blish_HUD;
+using CSCore.Codecs;
 using CSCore.SoundOut;
+using Gw2Sharp.Models;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
-using Gw2Sharp.Models;
 using static Blish_HUD.GameService;
-using Blish_HUD;
-using System.Diagnostics;
 
 namespace Nekres.Music_Mixer
 {
     public class MusicPlayer : IDisposable
     {
+        private float _masterVolume => MusicMixerModule.ModuleInstance.MasterVolume.Value / 100;
+
         private Regex _youtubeVideoID = new Regex(@"youtu(?:\.be|be\.com)/(?:.*v(?:/|=)|(?:.*/)?)([a-zA-Z0-9-_]+)", RegexOptions.Compiled);
 
         private WasapiOut _outputDevice;
+        private bool _initialized;
+
         private YoutubeDL _youtubeDL;
         private OptionSet _youtubeDLOptions;
+        
+        private Stopwatch _stopwatch;
 
         #region Playlists
         
@@ -39,6 +45,8 @@ namespace Nekres.Music_Mixer
 
         public MusicPlayer(string _playlistDirectory, string _FFmpegPath, string _youtubeDLPath) {
             _outputDevice = new WasapiOut();
+
+            _stopwatch = new Stopwatch();
 
             _youtubeDL = new YoutubeDL();
             _youtubeDLOptions = new OptionSet()
@@ -59,19 +67,48 @@ namespace Nekres.Music_Mixer
             _openWorldPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "world.json"));
             _wvwPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "wvw.json"));
             _submergedPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "submerged.json"));
+
+            Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
         }
 
+        private void OnIsMapOpenChanged(object o, ValueEventArgs<bool> e) {
+            if (e.Value)
+                Fade(0.5f * _masterVolume, 450);
+            else
+                Fade(_masterVolume, 450);
+        }
+
+        public void FadeOut() => Fade(0, 2000);
+        private void Fade(float target, int durationMs) {
+            if (!_initialized) return;
+            _stopwatch.Restart();
+            float start = _outputDevice.Volume;
+            float value;
+            bool reached = false;
+            while (!reached && _stopwatch.ElapsedMilliseconds < durationMs) {
+                if (target < start) {
+                    value = Math.Abs(start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) - start);
+                    reached = value < target;
+                } else {
+                    value = start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) + start;
+                    reached = value > target;
+                }
+                SetVolume(value);
+            }
+            _stopwatch.Stop();
+            if (target == 0)
+                Stop();
+        }
 
         public void Stop() {
-            _outputDevice.Stop();
+            if (!_initialized) return; 
+            _outputDevice?.Stop();
         }
-
 
         public void SetVolume(float volume) {
-            if (_outputDevice != null && _outputDevice.PlaybackState != PlaybackState.Stopped)
-                _outputDevice.Volume = MathHelper.Clamp(volume, 0f, 1f);
+            if (!_initialized) return;
+            _outputDevice.Volume = MathHelper.Clamp(volume, 0f, 1f);
         }
-
 
         public void PlayTrack(string uri) {
             if (uri == null || uri.Equals("")) return;
@@ -91,7 +128,9 @@ namespace Nekres.Music_Mixer
             }
 
             if (!File.Exists(uri)) return;
-            _outputDevice.Initialize(new Mp3MediafoundationDecoder(uri));
+            _outputDevice.Initialize(CodecFactory.Instance.GetCodec(uri));
+            _initialized = true;
+            SetVolume(_masterVolume);
             _outputDevice.Play();
         }
 
@@ -161,6 +200,7 @@ namespace Nekres.Music_Mixer
         public void PlaySubmergedTrack() => PlayTrack(SelectTrack(_submergedPlaylist));
 
         public void Dispose() {
+            Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
             _outputDevice.Stop();
             _outputDevice.Dispose();
             _outputDevice = null;
