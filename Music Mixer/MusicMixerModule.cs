@@ -53,7 +53,7 @@ namespace Nekres.Music_Mixer
         protected override void DefineSettings(SettingCollection settings) {
             MasterVolume = settings.DefineSetting("MasterVolume", 50.0f, "Master Volume", "Sets the audio volume.");
             ToggleSubmergedPlaylist = settings.DefineSetting("EnableSubmergedPlaylist", false, "Use submerged playlist", "If songs from the underwater playlist should be used while submerged.");
-            ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "If dusk and dawn track attributes should be interpreted as unique day cycles. Otherwise dusk and dawn will be interpreted as night and day respectively.");
+            ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "If dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
         }
 
 
@@ -92,6 +92,7 @@ namespace Nekres.Music_Mixer
             _gw2State = new Gw2StateService(LoadEncounterData());
 
             MasterVolume.SettingChanged += OnMasterVolumeSettingChanged;
+            _gw2State.IsSubmergedChanged += OnIsSubmergedChanged;
         }
 
         private void OnMasterVolumeSettingChanged(object o, ValueChangedEventArgs<float> e) {
@@ -99,8 +100,17 @@ namespace Nekres.Music_Mixer
         }
 
         protected override void Update(GameTime gameTime) {
-            _gw2State.TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
+            _gw2State.CheckTyrianTime();
             _gw2State.CheckWaterLevel();
+        }
+
+
+        private void OnIsSubmergedChanged(object o, ValueEventArgs<bool> e) {
+            if (!ToggleSubmergedPlaylist.Value) return;
+            if (e.Value)
+                _musicPlayer.Fade(0.4f * (MasterVolume.Value / 100), 450);
+            else
+                _musicPlayer.Fade(MasterVolume.Value / 100, 450);
         }
 
 
@@ -165,6 +175,7 @@ namespace Nekres.Music_Mixer
         protected override void Unload() { 
             MasterVolume.SettingChanged -= OnMasterVolumeSettingChanged;
             _gw2State.StateChanged -= OnStateChanged;
+            _gw2State.IsSubmergedChanged -= OnIsSubmergedChanged;
             _gw2State.Unload();
             _musicPlayer.Dispose();
             // All static members must be manually unset

@@ -43,17 +43,17 @@ namespace Nekres.Music_Mixer
         #endregion
 
         #region Events
-        /// <summary>
-        /// Fires when the Tyrian time of day changes.
-        /// </summary>
+
         public event EventHandler<ValueEventArgs<TyrianTime>> TyrianTimeChanged;
         public event EventHandler<ValueChangedEventArgs<State>> StateChanged;
+        public event EventHandler<ValueEventArgs<bool>> IsSubmergedChanged;
+
         #endregion
 
         private TyrianTime _prevTyrianTime = TyrianTime.None;
         public TyrianTime TyrianTime { 
-            get => _prevTyrianTime; 
-            set {
+            get => _prevTyrianTime;
+            private set {
                 if (_prevTyrianTime == value) return; 
 
                 _prevTyrianTime = value;
@@ -62,6 +62,19 @@ namespace Nekres.Music_Mixer
             }
         }
 
+        private bool _prevIsSubmerged = Gw2Mumble.PlayerCharacter.Position.Z < -1.25f;
+        public bool IsSubmerged {
+            get => _prevIsSubmerged; 
+            private set {
+                if (_prevIsSubmerged == value) return; 
+
+                _prevIsSubmerged = value;
+
+                _stateMachine?.Fire(value ? Trigger.Submerging : Trigger.Emerging);
+
+                IsSubmergedChanged?.Invoke(this, new ValueEventArgs<bool>(value));
+            }
+        }
 
         private StateMachine<State, Trigger> _stateMachine;
 
@@ -179,14 +192,8 @@ namespace Nekres.Music_Mixer
         }
 
 
-        public void CheckWaterLevel() {
-            var zloc = Gw2Mumble.PlayerCharacter.Position.Z;
-            if (zloc <= 0)
-                _stateMachine.Fire(Trigger.Submerging);
-            else
-                _stateMachine.Fire(Trigger.Emerging);
-        }
-
+        public void CheckWaterLevel() => IsSubmerged = Gw2Mumble.PlayerCharacter.Position.Z < -1.25f;
+        public void CheckTyrianTime() => TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
 
         private void OnTyrianTimeChanged(object sender, ValueEventArgs<TyrianTime> e) {
             System.Diagnostics.Debug.WriteLine(e.Value);
@@ -249,7 +256,7 @@ namespace Nekres.Music_Mixer
 
         private State GameModeStateSelector() {
             if (Gw2Mumble.PlayerCharacter.IsInCombat) return State.Combat;
-            if (Gw2Mumble.PlayerCharacter.Position.Z <= 0) return State.Submerged;
+            if (_toggleSubmergedPlaylist && _prevIsSubmerged) return State.Submerged;
             switch (Gw2Mumble.CurrentMap.Type) {
                 case Gw2Sharp.Models.MapType.Unknown:
                     return State.StandBy;

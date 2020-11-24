@@ -1,6 +1,7 @@
 ﻿using Blish_HUD;
 using CSCore.Codecs;
 using CSCore.SoundOut;
+using CSCore.Streams.Effects;
 using Gw2Sharp.Models;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
@@ -74,18 +75,19 @@ namespace Nekres.Music_Mixer
 
         private void OnIsMapOpenChanged(object o, ValueEventArgs<bool> e) {
             if (e.Value)
-                Fade(0.5f * _masterVolume, 450);
+                Fade(0.4f * _masterVolume, 450);
             else
                 Fade(_masterVolume, 450);
         }
 
         public void FadeOut() => Fade(0, 2000);
-        private void Fade(float target, int durationMs) {
+        public void Fade(float target, int durationMs) {
             if (!_initialized) return;
-            _stopwatch.Restart();
             float start = _outputDevice.Volume;
+            if (target == start) return;
             float value;
             bool reached = false;
+            _stopwatch.Restart();
             while (!reached && _stopwatch.ElapsedMilliseconds < durationMs) {
                 if (target < start) {
                     value = Math.Abs(start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) - start);
@@ -94,6 +96,7 @@ namespace Nekres.Music_Mixer
                     value = start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) + start;
                     reached = value > target;
                 }
+                value = reached ? target : value;
                 SetVolume(value);
             }
             _stopwatch.Stop();
@@ -108,12 +111,13 @@ namespace Nekres.Music_Mixer
 
         public void SetVolume(float volume) {
             if (!_initialized) return;
-            // Defaults to _masterVolume if out of boundaries.
+            // Avoid clamped volumes.
             volume = volume < 0 ? _masterVolume : volume; 
             volume = volume > 1 ? _masterVolume : volume;
-            // Keep _masterVolume in the safe zone as well.
+            // Keep _masterVolume in the safe zone as well. Clamped volumes are fine here.
             _outputDevice.Volume = MathHelper.Clamp(volume, 0f, 1f);
         }
+
 
         public void PlayTrack(string uri, float volume = 0) {
             if (uri == null || uri.Equals("")) return;
