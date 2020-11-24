@@ -25,6 +25,38 @@ namespace Nekres.Music_Mixer {
         /// </summary>
         [EnumMember(Value = "night")] Night
     }
+    internal static class TyrianTimeExtension
+    {
+        /// <summary>
+        /// Resolves a given day cycle to its two day cycle context which is either Night or Day.
+        /// </summary>
+        /// <param name="time">The time to resolve the day cycle context of.</param>
+        /// <returns>The full day cycle that is the context.</returns>
+        public static TyrianTime Resolve(this TyrianTime time) {
+            switch (time) {
+                case TyrianTime.Dawn:
+                    return TyrianTime.Day;
+                case TyrianTime.Day:
+                    return TyrianTime.Day;
+                case TyrianTime.Dusk:
+                    return TyrianTime.Night;
+                case TyrianTime.Night:
+                    return TyrianTime.Night;
+                default:
+                    return TyrianTime.None;
+            }
+        }
+
+        /// <summary>
+        /// Compares the context of two day cycles.
+        /// </summary>
+        /// <param name="source">The source day cycle.</param>
+        /// <param name="other">The other day cycle to compare against.</param>
+        /// <returns><see langword="True"/> if both day cycles belong to the same full day cycle. Otherwise <see langword="false"/>.</returns>
+        public static bool ContextEquals(this TyrianTime source, TyrianTime other) {
+            return source.Resolve() == other.Resolve();
+        }
+    }
     internal static class TyrianTimeUtil
     {
         private static IReadOnlyDictionary<TyrianTime, (TimeSpan,TimeSpan)> _dayCycleIntervals = new Dictionary<TyrianTime, (TimeSpan, TimeSpan)>() {
@@ -92,6 +124,7 @@ namespace Nekres.Music_Mixer {
              */
             return TimeSpan.FromSeconds(currentCycleSeconds * 12);
         }
+
 
         /// <summary>
         /// Checks if the given time is between the given start and end time.

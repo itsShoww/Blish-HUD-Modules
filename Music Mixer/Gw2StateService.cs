@@ -11,6 +11,8 @@ namespace Nekres.Music_Mixer
 {
     internal class Gw2StateService
     {
+        private bool _toggleSubmergedPlaylist => MusicMixerModule.ModuleInstance.ToggleSubmergedPlaylist.Value;
+
         private static readonly Logger Logger = Logger.GetLogger(typeof(Gw2StateService));
 
         #region _Enums
@@ -116,7 +118,7 @@ namespace Nekres.Music_Mixer
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
-                        .Permit(Trigger.Submerging, State.Submerged)
+                        .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
                         .Ignore(Trigger.Emerging)
                         .Ignore(Trigger.OutOfCombat);
 
@@ -153,7 +155,7 @@ namespace Nekres.Music_Mixer
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.InCombat, State.Combat)
-                        .Permit(Trigger.Submerging, State.Submerged)
+                        .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
                         .Ignore(Trigger.Emerging)
                         .Ignore(Trigger.OutOfCombat);
 
@@ -162,7 +164,7 @@ namespace Nekres.Music_Mixer
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
-                        .Permit(Trigger.Submerging, State.Submerged)
+                        .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
                         .Ignore(Trigger.Emerging)
                         .Ignore(Trigger.OutOfCombat);
 

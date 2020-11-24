@@ -10,11 +10,14 @@ namespace Nekres.Music_Mixer
     {
         [JsonProperty("mapId")]
         public int MapId { get; set; }
-        [JsonProperty("uri")]
-        public string Uri { get; set; }
         [JsonConverter(typeof(StringEnumConverter)), JsonProperty("dayTime")] 
         public TyrianTime DayTime { get; set; }
+        [JsonProperty("volume")]
+        public float Volume { get; set; }
+        [JsonProperty("uri")]
+        public string Uri { get; set; }
     }
+
     public class EncounterTrack
     {
         [JsonProperty("encounterIds"), JsonConverter(typeof(HexStringJsonConverter))]
@@ -22,6 +25,7 @@ namespace Nekres.Music_Mixer
         [JsonProperty("uris")]
         public IReadOnlyList<string> Uris { get; set; }
     }
+
     public class MountPlaylists
     {
         [JsonProperty("raptor")]

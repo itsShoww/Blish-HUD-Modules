@@ -19,6 +19,7 @@ namespace Nekres.Music_Mixer
     public class MusicPlayer : IDisposable
     {
         private float _masterVolume => MusicMixerModule.ModuleInstance.MasterVolume.Value / 100;
+        private bool _toggleFourDayCycle => MusicMixerModule.ModuleInstance.ToggleFourDayCycle.Value;
 
         private Regex _youtubeVideoID = new Regex(@"youtu(?:\.be|be\.com)/(?:.*v(?:/|=)|(?:.*/)?)([a-zA-Z0-9-_]+)", RegexOptions.Compiled);
 
@@ -107,10 +108,14 @@ namespace Nekres.Music_Mixer
 
         public void SetVolume(float volume) {
             if (!_initialized) return;
+            // Defaults to _masterVolume if out of boundaries.
+            volume = volume < 0 ? _masterVolume : volume; 
+            volume = volume > 1 ? _masterVolume : volume;
+            // Keep _masterVolume in the safe zone as well.
             _outputDevice.Volume = MathHelper.Clamp(volume, 0f, 1f);
         }
 
-        public void PlayTrack(string uri) {
+        public void PlayTrack(string uri, float volume = 0) {
             if (uri == null || uri.Equals("")) return;
             if (!FileUtil.IsLocalPath(uri)) {
                 var youtubeMatch = _youtubeVideoID.Match(uri);
@@ -130,7 +135,8 @@ namespace Nekres.Music_Mixer
             if (!File.Exists(uri)) return;
             _outputDevice.Initialize(CodecFactory.Instance.GetCodec(uri));
             _initialized = true;
-            SetVolume(_masterVolume);
+            // Individual songs can hold different peaks. Allow custom reduction per track.
+            SetVolume(_masterVolume - Math.Abs(1 - volume));
             _outputDevice.Play();
         }
 
@@ -180,7 +186,13 @@ namespace Nekres.Music_Mixer
             if (mapTracks.Count() == 0)
                 mapTracks = playlist.Where(x => x.MapId == -1);
 
-            var timeTracks = mapTracks.Where(x => x.DayTime == time);
+            IEnumerable<Track> timeTracks;
+
+            if (_toggleFourDayCycle)
+                timeTracks = mapTracks.Where(x => x.DayTime == time);
+            else
+                timeTracks = mapTracks.Where(x => x.DayTime.ContextEquals(time));
+
             if (timeTracks.Count() == 0)
                 timeTracks = mapTracks.Where(x => x.DayTime == TyrianTime.None);
 
