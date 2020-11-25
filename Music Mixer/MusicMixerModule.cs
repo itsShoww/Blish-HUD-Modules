@@ -90,11 +90,6 @@ namespace Nekres.Music_Mixer
 
             _musicPlayer = new MusicPlayer(_moduleDirectory, _FFmpegPath, _youtubeDLPath);
             _gw2State = new Gw2StateService(LoadEncounterData());
-
-            MasterVolume.SettingChanged += OnMasterVolumeSettingChanged;
-            _gw2State.IsSubmergedChanged += OnIsSubmergedChanged;
-            _gw2State.TyrianTimeChanged += OnTyrianTimeChanged;
-            GameIntegration.Gw2Closed += OnGw2Closed;
         }
 
         private void OnMasterVolumeSettingChanged(object o, ValueChangedEventArgs<float> e) {
@@ -109,20 +104,37 @@ namespace Nekres.Music_Mixer
         private void OnGw2Closed(object sender, EventArgs e) => _musicPlayer?.Stop();
 
         private void OnTyrianTimeChanged(object sender, ValueEventArgs<TyrianTime> e) {
-            System.Diagnostics.Debug.WriteLine(e.Value);
+            switch (e.Value) {
+                case TyrianTime.None: 
+                    return;
+                case TyrianTime.Dawn:
+                case TyrianTime.Dusk:
+                    if (!ToggleFourDayCycle.Value) 
+                        return;
+                    break;
+                default: break;
+            }
+            _musicPlayer.PlayNext();
         }
 
 
         private void OnIsSubmergedChanged(object o, ValueEventArgs<bool> e) {
-            if (!ToggleSubmergedPlaylist.Value) return;
-            if (e.Value)
+            if (ToggleSubmergedPlaylist.Value) return;
+            if (e.Value) {
+                _musicPlayer.EnableGargle();
                 _musicPlayer.Fade(0.4f * (MasterVolume.Value / 100), 450);
-            else
+            } else {
+                _musicPlayer.DisableGargle();
                 _musicPlayer.Fade(MasterVolume.Value / 100, 450);
+            }
         }
 
 
         protected override void OnModuleLoaded(EventArgs e) {
+            MasterVolume.SettingChanged += OnMasterVolumeSettingChanged;
+            _gw2State.IsSubmergedChanged += OnIsSubmergedChanged;
+            _gw2State.TyrianTimeChanged += OnTyrianTimeChanged;
+            GameIntegration.Gw2Closed += OnGw2Closed;
             _gw2State.StateChanged += OnStateChanged;
             // Base handler must be called
             base.OnModuleLoaded(e);
@@ -135,18 +147,12 @@ namespace Nekres.Music_Mixer
              */
             switch (e.PreviousValue) {
                 case State.Mounted:
-                    _musicPlayer.FadeOut();
-                    break;
                 case State.Combat:
-                    _musicPlayer.FadeOut();
-                    break;
                 case State.Encounter:
-                    _musicPlayer.FadeOut();
-                    break;
                 case State.Submerged:
                     _musicPlayer.FadeOut();
                     break;
-                default: 
+                default:
                     _musicPlayer.Stop(); 
                     break;
             }

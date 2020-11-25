@@ -35,11 +35,9 @@ namespace Nekres.Music_Mixer {
         public static TyrianTime Resolve(this TyrianTime time) {
             switch (time) {
                 case TyrianTime.Dawn:
-                    return TyrianTime.Day;
                 case TyrianTime.Day:
                     return TyrianTime.Day;
                 case TyrianTime.Dusk:
-                    return TyrianTime.Night;
                 case TyrianTime.Night:
                     return TyrianTime.Night;
                 default:
@@ -85,6 +83,7 @@ namespace Nekres.Music_Mixer {
         /// <summary>
         /// Checks which Tyrian day cycle prevails in the given Tyrian time.
         /// </summary>
+        /// <param name="tyrianTime">The Tyrian time to get the dominant day cycle of.</param>
         /// <returns>The day cycle.</returns>
         public static TyrianTime GetDayCycle(TimeSpan tyrianTime) {
             foreach (var timePair in _dayCycleIntervals) {

@@ -28,6 +28,7 @@ namespace Nekres.Music_Mixer
 
         private WasapiOut _outputDevice;
         private bool _initialized;
+        private Equalizer _equalizer;
 
         private YoutubeDL _youtubeDL;
         private OptionSet _youtubeDLOptions;
@@ -109,7 +110,8 @@ namespace Nekres.Music_Mixer
         }
 
         public void Stop() {
-            if (!_initialized) return; 
+            if (!_initialized) return;
+            _initialized = false;
             _outputDevice?.Stop();
         }
 
@@ -122,6 +124,14 @@ namespace Nekres.Music_Mixer
             _outputDevice.Volume = MathHelper.Clamp(volume, 0f, 1f);
         }
 
+        public void EnableGargle() {
+            if (!_initialized) return;
+            _equalizer.SampleFilters[9].AverageGainDB = -45; // Treble
+        }
+        public void DisableGargle() {
+            if (!_initialized) return;
+            _equalizer.SampleFilters[9].AverageGainDB = 0;
+        }
 
         public void PlayTrack(string uri, float volume = 0) {
             if (uri == null || uri.Equals("")) return;
@@ -147,18 +157,16 @@ namespace Nekres.Music_Mixer
 
             // Setup event for reaching the end of the stream.
             source = new LoopStream(source) { EnableLoop = false };
-            (source as LoopStream).StreamFinished += (o, e) => PlayTrack(SelectTrack(_currentPlaylist));
-
-            var sampleRate = source.WaveFormat.SampleRate;
-            var bitsPerSample = source.WaveFormat.BitsPerSample;
+            (source as LoopStream).StreamFinished += (o, e) => PlayNext();
 
             var equalizer = Equalizer.Create10BandEqualizer(source.ToSampleSource());
-
             var finalSource = equalizer
                     .ToStereo()
-                    .ChangeSampleRate(sampleRate)
+                    .ChangeSampleRate(source.WaveFormat.SampleRate)
                     .AppendSource(Equalizer.Create10BandEqualizer, out equalizer)
-                    .ToWaveSource(bitsPerSample);
+                    .ToWaveSource(source.WaveFormat.BitsPerSample);
+            
+            _equalizer = equalizer;
 
             _outputDevice.Initialize(finalSource);
             _initialized = true;
@@ -232,6 +240,7 @@ namespace Nekres.Music_Mixer
             return track;
         }
 
+        public void PlayNext() => PlayTrack(SelectTrack(_currentPlaylist));
         public void PlayMountTrack(MountType mount) => PlayTrack(SelectTrack(_mountedPlaylist.GetPlaylist(mount)));
         public void PlayOpenWorldTrack() => PlayTrack(SelectTrack(_openWorldPlaylist));
         public void PlayCombatTrack() => PlayTrack(SelectTrack(_combatPlaylist));

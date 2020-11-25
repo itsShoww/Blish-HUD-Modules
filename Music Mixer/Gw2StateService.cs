@@ -71,9 +71,9 @@ namespace Nekres.Music_Mixer
 
                 _prevIsSubmerged = value;
 
-                _stateMachine?.Fire(value ? Trigger.Submerging : Trigger.Emerging);
-
                 IsSubmergedChanged?.Invoke(this, new ValueEventArgs<bool>(value));
+
+                _stateMachine?.Fire(value ? Trigger.Submerging : Trigger.Emerging);
             }
         }
 
@@ -258,48 +258,37 @@ namespace Nekres.Music_Mixer
         #region State Guards
 
         private State GameModeStateSelector() {
-            if (Gw2Mumble.PlayerCharacter.IsInCombat) return State.Combat;
-            if (_toggleSubmergedPlaylist && _prevIsSubmerged) return State.Submerged;
+            if (Gw2Mumble.PlayerCharacter.IsInCombat) 
+                return State.Combat;
+            if (_toggleSubmergedPlaylist && _prevIsSubmerged) 
+                return State.Submerged;
             switch (Gw2Mumble.CurrentMap.Type) {
                 case Gw2Sharp.Models.MapType.Unknown:
-                    return State.StandBy;
                 case Gw2Sharp.Models.MapType.Redirect:
-                    return State.StandBy;
                 case Gw2Sharp.Models.MapType.CharacterCreate:
                     return State.StandBy;
                 case Gw2Sharp.Models.MapType.Pvp:
-                    return State.CompetitiveMode;
                 case Gw2Sharp.Models.MapType.Gvg:
-                    return State.CompetitiveMode;
-                case Gw2Sharp.Models.MapType.Instance:
-                    return State.StoryInstance;
-                case Gw2Sharp.Models.MapType.Public:
-                    return State.OpenWorld;
                 case Gw2Sharp.Models.MapType.Tournament:
-                    return State.CompetitiveMode;
-                case Gw2Sharp.Models.MapType.Tutorial:
-                    return State.OpenWorld;
                 case Gw2Sharp.Models.MapType.UserTournament:
                     return State.CompetitiveMode;
-                case Gw2Sharp.Models.MapType.Center:
-                    return State.WorldVsWorld;
-                case Gw2Sharp.Models.MapType.BlueHome:
-                    return State.WorldVsWorld;
-                case Gw2Sharp.Models.MapType.GreenHome:
-                    return State.WorldVsWorld;
-                case Gw2Sharp.Models.MapType.RedHome:
-                    return State.WorldVsWorld;
+                case Gw2Sharp.Models.MapType.Instance:
                 case Gw2Sharp.Models.MapType.FortunesVale:
                     return State.StoryInstance;
-                case Gw2Sharp.Models.MapType.JumpPuzzle:
-                    return State.WorldVsWorld;
-                case Gw2Sharp.Models.MapType.EdgeOfTheMists:
-                    return State.WorldVsWorld;
+                case Gw2Sharp.Models.MapType.Tutorial:
+                case Gw2Sharp.Models.MapType.Public:
                 case Gw2Sharp.Models.MapType.PublicMini:
                     return State.OpenWorld;
+                case Gw2Sharp.Models.MapType.Center:
+                case Gw2Sharp.Models.MapType.BlueHome:
+                case Gw2Sharp.Models.MapType.GreenHome:
+                case Gw2Sharp.Models.MapType.RedHome:
+                case Gw2Sharp.Models.MapType.JumpPuzzle:
+                case Gw2Sharp.Models.MapType.EdgeOfTheMists:
                 case Gw2Sharp.Models.MapType.WvwLounge:
                     return State.WorldVsWorld;
-                default: return State.StandBy;
+                default:
+                    return State.StandBy;
             }
         }
 
