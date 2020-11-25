@@ -30,6 +30,7 @@ namespace Nekres.Music_Mixer
         }
         private enum Trigger
         {
+            StandBy,
             MapChanged,
             InCombat,
             OutOfCombat,
@@ -96,21 +97,19 @@ namespace Nekres.Music_Mixer
             Gw2Mumble.PlayerCharacter.IsInCombatChanged += OnIsInCombatChanged;
             Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
             GameIntegration.IsInGameChanged += OnIsInGameChanged;
-            TyrianTimeChanged += OnTyrianTimeChanged;
+
             GameIntegration.Gw2Closed += OnGw2Closed;
-            GameIntegration.Gw2Started += OnGw2Started;
         }
 
 
         public void Unload() {
             GameIntegration.Gw2Closed -= OnGw2Closed;
-            GameIntegration.Gw2Started -= OnGw2Started;
             ArcDps.RawCombatEvent -= CombatEventReceived;
             Gw2Mumble.PlayerCharacter.CurrentMountChanged -= OnMountChanged;
             Gw2Mumble.PlayerCharacter.IsInCombatChanged -= OnIsInCombatChanged;
             Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
             GameIntegration.IsInGameChanged -= OnIsInGameChanged;
-            TyrianTimeChanged -= OnTyrianTimeChanged;
+
         }
 
 
@@ -125,10 +124,12 @@ namespace Nekres.Music_Mixer
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
-                        .Ignore(Trigger.OutOfCombat);
+                        .Ignore(Trigger.OutOfCombat)
+                        .Ignore(Trigger.StandBy);
 
             _stateMachine.Configure(State.OpenWorld)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .Permit(Trigger.StandBy, State.StandBy)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
                         .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
@@ -137,6 +138,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.Mounted)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .Permit(Trigger.StandBy, State.StandBy)
                         .PermitDynamic(Trigger.Unmounting, GameModeStateSelector)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
@@ -145,6 +147,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.Combat)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .Permit(Trigger.StandBy, State.StandBy)
                         .PermitDynamic(Trigger.OutOfCombat, GameModeStateSelector)
                         .Permit(Trigger.EncounterPull, State.Encounter)
                         .Ignore(Trigger.Submerging)
@@ -153,12 +156,14 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.Encounter)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .Permit(Trigger.StandBy, State.StandBy)
                         .PermitDynamic(Trigger.OutOfCombat, GameModeStateSelector)
                         .Ignore(Trigger.Emerging)
                         .Ignore(Trigger.EncounterPull);
 
             _stateMachine.Configure(State.CompetitiveMode)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .Permit(Trigger.StandBy, State.StandBy)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
@@ -166,6 +171,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.StoryInstance)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .Permit(Trigger.StandBy, State.StandBy)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.InCombat, State.Combat)
                         .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
@@ -174,6 +180,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.WorldVsWorld)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .Permit(Trigger.StandBy, State.StandBy)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
@@ -183,6 +190,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.Submerged)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .Permit(Trigger.StandBy, State.StandBy)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
@@ -191,15 +199,10 @@ namespace Nekres.Music_Mixer
                         .Ignore(Trigger.OutOfCombat);
         }
 
-
         public void CheckWaterLevel() => IsSubmerged = Gw2Mumble.PlayerCharacter.Position.Z < -1.25f;
         public void CheckTyrianTime() => TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
 
-        private void OnTyrianTimeChanged(object sender, ValueEventArgs<TyrianTime> e) {
-            System.Diagnostics.Debug.WriteLine(e.Value);
-        }
-        private void OnGw2Started(object sender, EventArgs e) { /*TODO OnGw2Started*/ }
-        private void OnGw2Closed(object sender, EventArgs e) { /*TODO OnGw2Closed*/ }
+        private void OnGw2Closed(object sender, EventArgs e) => _stateMachine.Fire(Trigger.StandBy);
 
         #region ArcDps Events
 
@@ -247,7 +250,7 @@ namespace Nekres.Music_Mixer
 
 
         private void OnIsInGameChanged(object o, ValueEventArgs<bool> e) {
-            //TODO: Loadingscreen, mainmenu differentiation.
+            _stateMachine.Fire(e.Value ? Trigger.MapChanged : Trigger.StandBy);
         }
 
         #endregion

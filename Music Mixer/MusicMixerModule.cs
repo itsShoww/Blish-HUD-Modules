@@ -93,6 +93,8 @@ namespace Nekres.Music_Mixer
 
             MasterVolume.SettingChanged += OnMasterVolumeSettingChanged;
             _gw2State.IsSubmergedChanged += OnIsSubmergedChanged;
+            _gw2State.TyrianTimeChanged += OnTyrianTimeChanged;
+            GameIntegration.Gw2Closed += OnGw2Closed;
         }
 
         private void OnMasterVolumeSettingChanged(object o, ValueChangedEventArgs<float> e) {
@@ -102,6 +104,12 @@ namespace Nekres.Music_Mixer
         protected override void Update(GameTime gameTime) {
             _gw2State.CheckTyrianTime();
             _gw2State.CheckWaterLevel();
+        }
+
+        private void OnGw2Closed(object sender, EventArgs e) => _musicPlayer?.Stop();
+
+        private void OnTyrianTimeChanged(object sender, ValueEventArgs<TyrianTime> e) {
+            System.Diagnostics.Debug.WriteLine(e.Value);
         }
 
 
@@ -174,8 +182,10 @@ namespace Nekres.Music_Mixer
         /// <inheritdoc />
         protected override void Unload() { 
             MasterVolume.SettingChanged -= OnMasterVolumeSettingChanged;
+            GameIntegration.Gw2Closed -= OnGw2Closed;
             _gw2State.StateChanged -= OnStateChanged;
             _gw2State.IsSubmergedChanged -= OnIsSubmergedChanged;
+            _gw2State.TyrianTimeChanged -= OnTyrianTimeChanged;
             _gw2State.Unload();
             _musicPlayer.Dispose();
             // All static members must be manually unset

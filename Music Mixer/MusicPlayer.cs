@@ -1,6 +1,8 @@
 ﻿using Blish_HUD;
+using CSCore;
 using CSCore.Codecs;
 using CSCore.SoundOut;
+using CSCore.Streams;
 using CSCore.Streams.Effects;
 using Gw2Sharp.Models;
 using Microsoft.Xna.Framework;
@@ -44,6 +46,8 @@ namespace Nekres.Music_Mixer
         private IList<Track> _submergedPlaylist;
 
         #endregion
+
+        private IList<Track> _currentPlaylist;
 
         public MusicPlayer(string _playlistDirectory, string _FFmpegPath, string _youtubeDLPath) {
             _outputDevice = new WasapiOut();
@@ -136,8 +140,27 @@ namespace Nekres.Music_Mixer
                     uri = file.FullName;
             }
 
+            Stop();
             if (!File.Exists(uri)) return;
-            _outputDevice.Initialize(CodecFactory.Instance.GetCodec(uri));
+
+            var source = CodecFactory.Instance.GetCodec(uri);
+
+            // Setup event for reaching the end of the stream.
+            source = new LoopStream(source) { EnableLoop = false };
+            (source as LoopStream).StreamFinished += (o, e) => PlayTrack(SelectTrack(_currentPlaylist));
+
+            var sampleRate = source.WaveFormat.SampleRate;
+            var bitsPerSample = source.WaveFormat.BitsPerSample;
+
+            var equalizer = Equalizer.Create10BandEqualizer(source.ToSampleSource());
+
+            var finalSource = equalizer
+                    .ToStereo()
+                    .ChangeSampleRate(sampleRate)
+                    .AppendSource(Equalizer.Create10BandEqualizer, out equalizer)
+                    .ToWaveSource(bitsPerSample);
+
+            _outputDevice.Initialize(finalSource);
             _initialized = true;
             // Individual songs can hold different peaks. Allow custom reduction per track.
             SetVolume(_masterVolume - Math.Abs(1 - volume));
@@ -155,7 +178,7 @@ namespace Nekres.Music_Mixer
                 var filePath = response.Result.Data;
                 var newPath = Path.Combine(dir, FileUtil.Sanitize(Path.GetFileName(filePath)));
 
-                if (File.Exists(newPath)) File.Delete(newPath);
+                if (!FileUtil.IsFileLocked(newPath)) File.Delete(newPath);
                 File.Move(filePath, Path.Combine(dir, Path.GetFileName(filePath)));
             });
         }
@@ -182,6 +205,8 @@ namespace Nekres.Music_Mixer
 
         private string SelectTrack(IList<Track> playlist) {
             if (playlist == null) return "";
+
+            _currentPlaylist = playlist;
 
             var mapId = Gw2Mumble.CurrentMap.Id;
             var time = TyrianTimeUtil.GetCurrentDayCycle();
