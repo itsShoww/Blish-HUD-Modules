@@ -109,7 +109,6 @@ namespace Nekres.Music_Mixer
             Gw2Mumble.PlayerCharacter.IsInCombatChanged -= OnIsInCombatChanged;
             Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
             GameIntegration.IsInGameChanged -= OnIsInGameChanged;
-
         }
 
 
@@ -263,10 +262,6 @@ namespace Nekres.Music_Mixer
             if (_toggleSubmergedPlaylist && _prevIsSubmerged) 
                 return State.Submerged;
             switch (Gw2Mumble.CurrentMap.Type) {
-                case Gw2Sharp.Models.MapType.Unknown:
-                case Gw2Sharp.Models.MapType.Redirect:
-                case Gw2Sharp.Models.MapType.CharacterCreate:
-                    return State.StandBy;
                 case Gw2Sharp.Models.MapType.Pvp:
                 case Gw2Sharp.Models.MapType.Gvg:
                 case Gw2Sharp.Models.MapType.Tournament:
