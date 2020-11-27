@@ -1,0 +1,19 @@
+{
+  "name": "Mumble Info",
+  "version": "0.1.0",
+  "namespace": "Nekres.Mumble_Info_Module",
+  "package": "MumbleInfo.dll",
+  "manifest_version": 1,
+
+  "description": "Shows real time mumble link data.",
+  "dependencies": {
+    "bh.blishhud": ">=0.7.0"
+  },
+  "url": "https://github.com/blish-hud/",
+  "contributors": [
+    {
+      "name": "Nekres",
+      "username": "Nekres.1038"
+    }
+  ]
+}
