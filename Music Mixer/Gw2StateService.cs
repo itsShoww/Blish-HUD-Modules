@@ -121,14 +121,14 @@ namespace Nekres.Music_Mixer
             _stateMachine.Configure(State.StandBy)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
+                        .PermitDynamic(Trigger.OutOfCombat, GameModeStateSelector)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
-                        .Ignore(Trigger.OutOfCombat)
                         .Ignore(Trigger.StandBy);
 
             _stateMachine.Configure(State.OpenWorld)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                        .Permit(Trigger.StandBy, State.StandBy)
+                        .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
                         .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
@@ -137,7 +137,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.Mounted)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                        .Permit(Trigger.StandBy, State.StandBy)
+                        .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.Unmounting, GameModeStateSelector)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
@@ -146,7 +146,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.Combat)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                        .Permit(Trigger.StandBy, State.StandBy)
+                        .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.OutOfCombat, GameModeStateSelector)
                         .Permit(Trigger.EncounterPull, State.Encounter)
                         .Ignore(Trigger.Submerging)
@@ -155,14 +155,14 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.Encounter)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                        .Permit(Trigger.StandBy, State.StandBy)
+                        .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.OutOfCombat, GameModeStateSelector)
                         .Ignore(Trigger.Emerging)
                         .Ignore(Trigger.EncounterPull);
 
             _stateMachine.Configure(State.CompetitiveMode)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                        .Permit(Trigger.StandBy, State.StandBy)
+                        .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
@@ -170,7 +170,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.StoryInstance)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                        .Permit(Trigger.StandBy, State.StandBy)
+                        .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.InCombat, State.Combat)
                         .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
@@ -179,7 +179,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.WorldVsWorld)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                        .Permit(Trigger.StandBy, State.StandBy)
+                        .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
@@ -189,7 +189,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.Submerged)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                        .Permit(Trigger.StandBy, State.StandBy)
+                        .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)

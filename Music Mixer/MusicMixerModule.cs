@@ -120,13 +120,7 @@ namespace Nekres.Music_Mixer
 
         private void OnIsSubmergedChanged(object o, ValueEventArgs<bool> e) {
             if (ToggleSubmergedPlaylist.Value) return;
-            if (e.Value) {
-                _musicPlayer.EnableGargle();
-                _musicPlayer.Fade(0.4f * (MasterVolume.Value / 100), 450);
-            } else {
-                _musicPlayer.DisableGargle();
-                _musicPlayer.Fade(MasterVolume.Value / 100, 450);
-            }
+            _musicPlayer.ToggleSubmergedFx(e.Value);
         }
 
 

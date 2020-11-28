@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Options;
 using static Blish_HUD.GameService;
@@ -49,6 +50,7 @@ namespace Nekres.Music_Mixer
         #endregion
 
         private IList<Track> _currentPlaylist;
+        private bool _submergedFxEnabled;
 
         public MusicPlayer(string _playlistDirectory, string _FFmpegPath, string _youtubeDLPath) {
             _outputDevice = new WasapiOut();
@@ -124,14 +126,15 @@ namespace Nekres.Music_Mixer
             _outputDevice.Volume = MathHelper.Clamp(volume, 0f, 1f);
         }
 
-        public void EnableGargle() {
+
+        public void ToggleSubmergedFx(bool enable) {
+            _submergedFxEnabled = enable;
             if (!_initialized) return;
-            _equalizer.SampleFilters[9].AverageGainDB = -45; // Treble
+            _equalizer.SampleFilters[2].AverageGainDB = enable ? +19.5 : 0; // Bass
+            _equalizer.SampleFilters[9].AverageGainDB = enable ? -13.4 : 0; // Treble
+            SetVolume(enable ? 0.4f * _masterVolume : _masterVolume);
         }
-        public void DisableGargle() {
-            if (!_initialized) return;
-            _equalizer.SampleFilters[9].AverageGainDB = 0;
-        }
+
 
         public void PlayTrack(string uri, float volume = 0) {
             if (uri == null || uri.Equals("")) return;
@@ -170,8 +173,10 @@ namespace Nekres.Music_Mixer
 
             _outputDevice.Initialize(finalSource);
             _initialized = true;
-            // Individual songs can hold different peaks. Allow custom reduction per track.
-            SetVolume(_masterVolume - Math.Abs(1 - volume));
+
+            // Restore previous sound effects.
+            ToggleSubmergedFx(_submergedFxEnabled); 
+
             _outputDevice.Play();
         }
 
