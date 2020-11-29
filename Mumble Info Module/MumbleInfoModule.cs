@@ -44,7 +44,7 @@ namespace Nekres.Mumble_Info_Module
         private Label _positionLabel;
 
         protected override void DefineSettings(SettingCollection settings) {
-            ToggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.F3),
+            ToggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.F12),
                 "Toggle Mumble Data", "Toggles the display of mumble data.");
         }
 

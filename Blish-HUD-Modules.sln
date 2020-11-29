@@ -15,13 +15,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Special Forces Module", "Sp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loading Screen Hints Module", "Loading Screen Hints Module\Loading Screen Hints Module.csproj", "{F6C1BF91-DEAA-4413-946D-074C67672CB7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music Mixer", "Music Mixer\Music Mixer.csproj", "{198F1394-AE12-4C1D-8D9B-C1272AD1631A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quick Surrender Module", "Quick Surrender Module\Quick Surrender Module.csproj", "{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notes Module", "Notes Module\Notes Module.csproj", "{06AF13E7-F301-49D4-932B-085D2436BE62}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mumble Info", "MumbleInfo\Mumble Info.csproj", "{2720A526-D1CE-4CFA-8022-6391E104CABE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mumble Info Module", "Mumble Info Module\Mumble Info Module.csproj", "{2720A526-D1CE-4CFA-8022-6391E104CABE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music Mixer Module", "Music Mixer Module\Music Mixer Module.csproj", "{198F1394-AE12-4C1D-8D9B-C1272AD1631A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,12 +71,6 @@ Global
 		{F6C1BF91-DEAA-4413-946D-074C67672CB7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F6C1BF91-DEAA-4413-946D-074C67672CB7}.Release|x64.ActiveCfg = Release|x64
 		{F6C1BF91-DEAA-4413-946D-074C67672CB7}.Release|x64.Build.0 = Release|x64
-		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Debug|x64.ActiveCfg = Debug|x64
-		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Debug|x64.Build.0 = Debug|x64
-		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|Any CPU.ActiveCfg = Release|x64
-		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|x64.ActiveCfg = Release|x64
-		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|x64.Build.0 = Release|x64
 		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Debug|x64.ActiveCfg = Debug|x64
 		{D0DC9A49-4831-45FD-9AF8-7D3F406E6E03}.Debug|x64.Build.0 = Debug|x64
@@ -95,6 +89,12 @@ Global
 		{2720A526-D1CE-4CFA-8022-6391E104CABE}.Release|Any CPU.ActiveCfg = Release|x64
 		{2720A526-D1CE-4CFA-8022-6391E104CABE}.Release|x64.ActiveCfg = Release|x64
 		{2720A526-D1CE-4CFA-8022-6391E104CABE}.Release|x64.Build.0 = Release|x64
+		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Debug|x64.ActiveCfg = Debug|x64
+		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Debug|x64.Build.0 = Debug|x64
+		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|Any CPU.ActiveCfg = Release|x64
+		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|x64.ActiveCfg = Release|x64
+		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

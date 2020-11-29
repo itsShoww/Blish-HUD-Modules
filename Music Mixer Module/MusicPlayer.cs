@@ -249,9 +249,9 @@ namespace Nekres.Music_Mixer
 
         private string SelectEncounterTrack(Encounter encounter) {
             var track = _encounterPlaylist.FirstOrDefault(x => x.EncounterIds.Except(encounter.Ids).Count() == 0);
-            if (track == null) return "";
+            if (track == null) return SelectTrack(_combatPlaylist);
             var count = track.Uris.Count;
-            if (count == 0) return "";
+            if (count == 0) return SelectTrack(_combatPlaylist);
             var trackNr = encounter.CurrentPhase;
             if (trackNr > count - 1) return "";
             return track.Uris[trackNr];
