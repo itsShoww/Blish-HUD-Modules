@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Xna.Framework;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -35,15 +36,36 @@ namespace Nekres.Music_Mixer
         /// Phases in percentage of remaining health.
         /// </summary>
         [JsonProperty("phases")]
-        public IReadOnlyList<int> Phases { get; set; }
+        public IReadOnlyList<double> Phases { get; set; }
 
         /// <summary>
         /// Phases in milliseconds since encounter start.
         /// </summary>
         [JsonProperty("times")]
         public IReadOnlyList<long> Times { get; set; }
+
+        /// <summary>
+        /// The playerspawn
+        /// </summary>
+        [JsonProperty("playerspawn")]
+        public PlayerSpawn PlayerSpawn { get; set; }
     }
 
+    public class PlayerSpawn
+    {
+        [JsonProperty("pointA")]
+        public Vector3 PointA { get; set; }
+        [JsonProperty("pointB")]
+        public Vector3 PointB { get; set; }
+        public bool Includes(Vector3 vec) {
+            return ((vec.X > PointA.X && vec.X < PointB.X) ||
+                (vec.X < PointA.X && vec.X > PointB.X)) &&
+                ((vec.Y > PointA.Y && vec.Y < PointB.Y) ||
+                (vec.Y < PointA.Y && vec.Y > PointB.Y)) &&
+                ((vec.Z > PointA.Z && vec.Z < PointB.Z) ||
+                (vec.Z < PointA.Z && vec.Z > PointB.Z));
+        }
+    }
     public sealed class HexStringJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)

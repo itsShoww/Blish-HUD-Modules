@@ -38,7 +38,8 @@ namespace Nekres.Music_Mixer
             Unmounting,
             Submerging,
             Emerging,
-            EncounterPull
+            EncounterPull,
+            EncounterReset
         }
 
         #endregion
@@ -48,6 +49,7 @@ namespace Nekres.Music_Mixer
         public event EventHandler<ValueEventArgs<TyrianTime>> TyrianTimeChanged;
         public event EventHandler<ValueChangedEventArgs<State>> StateChanged;
         public event EventHandler<ValueEventArgs<bool>> IsSubmergedChanged;
+        public event EventHandler<ValueChangedEventArgs<Encounter>> EncounterChanged;
 
         #endregion
 
@@ -77,6 +79,20 @@ namespace Nekres.Music_Mixer
             }
         }
 
+        private Encounter _prevEncounter;
+        public Encounter CurrentEncounter { 
+            get => _prevEncounter; 
+            private set {
+                if (_prevEncounter == value) return;
+
+                EncounterChanged?.Invoke(this, new ValueChangedEventArgs<Encounter>(_prevEncounter, value));
+
+                _prevEncounter = value;
+
+                _stateMachine?.Fire(value != null ? Trigger.EncounterPull : Trigger.EncounterReset);
+            }
+        }
+
         private StateMachine<State, Trigger> _stateMachine;
 
         private IReadOnlyList<EncounterData> _encounterData;
@@ -84,7 +100,6 @@ namespace Nekres.Music_Mixer
         private Timer _combatDelay;
         private int _combatDelayMs = 5000;
 
-        public Encounter CurrentEncounter;
         public State CurrentState => _stateMachine?.State ?? State.StandBy;
 
         public Gw2StateService(IReadOnlyList<EncounterData> encounterData) {
@@ -119,29 +134,38 @@ namespace Nekres.Music_Mixer
                 Logger.Info($"Warning: Trigger '{t}' was fired from state '{s}', but has no valid leaving transitions.");
             });
             _stateMachine.Configure(State.StandBy)
+                        .Ignore(Trigger.StandBy)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .PermitDynamic(Trigger.OutOfCombat, GameModeStateSelector)
+                        .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
+                        .Permit(Trigger.InCombat, State.Combat)
+                        .Permit(Trigger.Mounting, State.Mounted)
+                        .Permit(Trigger.EncounterPull, State.Encounter)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
-                        .Ignore(Trigger.StandBy);
+                        .Ignore(Trigger.EncounterReset);
 
             _stateMachine.Configure(State.OpenWorld)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
+                        .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
-                        .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
+                        .Permit(Trigger.EncounterPull, State.Encounter)
                         .Ignore(Trigger.Emerging)
+                        .Ignore(Trigger.EncounterReset)
                         .Ignore(Trigger.OutOfCombat);
 
             _stateMachine.Configure(State.Mounted)
+                        .Ignore(Trigger.Mounting)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.Unmounting, GameModeStateSelector)
+                        .Permit(Trigger.EncounterPull, State.Encounter)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
-                        .Ignore(Trigger.Mounting)
+                        .Ignore(Trigger.EncounterReset)
                         .Ignore(Trigger.OutOfCombat);
 
             _stateMachine.Configure(State.Combat)
@@ -151,114 +175,114 @@ namespace Nekres.Music_Mixer
                         .Permit(Trigger.EncounterPull, State.Encounter)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
+                        .Ignore(Trigger.EncounterReset)
                         .Ignore(Trigger.InCombat);
 
             _stateMachine.Configure(State.Encounter)
+                        .Ignore(Trigger.EncounterPull)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
-                        .PermitDynamic(Trigger.OutOfCombat, GameModeStateSelector)
-                        .Ignore(Trigger.Emerging)
-                        .Ignore(Trigger.EncounterPull);
+                        .PermitDynamic(Trigger.EncounterReset, GameModeStateSelector)
+                        .Ignore(Trigger.OutOfCombat)
+                        .Ignore(Trigger.Emerging);
 
             _stateMachine.Configure(State.CompetitiveMode)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
+                        .Permit(Trigger.EncounterPull, State.Encounter)
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
+                        .Ignore(Trigger.EncounterReset)
                         .Ignore(Trigger.OutOfCombat);
 
             _stateMachine.Configure(State.StoryInstance)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
-                        .Permit(Trigger.InCombat, State.Combat)
                         .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
+                        .Permit(Trigger.EncounterPull, State.Encounter)
+                        .Permit(Trigger.InCombat, State.Combat)
                         .Ignore(Trigger.Emerging)
+                        .Ignore(Trigger.EncounterReset)
                         .Ignore(Trigger.OutOfCombat);
 
             _stateMachine.Configure(State.WorldVsWorld)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                         .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
+                        .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
+                        .Permit(Trigger.EncounterPull, State.Encounter)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
-                        .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
                         .Ignore(Trigger.Emerging)
+                        .Ignore(Trigger.EncounterReset)
                         .Ignore(Trigger.OutOfCombat);
 
             _stateMachine.Configure(State.Submerged)
+                        .Ignore(Trigger.Submerging)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .PermitDynamic(Trigger.Emerging, GameModeStateSelector)
                         .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
+                        .Permit(Trigger.EncounterPull, State.Encounter)
                         .Permit(Trigger.Mounting, State.Mounted)
                         .Permit(Trigger.InCombat, State.Combat)
-                        .PermitDynamic(Trigger.Emerging, GameModeStateSelector)
-                        .Ignore(Trigger.Submerging)
+                        .Ignore(Trigger.EncounterReset)
                         .Ignore(Trigger.OutOfCombat);
         }
 
         public void CheckWaterLevel() => IsSubmerged = Gw2Mumble.PlayerCharacter.Position.Z < -1.25f;
         public void CheckTyrianTime() => TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
+        public void CheckEncounterReset() {
+            if (CurrentEncounter == null) return;
+            if (CurrentEncounter.Health <= 0)
+                CurrentEncounter = null;
+            else if (CurrentEncounter.PlayerSpawn.Includes(Gw2Mumble.PlayerCharacter.Position))
+                CurrentEncounter = null;
+        }
 
         private void OnGw2Closed(object sender, EventArgs e) => _stateMachine.Fire(Trigger.StandBy);
 
         #region ArcDps Events
 
         private void CombatEventReceived(object o, RawCombatEventArgs e) {
-            if (!_stateMachine.IsInState(State.Combat)) return;
             if (e.CombatEvent == null || e.CombatEvent.Dst == null) return;
             var encounterData = _encounterData.FirstOrDefault(x => x.Ids.Any(y => y.Equals(e.CombatEvent.Dst.Profession)));
             if (encounterData == null) return;
-
-            if (CurrentEncounter != null && CurrentEncounter.Name.Equals(encounterData.Name) && CurrentEncounter.SessionId.Equals(e.CombatEvent.Dst.Id))
+            if (CurrentEncounter == null) {
+                CurrentEncounter = new Encounter(encounterData);
+            } else if (CurrentEncounter.Ids.Any(x => x.Equals(e.CombatEvent.Dst.Profession))) {
                 CurrentEncounter.DoDamage(e.CombatEvent.Ev);
-            else {
-                CurrentEncounter = new Encounter(encounterData, e.CombatEvent.Dst.Id);
-                _stateMachine.Fire(Trigger.EncounterPull);
             }
-            
         }
 
         #endregion
 
         #region Mumble Events
 
-        private void OnMountChanged(object o, ValueEventArgs<Gw2Sharp.Models.MountType> e) {
-            if (e.Value.Equals(Gw2Sharp.Models.MountType.None))
-                _stateMachine.Fire(Trigger.Unmounting);
-            else
-                _stateMachine.Fire(Trigger.Mounting);
-        }
-
-
         private void OnIsInCombatChanged(object o, ValueEventArgs<bool> e) {
             _combatDelay?.Dispose();
             _combatDelay = new Timer(_combatDelayMs);
             _combatDelay.Elapsed += delegate {
+                if (CurrentEncounter != null) return;
                 _stateMachine.Fire(Gw2Mumble.PlayerCharacter.IsInCombat ? Trigger.InCombat : Trigger.OutOfCombat);
                 _combatDelay.Dispose();
             };
             _combatDelay.Start();
         }
 
-
-        private void OnMapChanged(object o, ValueEventArgs<int> e) {
-            _stateMachine.Fire(Trigger.MapChanged);
-        }
-
-
-        private void OnIsInGameChanged(object o, ValueEventArgs<bool> e) {
-            _stateMachine.Fire(e.Value ? Trigger.MapChanged : Trigger.StandBy);
-        }
+        private void OnMountChanged(object o, ValueEventArgs<Gw2Sharp.Models.MountType> e) => _stateMachine.Fire(e.Value > 0 ? Trigger.Mounting : Trigger.Unmounting);
+        private void OnMapChanged(object o, ValueEventArgs<int> e) => _stateMachine.Fire(Trigger.MapChanged);
+        private void OnIsInGameChanged(object o, ValueEventArgs<bool> e) => _stateMachine.Fire(e.Value ? Trigger.MapChanged : Trigger.StandBy);
 
         #endregion
 
         #region State Guards
 
         private State GameModeStateSelector() {
-            if (Gw2Mumble.PlayerCharacter.IsInCombat) 
-                return State.Combat;
+            if (Gw2Mumble.PlayerCharacter.CurrentMount > 0)
+                return State.Mounted;
             if (_toggleSubmergedPlaylist && _prevIsSubmerged) 
                 return State.Submerged;
             switch (Gw2Mumble.CurrentMap.Type) {

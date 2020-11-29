@@ -19,16 +19,14 @@ namespace Nekres.Music_Mixer
 
         private readonly long _initialHealth;
         /// <summary>
-        /// The crrent health.
+        /// The current health.
         /// </summary>
         public long Health { get; private set; }
+
         /// <summary>
-        /// Unique identifier.
+        /// The playerspawn when the squad resets.
         /// </summary>
-        /// <remarks>
-        /// Changes between entity (re-)spawn.
-        /// </remarks>
-        public ulong SessionId { get; private set; }
+        public PlayerSpawn PlayerSpawn { get; private set; }
 
         private long _enrageTimer;
         private DateTime _startTime;
@@ -40,7 +38,7 @@ namespace Nekres.Music_Mixer
         /// </remarks>
         public bool Enraged { get => _enrageTimer < DateTime.Now.Subtract(_startTime).Milliseconds; }
 
-        public IReadOnlyList<int> Phases { get; private set; }
+        public IReadOnlyList<double> Phases { get; private set; }
         public IReadOnlyList<long> Times { get; private set; }
 
         public event EventHandler<ValueEventArgs<int>> PhaseChanged;
@@ -49,7 +47,7 @@ namespace Nekres.Music_Mixer
         public int CurrentPhase { 
             get => _currentPhase;
             private set {
-                if (_currentPhase == value) return;
+                if (_currentPhase == value || value > Phases.Count) return;
 
                 _currentPhase = value;
 
@@ -57,14 +55,14 @@ namespace Nekres.Music_Mixer
             }
         }
 
-        public Encounter(EncounterData data, ulong sessionId) {
+        public Encounter(EncounterData data) {
             Name = data.Name;
             Ids = data.Ids;
             _initialHealth = data.Health;
             Health = data.Health;
-            SessionId = sessionId;
             Times = data.Times;
             Phases = data.Phases;
+            PlayerSpawn = data.PlayerSpawn;
             CurrentPhase = 0;
             _enrageTimer = data.EnrageTimer;
             _startTime = DateTime.Now;
@@ -74,28 +72,34 @@ namespace Nekres.Music_Mixer
         /// </summary>
         /// <param name="e">A combat event with damaging fields.</param>
         public void DoDamage(Ev e) {
-            if (e.IsStateChange || e.IsActivation || e.IsBuffRemove) return;
             var damage = 0;
-            if (e.Buff) {
-                if (e.BuffDmg < 1) return;
-                damage = e.BuffDmg;
-            } else {
-                damage = e.Value;
-            }
+
+            // buff damage event
+            if (e.Buff && e.Value == 0)
+                damage += e.BuffDmg;
+            // direct damage event
+            else if (!e.Buff && e.Value > 0)
+                damage += e.Value;
+
+            if (damage == 0) return;
+
             switch (e.Result) {
                 case 3: return; // blocked
                 case 4: return; // evaded
                 case 6: return; // absorbed
                 case 7: return; // missed
-                default: Health -= damage; break;
+                default: Health -= Math.Abs(damage); break;
             }
+
+            if (CurrentPhase < Phases.Count - 1 && Health < Phases[CurrentPhase] * _initialHealth)
+                CurrentPhase++;
         }
         /// <summary>
         /// Gets the current health percentage.
         /// </summary>
         /// <returns></returns>
         public float GetHealthPercent() {
-            return _initialHealth == 0 ? 0 : Health / _initialHealth;
+            return _initialHealth == 0 ? 0 : Health / (float)_initialHealth;
         }
     }
 }

@@ -22,7 +22,7 @@ namespace Nekres.Music_Mixer
 {
     public class MusicPlayer : IDisposable
     {
-        private float _masterVolume => MusicMixerModule.ModuleInstance.MasterVolume.Value / 100;
+        private float _masterVolume => MusicMixerModule.ModuleInstance.MasterVolume.Value / 1000;
         private bool _toggleFourDayCycle => MusicMixerModule.ModuleInstance.ToggleFourDayCycle.Value;
 
         private Regex _youtubeVideoID = new Regex(@"youtu(?:\.be|be\.com)/(?:.*v(?:/|=)|(?:.*/)?)([a-zA-Z0-9-_]+)", RegexOptions.Compiled);
@@ -130,13 +130,13 @@ namespace Nekres.Music_Mixer
         public void ToggleSubmergedFx(bool enable) {
             _submergedFxEnabled = enable;
             if (!_initialized) return;
-            _equalizer.SampleFilters[2].AverageGainDB = enable ? +19.5 : 0; // Bass
+            _equalizer.SampleFilters[1].AverageGainDB = enable ? +19.5 : 0; // Bass
             _equalizer.SampleFilters[9].AverageGainDB = enable ? -13.4 : 0; // Treble
             SetVolume(enable ? 0.4f * _masterVolume : _masterVolume);
         }
 
 
-        public void PlayTrack(string uri, float volume = 0) {
+        public void PlayTrack(string uri, bool isEncounter = false, float volume = 0) {
             if (uri == null || uri.Equals("")) return;
             if (!FileUtil.IsLocalPath(uri)) {
                 var youtubeMatch = _youtubeVideoID.Match(uri);
@@ -159,8 +159,10 @@ namespace Nekres.Music_Mixer
             var source = CodecFactory.Instance.GetCodec(uri);
 
             // Setup event for reaching the end of the stream.
-            source = new LoopStream(source) { EnableLoop = false };
-            (source as LoopStream).StreamFinished += (o, e) => PlayNext();
+            source = new LoopStream(source) { EnableLoop = isEncounter };
+            (source as LoopStream).StreamFinished += (o, e) => {
+                if (!isEncounter) PlayNext();
+            };
 
             var equalizer = Equalizer.Create10BandEqualizer(source.ToSampleSource());
             var finalSource = equalizer
@@ -199,7 +201,7 @@ namespace Nekres.Music_Mixer
 
         private void SavePlaylist(object o, string fileName) {
             var json = JsonConvert.SerializeObject(o, Formatting.Indented);
-            System.IO.File.WriteAllText(fileName + ".json", json);
+            System.IO.File.WriteAllText(fileName, json);
         }
 
 
@@ -245,14 +247,25 @@ namespace Nekres.Music_Mixer
             return track;
         }
 
-        public void PlayNext() => PlayTrack(SelectTrack(_currentPlaylist));
-        public void PlayMountTrack(MountType mount) => PlayTrack(SelectTrack(_mountedPlaylist.GetPlaylist(mount)));
-        public void PlayOpenWorldTrack() => PlayTrack(SelectTrack(_openWorldPlaylist));
-        public void PlayCombatTrack() => PlayTrack(SelectTrack(_combatPlaylist));
-        public void PlayCompetitiveTrack() => PlayTrack(SelectTrack(_pvpPlaylist));
-        public void PlayWorldVsWorldTrack() => PlayTrack(SelectTrack(_wvwPlaylist));
-        public void PlayInstanceTrack() => PlayTrack(SelectTrack(_instancePlaylist));
-        public void PlaySubmergedTrack() => PlayTrack(SelectTrack(_submergedPlaylist));
+        private string SelectEncounterTrack(Encounter encounter) {
+            var track = _encounterPlaylist.FirstOrDefault(x => x.EncounterIds.Except(encounter.Ids).Count() == 0);
+            if (track == null) return "";
+            var count = track.Uris.Count;
+            if (count == 0) return "";
+            var trackNr = encounter.CurrentPhase;
+            if (trackNr > count - 1) return "";
+            return track.Uris[trackNr];
+        }
+
+        internal void PlayNext() => PlayTrack(SelectTrack(_currentPlaylist));
+        internal void PlayMountTrack(MountType mount) => PlayTrack(SelectTrack(_mountedPlaylist.GetPlaylist(mount)));
+        internal void PlayOpenWorldTrack() => PlayTrack(SelectTrack(_openWorldPlaylist));
+        internal void PlayCombatTrack() => PlayTrack(SelectTrack(_combatPlaylist));
+        internal void PlayCompetitiveTrack() => PlayTrack(SelectTrack(_pvpPlaylist));
+        internal void PlayWorldVsWorldTrack() => PlayTrack(SelectTrack(_wvwPlaylist));
+        internal void PlayInstanceTrack() => PlayTrack(SelectTrack(_instancePlaylist));
+        internal void PlaySubmergedTrack() => PlayTrack(SelectTrack(_submergedPlaylist));
+        internal void PlayEncounterTrack(Encounter encounter) => PlayTrack(SelectEncounterTrack(encounter), true);
 
         public void Dispose() {
             Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;

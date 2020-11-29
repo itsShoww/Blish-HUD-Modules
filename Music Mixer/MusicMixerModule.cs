@@ -93,12 +93,13 @@ namespace Nekres.Music_Mixer
         }
 
         private void OnMasterVolumeSettingChanged(object o, ValueChangedEventArgs<float> e) {
-            _musicPlayer.SetVolume(e.NewValue / 100);
+            _musicPlayer.SetVolume(e.NewValue / 1000);
         }
 
         protected override void Update(GameTime gameTime) {
             _gw2State.CheckTyrianTime();
             _gw2State.CheckWaterLevel();
+            _gw2State.CheckEncounterReset();
         }
 
         private void OnGw2Closed(object sender, EventArgs e) => _musicPlayer?.Stop();
@@ -130,10 +131,18 @@ namespace Nekres.Music_Mixer
             _gw2State.TyrianTimeChanged += OnTyrianTimeChanged;
             GameIntegration.Gw2Closed += OnGw2Closed;
             _gw2State.StateChanged += OnStateChanged;
+            _gw2State.EncounterChanged += OnEncounterChanged;
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
 
+        private void OnEncounterChanged(object o, ValueChangedEventArgs<Encounter> e) {
+            if (e.PreviousValue != null)
+                e.PreviousValue.PhaseChanged -= OnPhaseChanged;
+            if (e.NewValue != null)
+                e.NewValue.PhaseChanged += OnPhaseChanged;
+        }
+        private void OnPhaseChanged(object o, ValueEventArgs<int> e) => _musicPlayer.PlayEncounterTrack(_gw2State.CurrentEncounter);
 
         private void OnStateChanged(object sender, ValueChangedEventArgs<State> e) {
             /**
@@ -154,6 +163,9 @@ namespace Nekres.Music_Mixer
              * Start playing a track.
              */
             switch (e.NewValue) {
+                case State.Encounter:
+                    _musicPlayer.PlayEncounterTrack(_gw2State.CurrentEncounter);
+                    break;
                 case State.Mounted:
                     _musicPlayer.PlayMountTrack(Gw2Mumble.PlayerCharacter.CurrentMount);
                     break;
@@ -186,6 +198,9 @@ namespace Nekres.Music_Mixer
             _gw2State.StateChanged -= OnStateChanged;
             _gw2State.IsSubmergedChanged -= OnIsSubmergedChanged;
             _gw2State.TyrianTimeChanged -= OnTyrianTimeChanged;
+            _gw2State.EncounterChanged -= OnEncounterChanged;
+            if (_gw2State.CurrentEncounter != null)
+                _gw2State.CurrentEncounter.PhaseChanged -= OnPhaseChanged;
             _gw2State.Unload();
             _musicPlayer.Dispose();
             // All static members must be manually unset
