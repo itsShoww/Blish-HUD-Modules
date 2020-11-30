@@ -35,6 +35,7 @@ namespace Nekres.Music_Mixer
         private OptionSet _youtubeDLOptions;
         
         private Stopwatch _stopwatch;
+        public bool IsFading => _stopwatch?.IsRunning ?? false;
 
         #region Playlists
         
@@ -96,6 +97,8 @@ namespace Nekres.Music_Mixer
             bool reached = false;
             _stopwatch.Restart();
             while (!reached && _stopwatch.ElapsedMilliseconds < durationMs) {
+                if (!_stopwatch.IsRunning)
+                    return;
                 if (target < start) {
                     value = Math.Abs(start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) - start);
                     reached = value < target;
@@ -114,6 +117,7 @@ namespace Nekres.Music_Mixer
         public void Stop() {
             if (!_initialized) return;
             _initialized = false;
+            _stopwatch.Stop();
             _outputDevice?.Stop();
         }
 

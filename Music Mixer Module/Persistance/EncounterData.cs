@@ -45,26 +45,10 @@ namespace Nekres.Music_Mixer
         public IReadOnlyList<long> Times { get; set; }
 
         /// <summary>
-        /// The playerspawn
+        /// Coordinates of relevant player spawns.
         /// </summary>
-        [JsonProperty("playerspawn")]
-        public PlayerSpawn PlayerSpawn { get; set; }
-    }
-
-    public class PlayerSpawn
-    {
-        [JsonProperty("pointA")]
-        public Vector3 PointA { get; set; }
-        [JsonProperty("pointB")]
-        public Vector3 PointB { get; set; }
-        public bool Includes(Vector3 vec) {
-            return ((vec.X > PointA.X && vec.X < PointB.X) ||
-                (vec.X < PointA.X && vec.X > PointB.X)) &&
-                ((vec.Y > PointA.Y && vec.Y < PointB.Y) ||
-                (vec.Y < PointA.Y && vec.Y > PointB.Y)) &&
-                ((vec.Z > PointA.Z && vec.Z < PointB.Z) ||
-                (vec.Z < PointA.Z && vec.Z > PointB.Z));
-        }
+        [JsonProperty("playerSpawns")]
+        public IReadOnlyList<Vector3> PlayerSpawns { get; set; }
     }
     public sealed class HexStringJsonConverter : JsonConverter
     {

@@ -1,5 +1,6 @@
 ﻿using Blish_HUD;
 using Blish_HUD.ArcDps.Models;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,7 +18,11 @@ namespace Nekres.Music_Mixer
         /// </summary>
         public IReadOnlyList<uint> Ids { get; private set; }
 
-        private readonly long _initialHealth;
+        /// <summary>
+        /// The session id.
+        /// </summary>
+        public ulong SessionId { get; private set; }
+
         /// <summary>
         /// The current health.
         /// </summary>
@@ -26,10 +31,8 @@ namespace Nekres.Music_Mixer
         /// <summary>
         /// The playerspawn when the squad resets.
         /// </summary>
-        public PlayerSpawn PlayerSpawn { get; private set; }
+        public IReadOnlyList<Vector3> PlayerSpawns { get; private set; }
 
-        private long _enrageTimer;
-        private DateTime _startTime;
         /// <summary>
         /// If the encounter is enraged.
         /// </summary>
@@ -55,14 +58,21 @@ namespace Nekres.Music_Mixer
             }
         }
 
-        public Encounter(EncounterData data) {
+        private float _playerSpawnSize;
+        private long _enrageTimer;
+        private DateTime _startTime;
+        private readonly long _initialHealth;
+
+        public Encounter(EncounterData data, ulong sessionId) {
+            SessionId = sessionId;
             Name = data.Name;
             Ids = data.Ids;
             _initialHealth = data.Health;
             Health = data.Health;
             Times = data.Times;
             Phases = data.Phases;
-            PlayerSpawn = data.PlayerSpawn;
+            _playerSpawnSize = 50.0f;
+            PlayerSpawns = data.PlayerSpawns;
             CurrentPhase = 0;
             _enrageTimer = data.EnrageTimer;
             _startTime = DateTime.Now;
@@ -100,6 +110,21 @@ namespace Nekres.Music_Mixer
         /// <returns></returns>
         public float GetHealthPercent() {
             return _initialHealth == 0 ? 0 : Health / (float)_initialHealth;
+        }
+
+        public bool IsPlayerReset(Vector3 position) {
+            foreach (var spawn in PlayerSpawns) {
+                var top = new Vector3(spawn.X + _playerSpawnSize, spawn.Y + _playerSpawnSize, spawn.Z + _playerSpawnSize);
+                var bot = new Vector3(spawn.X - _playerSpawnSize, spawn.Y - _playerSpawnSize, spawn.Z - _playerSpawnSize);
+                if (((position.X > top.X && position.X < bot.X) ||
+                    (position.X < top.X && position.X > bot.X)) &&
+                    ((position.Y > top.Y && position.Y < bot.Y) ||
+                    (position.Y < top.Y && position.Y > bot.Y)) &&
+                    ((position.Z > top.Z && position.Z < bot.Z) ||
+                    (position.Z < top.Z && position.Z > bot.Z)))
+                    return true;
+            }
+            return false;
         }
     }
 }

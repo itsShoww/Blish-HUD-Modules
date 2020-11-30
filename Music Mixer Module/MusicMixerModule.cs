@@ -148,6 +148,9 @@ namespace Nekres.Music_Mixer
             /**
              * Stop or fade depending on previous state.
              */
+            if (_musicPlayer.IsFading)
+                _musicPlayer.Stop();
+
             switch (e.PreviousValue) {
                 case State.Mounted:
                 case State.Combat:

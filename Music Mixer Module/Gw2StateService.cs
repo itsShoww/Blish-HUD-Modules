@@ -44,7 +44,7 @@ namespace Nekres.Music_Mixer
 
         #endregion
 
-        #region Events
+        #region _Events
 
         public event EventHandler<ValueEventArgs<TyrianTime>> TyrianTimeChanged;
         public event EventHandler<ValueChangedEventArgs<State>> StateChanged;
@@ -52,6 +52,15 @@ namespace Nekres.Music_Mixer
         public event EventHandler<ValueChangedEventArgs<Encounter>> EncounterChanged;
 
         #endregion
+
+        #region _Constants
+
+        private const int _combatDelayMs = 5000;
+        private const int _arcDpsDelayMs = 2500;
+
+        #endregion
+
+        #region Public Fields
 
         private TyrianTime _prevTyrianTime = TyrianTime.None;
         public TyrianTime TyrianTime { 
@@ -93,17 +102,27 @@ namespace Nekres.Music_Mixer
             }
         }
 
-        private StateMachine<State, Trigger> _stateMachine;
-
-        private IReadOnlyList<EncounterData> _encounterData;
-
-        private Timer _combatDelay;
-        private int _combatDelayMs = 5000;
-
         public State CurrentState => _stateMachine?.State ?? State.StandBy;
+
+        #endregion
+
+        private StateMachine<State, Trigger> _stateMachine;
+        private IReadOnlyList<EncounterData> _encounterData;
+        private Timer _combatDelay;
+        private Timer _arcDpsTimeOut;
 
         public Gw2StateService(IReadOnlyList<EncounterData> encounterData) {
             _encounterData = encounterData;
+
+            _combatDelay = new Timer(_combatDelayMs){ AutoReset = false };
+            _combatDelay.Elapsed += (o, e) => {
+                if (CurrentEncounter != null) return;
+                _stateMachine.Fire(Gw2Mumble.PlayerCharacter.IsInCombat ? Trigger.InCombat : Trigger.OutOfCombat);
+            };
+
+            _arcDpsTimeOut = new Timer(_arcDpsDelayMs){ AutoReset = false };
+            _arcDpsTimeOut.Elapsed += (o, e) => ArcDps.RawCombatEvent += CombatEventReceived;
+
             InitializeStateMachine();
 
             ArcDps.Common.Activate();
@@ -118,6 +137,8 @@ namespace Nekres.Music_Mixer
 
 
         public void Unload() {
+            _combatDelay?.Dispose();
+            _arcDpsTimeOut?.Dispose();
             GameIntegration.Gw2Closed -= OnGw2Closed;
             ArcDps.RawCombatEvent -= CombatEventReceived;
             Gw2Mumble.PlayerCharacter.CurrentMountChanged -= OnMountChanged;
@@ -236,22 +257,27 @@ namespace Nekres.Music_Mixer
         public void CheckTyrianTime() => TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
         public void CheckEncounterReset() {
             if (CurrentEncounter == null) return;
-            if (CurrentEncounter.Health <= 0)
-                CurrentEncounter = null;
-            else if (CurrentEncounter.PlayerSpawn.Includes(Gw2Mumble.PlayerCharacter.Position))
-                CurrentEncounter = null;
+            if (CurrentEncounter.IsPlayerReset(Gw2Mumble.PlayerCharacter.Position) || CurrentEncounter.Health <= 0)
+                TimeOutCombatEvents();
         }
+
 
         private void OnGw2Closed(object sender, EventArgs e) => _stateMachine.Fire(Trigger.StandBy);
 
         #region ArcDps Events
+
+        private void TimeOutCombatEvents() {
+            ArcDps.RawCombatEvent -= CombatEventReceived;
+            CurrentEncounter = null;
+            _arcDpsTimeOut.Start();
+        }
 
         private void CombatEventReceived(object o, RawCombatEventArgs e) {
             if (e.CombatEvent == null || e.CombatEvent.Dst == null) return;
             var encounterData = _encounterData.FirstOrDefault(x => x.Ids.Any(y => y.Equals(e.CombatEvent.Dst.Profession)));
             if (encounterData == null) return;
             if (CurrentEncounter == null) {
-                CurrentEncounter = new Encounter(encounterData);
+                CurrentEncounter = new Encounter(encounterData, e.CombatEvent.Dst.Id);
             } else if (CurrentEncounter.Ids.Any(x => x.Equals(e.CombatEvent.Dst.Profession))) {
                 CurrentEncounter.DoDamage(e.CombatEvent.Ev);
             }
@@ -262,13 +288,7 @@ namespace Nekres.Music_Mixer
         #region Mumble Events
 
         private void OnIsInCombatChanged(object o, ValueEventArgs<bool> e) {
-            _combatDelay?.Dispose();
-            _combatDelay = new Timer(_combatDelayMs);
-            _combatDelay.Elapsed += delegate {
-                if (CurrentEncounter != null) return;
-                _stateMachine.Fire(Gw2Mumble.PlayerCharacter.IsInCombat ? Trigger.InCombat : Trigger.OutOfCombat);
-                _combatDelay.Dispose();
-            };
+            _combatDelay.Stop();
             _combatDelay.Start();
         }
 
