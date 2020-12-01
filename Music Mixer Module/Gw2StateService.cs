@@ -169,6 +169,7 @@ namespace Nekres.Music_Mixer
 
             _stateMachine.Configure(State.OpenWorld)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                        .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                         .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                         .PermitIf(Trigger.Submerging, State.Submerged, () => _toggleSubmergedPlaylist)
                         .Permit(Trigger.Mounting, State.Mounted)
@@ -274,9 +275,9 @@ namespace Nekres.Music_Mixer
 
         private void CombatEventReceived(object o, RawCombatEventArgs e) {
             if (e.CombatEvent == null || e.CombatEvent.Dst == null) return;
-            var encounterData = _encounterData.FirstOrDefault(x => x.Ids.Any(y => y.Equals(e.CombatEvent.Dst.Profession)));
-            if (encounterData == null) return;
             if (CurrentEncounter == null) {
+                var encounterData = _encounterData.FirstOrDefault(x => x.Ids.Any(y => y.Equals(e.CombatEvent.Dst.Profession)));
+                if (encounterData == null) return;
                 CurrentEncounter = new Encounter(encounterData, e.CombatEvent.Dst.Id);
             } else if (CurrentEncounter.Ids.Any(x => x.Equals(e.CombatEvent.Dst.Profession))) {
                 CurrentEncounter.DoDamage(e.CombatEvent.Ev);
