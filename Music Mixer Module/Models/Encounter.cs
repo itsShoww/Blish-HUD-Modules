@@ -19,11 +19,6 @@ namespace Nekres.Music_Mixer
         public IReadOnlyList<uint> Ids { get; private set; }
 
         /// <summary>
-        /// The session id.
-        /// </summary>
-        public ulong SessionId { get; private set; }
-
-        /// <summary>
         /// The current health.
         /// </summary>
         public long Health { get; private set; }
@@ -63,8 +58,7 @@ namespace Nekres.Music_Mixer
         private DateTime _startTime;
         private readonly long _initialHealth;
 
-        public Encounter(EncounterData data, ulong sessionId) {
-            SessionId = sessionId;
+        public Encounter(EncounterData data) {
             Name = data.Name;
             Ids = data.Ids;
             _initialHealth = data.Health;

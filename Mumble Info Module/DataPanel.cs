@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using static Blish_HUD.GameService;
 using Color = Microsoft.Xna.Framework.Color;

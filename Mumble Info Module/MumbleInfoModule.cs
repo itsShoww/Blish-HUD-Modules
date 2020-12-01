@@ -75,14 +75,13 @@ namespace Nekres.Mumble_Info_Module
                     InstanceName =  GameIntegration.Gw2Process.ProcessName,
                     ReadOnly = true
                 };
-                ManagementObjectSearcher mos = 
-                  new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_Processor");
+                using (var mos = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_Processor")) {
                     foreach (ManagementObject mo in mos.Get()) {
                         var name = (string)mo["Name"];
                         if (name.Length < CpuName.Length) continue;
                         CpuName = name.Trim();
                     }
-                mos.Dispose();
+                }
             });
         }
 
@@ -100,6 +99,7 @@ namespace Nekres.Mumble_Info_Module
 
 
         private void UpdateCounter() {
+            if (_ramCounter == null || _cpuCounter == null) return;
             if (DateTime.Now < _timeOutPc) return;
 
             _timeOutPc = DateTime.Now.AddMilliseconds(500);
@@ -162,6 +162,7 @@ namespace Nekres.Mumble_Info_Module
                 });
             }
         }
+
         /// <inheritdoc />
         protected override void Unload() {
             _dataPanel?.Dispose();
