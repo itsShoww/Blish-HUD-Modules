@@ -61,8 +61,34 @@ namespace Nekres.Mumble_Info_Module
             EliteSpecRepository = new Dictionary<int, Specialization>();
         }
 
+
         protected override async Task LoadAsync() {
-            await Task.Run(() => {
+            await LoadPerformanceCounters();
+            await QueryManagementObjects();
+        }
+
+
+        protected override void Update(GameTime gameTime) {
+            UpdateCounter();
+        }
+
+
+        protected override void OnModuleLoaded(EventArgs e) {
+            ToggleInfoBinding.Value.Enabled = true;
+            ToggleInfoBinding.Value.Activated += OnToggleInfoBindingActivated;
+            Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
+            Gw2Mumble.PlayerCharacter.SpecializationChanged += OnSpecializationChanged;
+            GameIntegration.Gw2Closed += OnGw2Closed;
+            GameIntegration.Gw2Started += OnGw2Started;
+
+            // Base handler must be called
+            base.OnModuleLoaded(e);
+        }
+
+
+        private Task LoadPerformanceCounters() {
+            return Task.Run(() => { 
+                if (!GameIntegration.Gw2IsRunning) return;
                 _ramCounter = new PerformanceCounter() {
                     CategoryName = "Process",
                     CounterName = "Working Set - Private",
@@ -72,9 +98,15 @@ namespace Nekres.Mumble_Info_Module
                 _cpuCounter = new PerformanceCounter() {
                     CategoryName = "Process",
                     CounterName = "% Processor Time",
-                    InstanceName =  GameIntegration.Gw2Process.ProcessName,
+                    InstanceName = GameIntegration.Gw2Process.ProcessName,
                     ReadOnly = true
                 };
+            });
+        }
+
+
+        private Task QueryManagementObjects() {
+            return Task.Run(() => {
                 using (var mos = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_Processor")) {
                     foreach (ManagementObject mo in mos.Get()) {
                         var name = (string)mo["Name"];
@@ -85,29 +117,28 @@ namespace Nekres.Mumble_Info_Module
             });
         }
 
-        protected override void Update(GameTime gameTime) {
-            UpdateCounter();
+
+        private void OnGw2Closed(object o, EventArgs e) {
+            _dataPanel?.Dispose();
+            _cpuCounter?.Dispose();
+            _ramCounter?.Dispose();
         }
-        protected override void OnModuleLoaded(EventArgs e) {
-            ToggleInfoBinding.Value.Enabled = true;
-            ToggleInfoBinding.Value.Activated += OnToggleInfoBindingActivated;
-            Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
-            Gw2Mumble.PlayerCharacter.SpecializationChanged += OnSpecializationChanged;
-            // Base handler must be called
-            base.OnModuleLoaded(e);
-        }
+
+
+        private void OnGw2Started(object o, EventArgs e) => LoadPerformanceCounters();
 
 
         private void UpdateCounter() {
-            if (_ramCounter == null || _cpuCounter == null) return;
+            if (!GameIntegration.Gw2IsRunning || _ramCounter == null || _cpuCounter == null) return;
             if (DateTime.Now < _timeOutPc) return;
 
-            _timeOutPc = DateTime.Now.AddMilliseconds(500);
+            _timeOutPc = DateTime.Now.AddMilliseconds(250);
             MemoryUsage = _ramCounter.NextValue() / 1024 / 1024;
             CpuUsage = _cpuCounter.NextValue() / Environment.ProcessorCount;
         }
 
         private void OnToggleInfoBindingActivated(object o, EventArgs e) {
+            if (!GameIntegration.Gw2IsRunning) return;
             if (_dataPanel != null) {
                 _dataPanel.Dispose();
                 _dataPanel = null;
@@ -175,6 +206,8 @@ namespace Nekres.Mumble_Info_Module
             ToggleInfoBinding.Value.Activated -= OnToggleInfoBindingActivated;
             Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
             Gw2Mumble.PlayerCharacter.SpecializationChanged -= OnSpecializationChanged;
+            GameIntegration.Gw2Closed -= OnGw2Closed;
+            GameIntegration.Gw2Started -= OnGw2Started;
             // All static members must be manually unset
             ModuleInstance = null;
         }

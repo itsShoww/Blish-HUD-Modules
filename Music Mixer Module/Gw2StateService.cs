@@ -274,12 +274,15 @@ namespace Nekres.Music_Mixer
         }
 
         private void CombatEventReceived(object o, RawCombatEventArgs e) {
-            if (e.CombatEvent == null || e.EventType == RawCombatEventArgs.CombatEventType.Local) return;
+            if (e.CombatEvent == null || e.CombatEvent.Ev == null || e.EventType == RawCombatEventArgs.CombatEventType.Local) return;
+
+            //TODO: StateChange.Reward for Victory fanfare!
+
+            var dstProf = e.CombatEvent.Dst?.Profession ?? 0;
 
             if (CurrentEncounter == null) {
 
                 var srcProf = e.CombatEvent.Src?.Profession ?? 0;
-                var dstProf = e.CombatEvent.Dst?.Profession ?? 0;
 
                 var encounterData = 
                     _encounterData.FirstOrDefault(x => x.Ids.Any(y => y.Equals(srcProf) || y.Equals(dstProf)));
@@ -288,7 +291,7 @@ namespace Nekres.Music_Mixer
 
                 CurrentEncounter = new Encounter(encounterData);
 
-            } else if (CurrentEncounter.Ids.Any(x => x.Equals(e.CombatEvent.Dst.Profession))) {
+            } else if (CurrentEncounter.Ids.Any(x => x.Equals(dstProf))) {
                 CurrentEncounter.DoDamage(e.CombatEvent.Ev);
             }
         }

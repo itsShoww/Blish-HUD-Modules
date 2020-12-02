@@ -71,7 +71,7 @@ namespace Nekres.Mumble_Info_Module
         private void UpdateLocation(object sender, EventArgs e) => Location = new Point(0, 0);
 
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds) {
-            if (!Gw2Mumble.IsAvailable || !GameIntegration.IsInGame) return;
+            if (!GameIntegration.Gw2IsRunning || !Gw2Mumble.IsAvailable || !GameIntegration.IsInGame) return;
 
             var left = HorizontalAlignment.Left;
             var top = VerticalAlignment.Top;

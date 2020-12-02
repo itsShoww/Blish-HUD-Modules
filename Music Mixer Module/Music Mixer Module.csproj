@@ -76,7 +76,8 @@
     <Compile Include="Utils\TyrianTimeUtil.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Blish HUD">
+    <Reference Include="Blish HUD, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Blish-HUD\Blish HUD\bin\x64\Debug\net472\Blish HUD.exe</HintPath>
     </Reference>
     <Reference Include="CSCore, Version=1.2.1.2, Culture=neutral, PublicKeyToken=5a08f2b6f4415dea, processorArchitecture=MSIL">
