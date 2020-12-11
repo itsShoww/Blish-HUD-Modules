@@ -39,6 +39,7 @@ namespace Nekres.Music_Mixer
         internal SettingEntry<float> MasterVolume;
         internal SettingEntry<bool> ToggleSubmergedPlaylist;
         internal SettingEntry<bool> ToggleFourDayCycle;
+        internal SettingEntry<bool> ToggleKeepAudioFiles;
 
         #endregion
 
@@ -52,8 +53,9 @@ namespace Nekres.Music_Mixer
 
         protected override void DefineSettings(SettingCollection settings) {
             MasterVolume = settings.DefineSetting("MasterVolume", 50.0f, "Master Volume", "Sets the audio volume.");
-            ToggleSubmergedPlaylist = settings.DefineSetting("EnableSubmergedPlaylist", false, "Use submerged playlist", "If songs from the underwater playlist should be used while submerged.");
-            ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "If dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
+            ToggleSubmergedPlaylist = settings.DefineSetting("EnableSubmergedPlaylist", false, "Use submerged playlist", "Whether songs of the underwater playlist should be played while submerged.");
+            ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "Whether dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
+            ToggleKeepAudioFiles = settings.DefineSetting("KeepAudioFiles", false, "Keep audio files on disk", "Whether streamed audio should be kept on disk.\nReduces delay for all future playback events after the first at the expense of disk space.");
         }
 
 
@@ -88,7 +90,7 @@ namespace Nekres.Music_Mixer
             ExtractFile(_FFmpegPath);
             ExtractFile(_youtubeDLPath);
 
-            _musicPlayer = new MusicPlayer(_moduleDirectory, _FFmpegPath, _youtubeDLPath);
+            _musicPlayer = new MusicPlayer(_moduleDirectory, Path.Combine(_moduleDirectory, _FFmpegPath), Path.Combine(_moduleDirectory, _youtubeDLPath));
             _gw2State = new Gw2StateService(LoadEncounterData());
         }
 

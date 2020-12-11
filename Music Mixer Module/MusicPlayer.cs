@@ -13,28 +13,43 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using YoutubeDLSharp;
-using YoutubeDLSharp.Options;
+using System.Threading;
 using static Blish_HUD.GameService;
 
 namespace Nekres.Music_Mixer
 {
     public class MusicPlayer : IDisposable
     {
+        private static readonly Logger Logger = Logger.GetLogger(typeof(MusicPlayer));
+
         private float _masterVolume => MusicMixerModule.ModuleInstance.MasterVolume.Value / 1000;
         private bool _toggleFourDayCycle => MusicMixerModule.ModuleInstance.ToggleFourDayCycle.Value;
+        private bool _toggleKeepAudioFiles => MusicMixerModule.ModuleInstance.ToggleKeepAudioFiles.Value;
 
         private Regex _youtubeVideoID = new Regex(@"youtu(?:\.be|be\.com)/(?:.*v(?:/|=)|(?:.*/)?)([a-zA-Z0-9-_]+)", RegexOptions.Compiled);
+        
+        private const int _sampleRate = 44100;
+        private const int _bits = 16;
+        private const int _channels = 1;
+        private const int _bitRate = 196; // kbps
+        private const string _rawAudioFormat = "s16le";
+        private const string _rawAudioCodec = "pcm_s16le";
+
+        private const string _audioCodec = "mp3";
+        private const int _bufferSize = 65536; // 64KB chunks
 
         private WasapiOut _outputDevice;
         private bool _initialized;
         private Equalizer _equalizer;
 
-        private YoutubeDL _youtubeDL;
-        private OptionSet _youtubeDLOptions;
-        
+        private Process _streamingProcess;
+        private Thread _bufferedPlayback;
+
+        private Process _downloadProcess;
+        private Queue<string> _downloadQueue;
+
         private Stopwatch _stopwatch;
+        private Thread _fadingThread;
         public bool IsFading => _stopwatch?.IsRunning ?? false;
 
         #region Playlists
@@ -53,30 +68,28 @@ namespace Nekres.Music_Mixer
         private IList<Track> _currentPlaylist;
         private bool _submergedFxEnabled;
 
-        public MusicPlayer(string _playlistDirectory, string _FFmpegPath, string _youtubeDLPath) {
+        private string _FFmpegPath;
+        private string _youtubeDLPath;
+        private string _cachePath;
+
+        public MusicPlayer(string playlistDirectory, string FFmpegPath, string youtubeDLPath) {
+            _cachePath = Directory.CreateDirectory(Path.Combine(playlistDirectory, "cache")).FullName;
+
+            _FFmpegPath = FFmpegPath;
+            _youtubeDLPath = youtubeDLPath;
+            
             _outputDevice = new WasapiOut();
-
             _stopwatch = new Stopwatch();
+            _downloadQueue = new Queue<string>();
 
-            _youtubeDL = new YoutubeDL();
-            _youtubeDLOptions = new OptionSet()
-            {
-                NoContinue = true,
-                Format = "best",
-                NoPart = true
-            };
-            _youtubeDL.FFmpegPath = Path.Combine(_playlistDirectory, _FFmpegPath);
-            _youtubeDL.YoutubeDLPath = Path.Combine(_playlistDirectory, _youtubeDLPath);
-            _youtubeDL.OutputFolder = Directory.CreateDirectory(Path.Combine(_playlistDirectory, "cache")).FullName;
-
-            _combatPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "combat.json"));
-            _encounterPlaylist = LoadPlaylist<List<EncounterTrack>>(Path.Combine(_playlistDirectory, "encounter.json"));
-            _instancePlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "instance.json"));
-            _mountedPlaylist = LoadPlaylist<MountPlaylists>(Path.Combine(_playlistDirectory, "mounted.json"));
-            _pvpPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "pvp.json"));
-            _openWorldPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "world.json"));
-            _wvwPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "wvw.json"));
-            _submergedPlaylist = LoadPlaylist<List<Track>>(Path.Combine(_playlistDirectory, "submerged.json"));
+            _combatPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "combat.json"));
+            _encounterPlaylist = LoadPlaylist<List<EncounterTrack>>(Path.Combine(playlistDirectory, "encounter.json"));
+            _instancePlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "instance.json"));
+            _mountedPlaylist = LoadPlaylist<MountPlaylists>(Path.Combine(playlistDirectory, "mounted.json"));
+            _pvpPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "pvp.json"));
+            _openWorldPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "world.json"));
+            _wvwPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "wvw.json"));
+            _submergedPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "submerged.json"));
 
             Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
         }
@@ -91,32 +104,37 @@ namespace Nekres.Music_Mixer
         public void FadeOut() => Fade(0, 2000);
         public void Fade(float target, int durationMs) {
             if (!_initialized) return;
-            float start = _outputDevice.Volume;
-            if (target == start) return;
-            float value;
-            bool reached = false;
-            _stopwatch.Restart();
-            while (!reached && _stopwatch.ElapsedMilliseconds < durationMs) {
-                if (!_stopwatch.IsRunning)
-                    return;
-                if (target < start) {
-                    value = Math.Abs(start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) - start);
-                    reached = value < target;
-                } else {
-                    value = start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) + start;
-                    reached = value > target;
+            _fadingThread?.Abort();
+            _fadingThread = new Thread(o => { 
+                float start = _outputDevice.Volume;
+                if (target == start) return;
+                float value;
+                bool reached = false;
+                _stopwatch.Restart();
+                while (!reached && _stopwatch.ElapsedMilliseconds < durationMs) {
+                    if (!_stopwatch.IsRunning)
+                        return;
+                    if (target < start) {
+                        value = Math.Abs(start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) - start);
+                        reached = value < target;
+                    } else {
+                        value = start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) + start;
+                        reached = value > target;
+                    }
+                    value = reached ? target : value;
+                    SetVolume(value);
                 }
-                value = reached ? target : value;
-                SetVolume(value);
-            }
-            _stopwatch.Stop();
-            if (target == 0)
-                Stop();
+                _stopwatch.Stop();
+                if (target == 0)
+                    Stop();
+            });
         }
 
         public void Stop() {
             if (!_initialized) return;
             _initialized = false;
+            _bufferedPlayback?.Abort();
+            _fadingThread?.Abort();
             _stopwatch.Stop();
             _outputDevice?.Stop();
         }
@@ -140,27 +158,104 @@ namespace Nekres.Music_Mixer
         }
 
 
+        private WriteableBufferingSource StreamTrack(string youtubeId) {
+            var url = "https://youtu.be/" + youtubeId;
+
+            var fileName = @"C:\Windows\System32\cmd.exe";
+            var args = $"/C youtube-dl \"{url}\" -o - -f \"(mp4/webm)[asr={_sampleRate}][abr<={_bitRate}]\" | ffmpeg -i pipe:0 -f {_rawAudioFormat} -c:a {_rawAudioCodec} -ar {_sampleRate} -ac {_channels} pipe:1";
+            var wd = Path.GetDirectoryName(_youtubeDLPath);
+
+            _streamingProcess = ProcessUtil.CreateProcess(fileName, wd, args, true);
+            _streamingProcess.Exited += (o, e) => _streamingProcess?.Dispose();
+            _streamingProcess.Start();
+
+            return new WriteableBufferingSource(new WaveFormat(_sampleRate, _bits, _channels)){ FillWithZeros = true };
+        }
+
+
+        private void DownloadTrack(string youtubeId, string outputFolder) {
+            var url = "https://youtu.be/" + youtubeId;
+
+            if (_downloadQueue.Contains(youtubeId)) return;
+            _downloadQueue.Enqueue(youtubeId);
+
+            if (_downloadProcess != null) return;
+
+            var dir = Directory.CreateDirectory(Path.Combine(outputFolder, youtubeId)).FullName;
+
+            var fileName = @"C:\Windows\System32\cmd.exe";
+            var wd = Path.GetDirectoryName(_youtubeDLPath);
+            var args = $"/C youtube-dl -f \"bestaudio/best[ext=mp4]/best\" \"{url}\" -o \"{dir}/%(title)s.%(ext)s\" --restrict-filenames --extract-audio --audio-format {_audioCodec} --ffmpeg-location \"{Path.GetDirectoryName(_FFmpegPath)}\"";
+            _downloadProcess = ProcessUtil.CreateProcess(fileName, wd, args, false);
+            _downloadProcess.Exited += (o, e) => {
+                if (_downloadQueue.Count == 0) return;
+                DownloadTrack(_downloadQueue.Dequeue(), outputFolder);
+                _downloadProcess?.Dispose();
+                _downloadProcess = null;
+            };
+            _downloadProcess.Start();
+        }
+
+
+        public void StartBufferedPlayback(WriteableBufferingSource bufferingSource) {
+            _bufferedPlayback = new Thread(o => {
+                byte[] buffer = new byte[_bufferSize];
+                int read;
+                while (_initialized && !_streamingProcess.HasExited && bufferingSource != null) {
+                    if(bufferingSource.MaxBufferSize - bufferingSource.Length > buffer.Length)
+                    {
+                        read = _streamingProcess.StandardOutput.BaseStream.Read(buffer, 0, buffer.Length);
+                        if (read <= 0)
+                            break;
+                        bufferingSource.Write(buffer, 0, read);
+                    }
+                    Thread.Sleep(50);
+                }
+            });
+            _bufferedPlayback.Start();
+        }
+
+
         public void PlayTrack(string uri, bool isEncounter = false, float volume = 0) {
             if (uri == null || uri.Equals("")) return;
+
+            Stop();
+
+            WriteableBufferingSource bufferingSource = null;
+            IWaveSource source;
+
             if (!FileUtil.IsLocalPath(uri)) {
+
                 var youtubeMatch = _youtubeVideoID.Match(uri);
                 if (!youtubeMatch.Success) return;
 
                 var id = youtubeMatch.Groups[1].Value;
-                var dir = Directory.CreateDirectory(Path.Combine(_youtubeDL.OutputFolder, id));
+                var dir = Path.Combine(_cachePath, id);
 
-                var file = dir.GetFiles().FirstOrDefault(x => x.Extension.Equals(".mp3"));
-                if (file == null) {
-                    DownloadTrack(id, _youtubeDL.OutputFolder);
-                    return;
-                } else
-                    uri = file.FullName;
+                FileInfo file = null; 
+
+                if (Directory.Exists(dir))
+                    file = new DirectoryInfo(dir).GetFiles().FirstOrDefault(x => x.Extension.Equals($".{_audioCodec}"));
+                
+                if (file != null && !FileUtil.IsFileLocked(file.FullName)) {
+
+                    source = CodecFactory.Instance.GetCodec(file.FullName);
+
+                } else {
+
+                    if (file == null && _toggleKeepAudioFiles)
+                        DownloadTrack(id, _cachePath);
+
+                    bufferingSource = StreamTrack(id);
+                    source = bufferingSource;
+                }
+
+            } else {
+
+                if (!File.Exists(uri)) return;
+
+                source = CodecFactory.Instance.GetCodec(uri);
             }
-
-            Stop();
-            if (!File.Exists(uri)) return;
-
-            var source = CodecFactory.Instance.GetCodec(uri);
 
             // Setup event for reaching the end of the stream.
             source = new LoopStream(source) { EnableLoop = isEncounter };
@@ -184,22 +279,9 @@ namespace Nekres.Music_Mixer
             ToggleSubmergedFx(_submergedFxEnabled); 
 
             _outputDevice.Play();
-        }
 
-
-        private async void DownloadTrack(string youtubeId, string outputFolder, IProgress<DownloadProgress> progress = null) {
-            var url = "https://youtu.be/" + youtubeId;
-            var dir = Directory.CreateDirectory(Path.Combine(outputFolder, youtubeId)).FullName;
-
-            await _youtubeDL.RunAudioDownload(url, AudioConversionFormat.Mp3, default, progress, null, _youtubeDLOptions).ContinueWith(response => {
-                if (response.IsFaulted || !response.Result.Success) return;
-
-                var filePath = response.Result.Data;
-                var newPath = Path.Combine(dir, FileUtil.Sanitize(Path.GetFileName(filePath)));
-
-                if (!FileUtil.IsFileLocked(newPath)) File.Delete(newPath);
-                File.Move(filePath, Path.Combine(dir, Path.GetFileName(filePath)));
-            });
+            if (bufferingSource != null)
+                StartBufferedPlayback(bufferingSource);
         }
 
 
@@ -276,6 +358,12 @@ namespace Nekres.Music_Mixer
             _outputDevice.Stop();
             _outputDevice.Dispose();
             _outputDevice = null;
+            _fadingThread?.Abort();
+            _bufferedPlayback?.Abort();
+            _streamingProcess?.Kill();
+            _streamingProcess?.Dispose();
+            _downloadProcess?.Kill();
+            _downloadProcess?.Dispose();
         }
     }
 }

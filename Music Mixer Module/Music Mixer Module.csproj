@@ -73,6 +73,8 @@
     <Compile Include="Persistance\EncounterData.cs" />
     <Compile Include="Persistance\Playlists.cs" />
     <Compile Include="Utils\FileUtil.cs" />
+    <Compile Include="Utils\ProcessUtil.cs" />
+    <Compile Include="Utils\ReadSeekableStream.cs" />
     <Compile Include="Utils\TyrianTimeUtil.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -129,9 +131,6 @@
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="YoutubeDLSharp, Version=0.3.0.20271, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\YoutubeDLSharp.0.3.0\lib\net45\YoutubeDLSharp.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
