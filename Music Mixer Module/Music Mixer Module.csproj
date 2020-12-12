@@ -74,7 +74,6 @@
     <Compile Include="Persistance\Playlists.cs" />
     <Compile Include="Utils\FileUtil.cs" />
     <Compile Include="Utils\ProcessUtil.cs" />
-    <Compile Include="Utils\ReadSeekableStream.cs" />
     <Compile Include="Utils\TyrianTimeUtil.cs" />
   </ItemGroup>
   <ItemGroup>

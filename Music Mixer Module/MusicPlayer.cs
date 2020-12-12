@@ -47,9 +47,9 @@ namespace Nekres.Music_Mixer
 
         private Process _downloadProcess;
         private Queue<string> _downloadQueue;
+        private string _currentDownload;
 
         private Stopwatch _stopwatch;
-        private Thread _fadingThread;
         public bool IsFading => _stopwatch?.IsRunning ?? false;
 
         #region Playlists
@@ -104,37 +104,33 @@ namespace Nekres.Music_Mixer
         public void FadeOut() => Fade(0, 2000);
         public void Fade(float target, int durationMs) {
             if (!_initialized) return;
-            _fadingThread?.Abort();
-            _fadingThread = new Thread(o => { 
-                float start = _outputDevice.Volume;
-                if (target == start) return;
-                float value;
-                bool reached = false;
-                _stopwatch.Restart();
-                while (!reached && _stopwatch.ElapsedMilliseconds < durationMs) {
-                    if (!_stopwatch.IsRunning)
-                        return;
-                    if (target < start) {
-                        value = Math.Abs(start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) - start);
-                        reached = value < target;
-                    } else {
-                        value = start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) + start;
-                        reached = value > target;
-                    }
-                    value = reached ? target : value;
-                    SetVolume(value);
+            float start = _outputDevice.Volume;
+            if (target == start) return;
+            float value;
+            bool reached = false;
+            _stopwatch.Restart();
+            while (!reached && _stopwatch.ElapsedMilliseconds < durationMs) {
+                if (!_stopwatch.IsRunning)
+                    return;
+                if (target < start) {
+                    value = Math.Abs(start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) - start);
+                    reached = value < target;
+                } else {
+                    value = start * (_stopwatch.ElapsedMilliseconds / (float)durationMs) + start;
+                    reached = value > target;
                 }
-                _stopwatch.Stop();
-                if (target == 0)
-                    Stop();
-            });
+                value = reached ? target : value;
+                SetVolume(value);
+            }
+            _stopwatch.Stop();
+            if (target == 0)
+                Stop();
         }
 
         public void Stop() {
             if (!_initialized) return;
             _initialized = false;
             _bufferedPlayback?.Abort();
-            _fadingThread?.Abort();
             _stopwatch.Stop();
             _outputDevice?.Stop();
         }
@@ -176,10 +172,12 @@ namespace Nekres.Music_Mixer
         private void DownloadTrack(string youtubeId, string outputFolder) {
             var url = "https://youtu.be/" + youtubeId;
 
-            if (_downloadQueue.Contains(youtubeId)) return;
+            if (string.Equals(_currentDownload, youtubeId) || _downloadQueue.Contains(youtubeId)) return;
             _downloadQueue.Enqueue(youtubeId);
 
             if (_downloadProcess != null) return;
+
+            _currentDownload = youtubeId;
 
             var dir = Directory.CreateDirectory(Path.Combine(outputFolder, youtubeId)).FullName;
 
@@ -188,6 +186,7 @@ namespace Nekres.Music_Mixer
             var args = $"/C youtube-dl -f \"bestaudio/best[ext=mp4]/best\" \"{url}\" -o \"{dir}/%(title)s.%(ext)s\" --restrict-filenames --extract-audio --audio-format {_audioCodec} --ffmpeg-location \"{Path.GetDirectoryName(_FFmpegPath)}\"";
             _downloadProcess = ProcessUtil.CreateProcess(fileName, wd, args, false);
             _downloadProcess.Exited += (o, e) => {
+                _currentDownload = null;
                 if (_downloadQueue.Count == 0) return;
                 DownloadTrack(_downloadQueue.Dequeue(), outputFolder);
                 _downloadProcess?.Dispose();
@@ -358,7 +357,6 @@ namespace Nekres.Music_Mixer
             _outputDevice.Stop();
             _outputDevice.Dispose();
             _outputDevice = null;
-            _fadingThread?.Abort();
             _bufferedPlayback?.Abort();
             _streamingProcess?.Kill();
             _streamingProcess?.Dispose();
