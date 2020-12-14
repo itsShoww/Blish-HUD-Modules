@@ -52,7 +52,7 @@ namespace Nekres.Music_Mixer
         private const string _youtubeDLPath = "bin/youtube-dl.exe";
 
         protected override void DefineSettings(SettingCollection settings) {
-            MasterVolume = settings.DefineSetting("MasterVolume", 50.0f, "Master Volume", "Sets the audio volume.");
+            MasterVolume = settings.DefineSetting("MasterVolume", 50f, "Master Volume", "Sets the audio volume.");
             ToggleSubmergedPlaylist = settings.DefineSetting("EnableSubmergedPlaylist", false, "Use submerged playlist", "Whether songs of the underwater playlist should be played while submerged.");
             ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "Whether dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
             ToggleKeepAudioFiles = settings.DefineSetting("KeepAudioFiles", false, "Keep audio files on disk", "Whether streamed audio should be kept on disk.\nReduces delay for all future playback events after the first at the expense of disk space.");
@@ -128,6 +128,9 @@ namespace Nekres.Music_Mixer
 
 
         protected override void OnModuleLoaded(EventArgs e) {
+            MasterVolume.Value = MathHelper.Clamp(MasterVolume.Value, 0f, 100f);
+            OnStateChanged(this, new ValueChangedEventArgs<State>(0, _gw2State.CurrentState));
+
             MasterVolume.SettingChanged += OnMasterVolumeSettingChanged;
             _gw2State.IsSubmergedChanged += OnIsSubmergedChanged;
             _gw2State.TyrianTimeChanged += OnTyrianTimeChanged;

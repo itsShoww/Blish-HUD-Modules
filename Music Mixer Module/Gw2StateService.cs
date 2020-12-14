@@ -188,7 +188,8 @@ namespace Nekres.Music_Mixer
                         .Ignore(Trigger.Submerging)
                         .Ignore(Trigger.Emerging)
                         .Ignore(Trigger.EncounterReset)
-                        .Ignore(Trigger.OutOfCombat);
+                        .Ignore(Trigger.OutOfCombat)
+                        .Ignore(Trigger.MapChanged);
 
             _stateMachine.Configure(State.Combat)
                         .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
@@ -257,7 +258,7 @@ namespace Nekres.Music_Mixer
         public void CheckWaterLevel() => IsSubmerged = Gw2Mumble.PlayerCharacter.Position.Z < -1.25f;
         public void CheckTyrianTime() => TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
         public void CheckEncounterReset() {
-            if (CurrentEncounter == null) return;
+            if (!ArcDps.Loaded || CurrentEncounter == null) return;
             if (CurrentEncounter.IsPlayerReset(Gw2Mumble.PlayerCharacter.Position) || CurrentEncounter.Health <= 0)
                 TimeOutCombatEvents();
         }

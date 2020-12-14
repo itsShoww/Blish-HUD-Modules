@@ -107,6 +107,7 @@ namespace Nekres.Music_Mixer
         }
 
         public bool IsPlayerReset(Vector3 position) {
+            if (position == null) return false;
             foreach (var spawn in PlayerSpawns) {
                 var top = new Vector3(spawn.X + _playerSpawnSize, spawn.Y + _playerSpawnSize, spawn.Z + _playerSpawnSize);
                 var bot = new Vector3(spawn.X - _playerSpawnSize, spawn.Y - _playerSpawnSize, spawn.Z - _playerSpawnSize);
