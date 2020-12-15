@@ -65,6 +65,8 @@ namespace Nekres.Mumble_Info_Module
         private const string _clipboardMessage = "Copied!";
         private const string _decimalFormat = "0.###";
 
+        private bool _isMousePressed;
+
         #region Info Elements
 
         private (string, bool) _gameInfo;
@@ -88,10 +90,12 @@ namespace Nekres.Mumble_Info_Module
 
             Input.Mouse.LeftMouseButtonReleased += OnLeftMouseButtonReleased;
             Input.Mouse.RightMouseButtonReleased += OnRightMouseButtonReleased;
-
+            Input.Mouse.LeftMouseButtonPressed += OnMousePressed;
+            Input.Mouse.RightMouseButtonPressed += OnMousePressed;
         }
 
         private void OnLeftMouseButtonReleased(object o, MouseEventArgs e) {
+            _isMousePressed = false;
             if (Input.Mouse.Position.IsInBounds(_currentFocusBounds)) {
                 ClipboardUtil.WindowsClipboardService.SetTextAsync(_currentSingleInfo);
                 ScreenNotification.ShowNotification(_clipboardMessage);
@@ -113,16 +117,20 @@ namespace Nekres.Mumble_Info_Module
             }
         }
         private void OnRightMouseButtonReleased(object o, MouseEventArgs e) {
+            _isMousePressed = false;
             if (_computerInfo.Item2) {
                 ClipboardUtil.WindowsClipboardService.SetTextAsync(_computerInfo.Item1);
                 ScreenNotification.ShowNotification(_clipboardMessage);
             }
         }
+        private void OnMousePressed(object o, MouseEventArgs e) => _isMousePressed = true;
 
         protected override CaptureType CapturesInput() => _captureMouseOnLCtrl && IsPressed(VK_LCONTROL) ? CaptureType.Mouse : CaptureType.ForceNone;
         private void OnDisposed(object sender, EventArgs e) {
             Input.Mouse.LeftMouseButtonReleased -= OnLeftMouseButtonReleased; 
-            Input.Mouse.RightMouseButtonReleased -= OnRightMouseButtonReleased; 
+            Input.Mouse.RightMouseButtonReleased -= OnRightMouseButtonReleased;
+            Input.Mouse.LeftMouseButtonPressed -= OnMousePressed;
+            Input.Mouse.RightMouseButtonPressed -= OnMousePressed;
         }
 
         private void UpdateLocation(object sender, EventArgs e) => Location = new Point(0, 0);
@@ -1368,10 +1376,10 @@ namespace Nekres.Mumble_Info_Module
         }
 
         private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds) {
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y, bounds.Width, _borderSize), Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed ? _clickColor : _borderColor);
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y, _borderSize, bounds.Height), Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed ? _clickColor : _borderColor);
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y + bounds.Height, bounds.Width, _borderSize), Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed ? _clickColor : _borderColor);
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X + bounds.Width, bounds.Y, _borderSize, bounds.Height), Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed ? _clickColor : _borderColor);
+            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y, bounds.Width, _borderSize), _isMousePressed ? _clickColor : _borderColor);
+            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y, _borderSize, bounds.Height), _isMousePressed ? _clickColor : _borderColor);
+            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y + bounds.Height, bounds.Width, _borderSize), _isMousePressed ? _clickColor : _borderColor);
+            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X + bounds.Width, bounds.Y, _borderSize, bounds.Height), _isMousePressed ? _clickColor : _borderColor);
         }
     }
 }
