@@ -67,8 +67,13 @@
   <ItemGroup>
     <Compile Include="DataPanel.cs" />
     <Compile Include="MumbleInfoModule.cs" />
+    <Compile Include="_Extensions\PointExtension.cs" />
+    <Compile Include="_Extensions\RectangleExtension.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="AsyncClipboardService, Version=1.7.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AsyncClipboardService.1.7.1\lib\net45\AsyncClipboardService.dll</HintPath>
+    </Reference>
     <Reference Include="Blish HUD">
       <HintPath>..\..\Blish-HUD\Blish HUD\bin\x64\Debug\net472\Blish HUD.exe</HintPath>
     </Reference>
