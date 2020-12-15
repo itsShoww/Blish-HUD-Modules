@@ -5,7 +5,7 @@
   "package": "MumbleInfo.dll",
   "manifest_version": 1,
 
-  "description": "Shows real time mumble link data.\nHold [Left Shift] to show unformatted values.\nUse [Left Click] to copy infos.\nHold [Left Control] to intercept the mouse forcibly before the game captures it.",
+  "description": "Shows real time mumble link data.\nHold [Left Control] to show unformatted values.\nUse [Left Click] to copy infos.",
   "dependencies": {
     "bh.blishhud": ">=0.7.0"
   },

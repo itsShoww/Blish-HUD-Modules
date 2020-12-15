@@ -18,6 +18,7 @@ namespace Nekres.Mumble_Info_Module
         private float _memoryUsage => MumbleInfoModule.ModuleInstance.MemoryUsage;
         private float _cpuUsage => MumbleInfoModule.ModuleInstance.CpuUsage;
         private string _cpuName => MumbleInfoModule.ModuleInstance.CpuName;
+        private bool _captureMouseOnLCtrl => MumbleInfoModule.ModuleInstance.CaptureMouseOnLCtrl.Value;
 
         public Map CurrentMap;
         public Specialization CurrentEliteSpec;
@@ -36,6 +37,7 @@ namespace Nekres.Mumble_Info_Module
         private Color _yellow = new Color(252, 252, 84);
         private Color _softYellow = new Color(250, 250, 148);
         private Color _borderColor = Color.AntiqueWhite;
+        private Color _clickColor = Color.AliceBlue;
 
         #endregion
 
@@ -117,7 +119,7 @@ namespace Nekres.Mumble_Info_Module
             }
         }
 
-        protected override CaptureType CapturesInput() => IsPressed(VK_LCONTROL) ? CaptureType.Mouse : CaptureType.ForceNone;
+        protected override CaptureType CapturesInput() => _captureMouseOnLCtrl && IsPressed(VK_LCONTROL) ? CaptureType.Mouse : CaptureType.ForceNone;
         private void OnDisposed(object sender, EventArgs e) {
             Input.Mouse.LeftMouseButtonReleased -= OnLeftMouseButtonReleased; 
             Input.Mouse.RightMouseButtonReleased -= OnRightMouseButtonReleased; 
@@ -131,7 +133,7 @@ namespace Nekres.Mumble_Info_Module
             var left = HorizontalAlignment.Left;
             var top = VerticalAlignment.Top;
 
-            var lShiftPressed = IsPressed(VK_LSHIFT);
+            var togglePressed = IsPressed(VK_LCONTROL);
 
             string text;
             int height;
@@ -442,7 +444,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = playerPos.X.ToString(lShiftPressed ? null : _decimalFormat);
+            text = playerPos.X.ToString(togglePressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -453,7 +455,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerPos.Y.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {playerPos.Y.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -464,7 +466,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerPos.Z.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {playerPos.Z.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -507,7 +509,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = playerFacing.X.ToString(lShiftPressed ? null : _decimalFormat);
+            text = playerFacing.X.ToString(togglePressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -518,7 +520,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerFacing.Y.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {playerFacing.Y.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -529,7 +531,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerFacing.Z.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {playerFacing.Z.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -785,7 +787,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = playerLocationMap.X.ToString(lShiftPressed ? null : _decimalFormat);
+            text = playerLocationMap.X.ToString(togglePressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -796,7 +798,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerLocationMap.X.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {playerLocationMap.X.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -859,7 +861,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = cameraForward.X.ToString(lShiftPressed ? null : _decimalFormat);
+            text = cameraForward.X.ToString(togglePressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -870,7 +872,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {cameraForward.Y.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {cameraForward.Y.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -881,7 +883,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {cameraForward.Z.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {cameraForward.Z.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -924,7 +926,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = cameraPosition.X.ToString(lShiftPressed ? null : _decimalFormat);
+            text = cameraPosition.X.ToString(togglePressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -935,7 +937,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {cameraPosition.Y.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {cameraPosition.Y.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -946,7 +948,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {cameraPosition.Z.ToString(lShiftPressed ? null : _decimalFormat)}";
+            text = $"  {cameraPosition.Z.ToString(togglePressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -1195,7 +1197,7 @@ namespace Nekres.Mumble_Info_Module
 
             #region Computer
 
-            text = $"{_memoryUsage.ToString(lShiftPressed ? null : _decimalFormat)} MB";
+            text = $"{_memoryUsage.ToString(togglePressed ? null : _decimalFormat)} MB";
             width = (int)_font.MeasureString(text).Width;
             height = (int)_font.MeasureString(text).Height;
             rect = new Rectangle(Size.X - width - calcRightMargin, calcTopMargin, width, height);
@@ -1280,7 +1282,7 @@ namespace Nekres.Mumble_Info_Module
             calcTopMargin += height;
             calcRightMargin = _rightMargin;
 
-            text = $"{_cpuUsage.ToString(lShiftPressed ? null : _decimalFormat)}%";
+            text = $"{_cpuUsage.ToString(togglePressed ? null : _decimalFormat)}%";
             width = (int)_font.MeasureString(text).Width;
             height = (int)_font.MeasureString(text).Height;
             rect = new Rectangle(Size.X - width - calcRightMargin, calcTopMargin, width, height);
@@ -1366,10 +1368,10 @@ namespace Nekres.Mumble_Info_Module
         }
 
         private void DrawBorder(SpriteBatch spriteBatch, Rectangle bounds) {
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y, bounds.Width, _borderSize), _borderColor);
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y, _borderSize, bounds.Height), _borderColor);
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y + bounds.Height, bounds.Width, _borderSize), _borderColor);
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X + bounds.Width, bounds.Y, _borderSize, bounds.Height), _borderColor);
+            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y, bounds.Width, _borderSize), Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed ? _clickColor : _borderColor);
+            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y, _borderSize, bounds.Height), Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed ? _clickColor : _borderColor);
+            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X, bounds.Y + bounds.Height, bounds.Width, _borderSize), Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed ? _clickColor : _borderColor);
+            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, new Rectangle(bounds.X + bounds.Width, bounds.Y, _borderSize, bounds.Height), Input.Mouse.State.LeftButton == Microsoft.Xna.Framework.Input.ButtonState.Pressed ? _clickColor : _borderColor);
         }
     }
 }

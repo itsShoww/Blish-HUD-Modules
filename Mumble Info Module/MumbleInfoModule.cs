@@ -36,6 +36,7 @@ namespace Nekres.Mumble_Info_Module
         #region Settings
 
         private SettingEntry<KeyBinding> ToggleInfoBinding;
+        internal SettingEntry<bool> CaptureMouseOnLCtrl;
 
         #endregion
 
@@ -53,6 +54,8 @@ namespace Nekres.Mumble_Info_Module
         protected override void DefineSettings(SettingCollection settings) {
             ToggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.F12),
                 "Toggle Mumble Data", "Toggles the display of mumble data.");
+            CaptureMouseOnLCtrl = settings.DefineSetting("ForceInterceptMouseOnCtrl", true, 
+                "Capture mouse on [Left Control]", "Whether the mouse should be intercepted forcibly while [Left Control] is pressed.");
         }
 
         protected override void Initialize() {
