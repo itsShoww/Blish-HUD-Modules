@@ -117,8 +117,8 @@ namespace Nekres.Mumble_Info_Module
             }
         }
 
-        protected override CaptureType CapturesInput() => CaptureType.ForceNone;
-        private void OnDisposed(object sender, EventArgs e) { 
+        protected override CaptureType CapturesInput() => IsPressed(VK_LCONTROL) ? CaptureType.Mouse : CaptureType.ForceNone;
+        private void OnDisposed(object sender, EventArgs e) {
             Input.Mouse.LeftMouseButtonReleased -= OnLeftMouseButtonReleased; 
             Input.Mouse.RightMouseButtonReleased -= OnRightMouseButtonReleased; 
         }
@@ -131,7 +131,7 @@ namespace Nekres.Mumble_Info_Module
             var left = HorizontalAlignment.Left;
             var top = VerticalAlignment.Top;
 
-            var ctrlPressed = IsPressed(VK_LCONTROL);
+            var lShiftPressed = IsPressed(VK_LSHIFT);
 
             string text;
             int height;
@@ -442,7 +442,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = playerPos.X.ToString(ctrlPressed ? null : _decimalFormat);
+            text = playerPos.X.ToString(lShiftPressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -453,7 +453,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerPos.Y.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {playerPos.Y.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -464,7 +464,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerPos.Z.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {playerPos.Z.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -507,7 +507,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = playerFacing.X.ToString(ctrlPressed ? null : _decimalFormat);
+            text = playerFacing.X.ToString(lShiftPressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -518,7 +518,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerFacing.Y.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {playerFacing.Y.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -529,7 +529,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerFacing.Z.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {playerFacing.Z.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -785,7 +785,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = playerLocationMap.X.ToString(ctrlPressed ? null : _decimalFormat);
+            text = playerLocationMap.X.ToString(lShiftPressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -796,7 +796,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {playerLocationMap.X.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {playerLocationMap.X.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -859,7 +859,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = cameraForward.X.ToString(ctrlPressed ? null : _decimalFormat);
+            text = cameraForward.X.ToString(lShiftPressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -870,7 +870,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {cameraForward.Y.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {cameraForward.Y.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -881,7 +881,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {cameraForward.Z.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {cameraForward.Z.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -924,7 +924,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = cameraPosition.X.ToString(ctrlPressed ? null : _decimalFormat);
+            text = cameraPosition.X.ToString(lShiftPressed ? null : _decimalFormat);
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -935,7 +935,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {cameraPosition.Y.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {cameraPosition.Y.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -946,7 +946,7 @@ namespace Nekres.Mumble_Info_Module
             focusedSingleInfo += text;
             calcLeftMargin += width;
 
-            text = $"  {cameraPosition.Z.ToString(ctrlPressed ? null : _decimalFormat)}";
+            text = $"  {cameraPosition.Z.ToString(lShiftPressed ? null : _decimalFormat)}";
             width = (int)_font.MeasureString(text).Width;
             height = Math.Max(height, (int)_font.MeasureString(text).Height);
             rect = new Rectangle(calcLeftMargin, calcTopMargin, width, height);
@@ -1195,7 +1195,7 @@ namespace Nekres.Mumble_Info_Module
 
             #region Computer
 
-            text = $"{_memoryUsage.ToString(ctrlPressed ? null : _decimalFormat)} MB";
+            text = $"{_memoryUsage.ToString(lShiftPressed ? null : _decimalFormat)} MB";
             width = (int)_font.MeasureString(text).Width;
             height = (int)_font.MeasureString(text).Height;
             rect = new Rectangle(Size.X - width - calcRightMargin, calcTopMargin, width, height);
@@ -1214,7 +1214,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, Color.LightGray, false, true, _strokeDist, left, top);
             
             RectangleExtension.Union(ref rect, ref infoBounds, out infoBounds);
-            _computerInfo.Item1 = text + _computerInfo;
+            _computerInfo.Item1 = text + _computerInfo.Item1;
             focusedSingleInfo = text + focusedSingleInfo;
 
             calcRightMargin += width;
@@ -1226,7 +1226,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, _orange, false, true, _strokeDist, left, top);
 
             RectangleExtension.Union(ref rect, ref infoBounds, out infoBounds);
-            _computerInfo.Item1 = '\n' + text + _computerInfo;
+            _computerInfo.Item1 = '\n' + text + _computerInfo.Item1;
             focusedSingleInfo = text + focusedSingleInfo + '\n';
 
             if (_computerInfo.Item2 = Input.Mouse.Position.IsInBounds(infoBounds)) {
@@ -1245,7 +1245,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, _cyan, false, true, _strokeDist, left, top);
 
             infoBounds = rect;
-            _computerInfo.Item1 = text + _computerInfo;
+            _computerInfo.Item1 = text + _computerInfo.Item1;
             focusedSingleInfo = text;
 
             calcRightMargin += width;
@@ -1257,7 +1257,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, Color.LightGray, false, true, _strokeDist, left, top);
             
             RectangleExtension.Union(ref rect, ref infoBounds, out infoBounds);
-            _computerInfo.Item1 = text + _computerInfo;
+            _computerInfo.Item1 = text + _computerInfo.Item1;
             focusedSingleInfo = text + focusedSingleInfo;
             calcRightMargin += width;
 
@@ -1268,7 +1268,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, _orange, false, true, _strokeDist, left, top);
 
             RectangleExtension.Union(ref rect, ref infoBounds, out infoBounds);
-            _computerInfo.Item1 = '\n' + text + _computerInfo;
+            _computerInfo.Item1 = '\n' + text + _computerInfo.Item1;
             focusedSingleInfo = text + focusedSingleInfo + '\n';
 
             if (_computerInfo.Item2 = Input.Mouse.Position.IsInBounds(infoBounds)) {
@@ -1280,14 +1280,14 @@ namespace Nekres.Mumble_Info_Module
             calcTopMargin += height;
             calcRightMargin = _rightMargin;
 
-            text = $"{_cpuUsage.ToString(ctrlPressed ? null : _decimalFormat)}%";
+            text = $"{_cpuUsage.ToString(lShiftPressed ? null : _decimalFormat)}%";
             width = (int)_font.MeasureString(text).Width;
             height = (int)_font.MeasureString(text).Height;
             rect = new Rectangle(Size.X - width - calcRightMargin, calcTopMargin, width, height);
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, _cyan, false, true, _strokeDist, left, top);
 
             infoBounds = rect;
-            _computerInfo.Item1 = text + _computerInfo;
+            _computerInfo.Item1 = text + _computerInfo.Item1;
             focusedSingleInfo = text;
 
             calcRightMargin += width;
@@ -1299,7 +1299,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, Color.LightGray, false, true, _strokeDist, left, top);
             
             RectangleExtension.Union(ref rect, ref infoBounds, out infoBounds);
-            _computerInfo.Item1 = text + _computerInfo;
+            _computerInfo.Item1 = text + _computerInfo.Item1;
             focusedSingleInfo = text + focusedSingleInfo;
 
             calcRightMargin += width;
@@ -1311,7 +1311,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, _orange, false, true, _strokeDist, left, top);
             
             RectangleExtension.Union(ref rect, ref infoBounds, out infoBounds);
-            _computerInfo.Item1 = '\n' + text + _computerInfo;
+            _computerInfo.Item1 = '\n' + text + _computerInfo.Item1;
             focusedSingleInfo = text + focusedSingleInfo + '\n';
 
             if (_computerInfo.Item2 = Input.Mouse.Position.IsInBounds(infoBounds)) {
@@ -1330,7 +1330,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, _cyan, false, true, _strokeDist, left, top);
 
             infoBounds = rect;
-            _computerInfo.Item1 = text + _computerInfo;
+            _computerInfo.Item1 = text + _computerInfo.Item1;
             focusedSingleInfo = text;
             calcRightMargin += width;
 
@@ -1341,7 +1341,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, Color.LightGray, false, true, _strokeDist, left, top);
             
             RectangleExtension.Union(ref rect, ref infoBounds, out infoBounds);
-            _computerInfo.Item1 = text + _computerInfo;
+            _computerInfo.Item1 = text + _computerInfo.Item1;
             focusedSingleInfo = text + focusedSingleInfo;
 
             calcRightMargin += width;
@@ -1353,7 +1353,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, _orange, false, true, _strokeDist, left, top);
             
             RectangleExtension.Union(ref rect, ref infoBounds, out infoBounds);
-            _computerInfo.Item1 = '\n' + text + _computerInfo;
+            _computerInfo.Item1 = '\n' + text + _computerInfo.Item1;
             focusedSingleInfo = text + focusedSingleInfo + '\n';
 
             if (_computerInfo.Item2 = Input.Mouse.Position.IsInBounds(infoBounds)) {
