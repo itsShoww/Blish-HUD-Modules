@@ -81,9 +81,11 @@
     <Reference Include="Blish HUD, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Blish-HUD\Blish HUD\bin\x64\Debug\net472\Blish HUD.exe</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="CSCore, Version=1.2.1.2, Culture=neutral, PublicKeyToken=5a08f2b6f4415dea, processorArchitecture=MSIL">
       <HintPath>..\packages\CSCore.1.2.1.2\lib\net35-client\CSCore.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Gw2Sharp, Version=0.11.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Gw2Sharp.0.11.1\lib\netstandard2.0\Gw2Sharp.dll</HintPath>
@@ -98,6 +100,7 @@
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Stateless, Version=4.0.0.0, Culture=neutral, PublicKeyToken=93038f0927583c9a, processorArchitecture=MSIL">
       <HintPath>..\packages\Stateless.5.1.3\lib\net472\Stateless.dll</HintPath>
