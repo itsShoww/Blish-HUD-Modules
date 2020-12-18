@@ -20,7 +20,9 @@ namespace Nekres.Music_Mixer
                 },
                 EnableRaisingEvents = true
             };
+#if DEBUG
             Logger.Info($"Created a new process for '{exePath}'\nArguments: '{arguments}'\nWorking Dir: '{workingDir}'");
+#endif
             return process;
         }
     }

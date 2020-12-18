@@ -69,9 +69,11 @@
     <Compile Include="MainView.cs" />
     <Compile Include="Models\Encounter.cs" />
     <Compile Include="MusicMixerModule.cs" />
-    <Compile Include="MusicPlayer.cs" />
-    <Compile Include="Persistance\EncounterData.cs" />
-    <Compile Include="Persistance\Playlists.cs" />
+    <Compile Include="Player\MusicPlayer.cs" />
+    <Compile Include="Models\EncounterData.cs" />
+    <Compile Include="Models\Playlists.cs" />
+    <Compile Include="Player\PlaylistManager.cs" />
+    <Compile Include="Player\SimpleMixer.cs" />
     <Compile Include="Utils\FileUtil.cs" />
     <Compile Include="Utils\ProcessUtil.cs" />
     <Compile Include="Utils\TyrianTimeUtil.cs" />

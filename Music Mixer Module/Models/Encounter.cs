@@ -1,10 +1,11 @@
 ﻿using Blish_HUD;
+using Blish_HUD.ArcDps;
 using Blish_HUD.ArcDps.Models;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-
+using static Blish_HUD.ArcDps.ArcDpsEnums;
+using static Blish_HUD.GameService;
 namespace Nekres.Music_Mixer
 {
     internal class Encounter
@@ -34,10 +35,12 @@ namespace Nekres.Music_Mixer
         /// <remarks>
         /// Ie. enrage timer has passed.
         /// </remarks>
-        public bool Enraged { get => _enrageTimer < DateTime.Now.Subtract(_startTime).Milliseconds; }
+        public bool Enraged { get => _enrageTimeMs < DateTime.Now.Subtract(_startTime).Milliseconds; }
 
         public IReadOnlyList<double> Phases { get; private set; }
         public IReadOnlyList<long> Times { get; private set; }
+
+        public bool IsDead { get; private set; }
 
         public event EventHandler<ValueEventArgs<int>> PhaseChanged;
 
@@ -53,61 +56,36 @@ namespace Nekres.Music_Mixer
             }
         }
 
-        private float _playerSpawnSize;
-        private long _enrageTimer;
+        private const float _playerSpawnSize = 50f;
+        private long _enrageTimeMs;
         private DateTime _startTime;
-        private readonly long _initialHealth;
 
         public Encounter(EncounterData data) {
+            _enrageTimeMs = data.EnrageTimer;
+
             Name = data.Name;
             Ids = data.Ids;
-            _initialHealth = data.Health;
             Health = data.Health;
             Times = data.Times;
             Phases = data.Phases;
-            _playerSpawnSize = 50.0f;
             PlayerSpawns = data.PlayerSpawns;
+
             CurrentPhase = 0;
-            _enrageTimer = data.EnrageTimer;
+
             _startTime = DateTime.Now;
         }
-        /// <summary>
-        /// Tries to decrement the current health given the damaging combat event.
-        /// </summary>
-        /// <param name="e">A combat event with damaging fields.</param>
-        public void DoDamage(Ev e) {
-            var damage = 0;
 
-            // buff damage event
-            if (e.Buff && e.Value == 0)
-                damage += e.BuffDmg;
-            // direct damage event
-            else if (!e.Buff && e.Value > 0)
-                damage += e.Value;
 
-            if (damage == 0) return;
-
-            switch (e.Result) {
-                case 3: return; // blocked
-                case 4: return; // evaded
-                case 6: return; // absorbed
-                case 7: return; // missed
-                default: Health -= Math.Abs(damage); break;
-            }
-
-            if (CurrentPhase < Phases.Count - 1 && Health < Phases[CurrentPhase] * _initialHealth)
+        public void CheckPhase(RawCombatEventArgs e) {
+            if (e.CombatEvent.Ev.Iff == IFF.Foe && e.CombatEvent.Src.Self == 0)
+                IsDead = e.CombatEvent.Ev.IsStateChange == StateChange.ChangeDead;
+            if (e.CombatEvent.Ev.IsFifty)
                 CurrentPhase++;
         }
-        /// <summary>
-        /// Gets the current health percentage.
-        /// </summary>
-        /// <returns></returns>
-        public float GetHealthPercent() {
-            return _initialHealth == 0 ? 0 : Health / (float)_initialHealth;
-        }
 
-        public bool IsPlayerReset(Vector3 position) {
-            if (position == null) return false;
+
+        public bool IsPlayerReset() {
+            var position = Gw2Mumble.PlayerCharacter.Position;
             foreach (var spawn in PlayerSpawns) {
                 var top = new Vector3(spawn.X + _playerSpawnSize, spawn.Y + _playerSpawnSize, spawn.Z + _playerSpawnSize);
                 var bot = new Vector3(spawn.X - _playerSpawnSize, spawn.Y - _playerSpawnSize, spawn.Z - _playerSpawnSize);

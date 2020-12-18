@@ -12,6 +12,7 @@ namespace Nekres.Music_Mixer
     internal class Gw2StateService
     {
         private bool _toggleSubmergedPlaylist => MusicMixerModule.ModuleInstance.ToggleSubmergedPlaylist.Value;
+        private IReadOnlyList<EncounterData> _encounterData => MusicMixerModule.ModuleInstance.EncounterData;
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(Gw2StateService));
 
@@ -39,7 +40,9 @@ namespace Nekres.Music_Mixer
             Submerging,
             Emerging,
             EncounterPull,
-            EncounterReset
+            EncounterReset,
+            Victory,
+            Death
         }
 
         #endregion
@@ -107,13 +110,10 @@ namespace Nekres.Music_Mixer
         #endregion
 
         private StateMachine<State, Trigger> _stateMachine;
-        private IReadOnlyList<EncounterData> _encounterData;
         private Timer _combatDelay;
         private Timer _arcDpsTimeOut;
 
-        public Gw2StateService(IReadOnlyList<EncounterData> encounterData) {
-            _encounterData = encounterData;
-
+        public Gw2StateService() {
             _combatDelay = new Timer(_combatDelayMs){ AutoReset = false };
             _combatDelay.Elapsed += (o, e) => {
                 if (CurrentEncounter != null) return;
@@ -259,7 +259,7 @@ namespace Nekres.Music_Mixer
         public void CheckTyrianTime() => TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
         public void CheckEncounterReset() {
             if (!ArcDps.Loaded || CurrentEncounter == null) return;
-            if (CurrentEncounter.IsPlayerReset(Gw2Mumble.PlayerCharacter.Position) || CurrentEncounter.Health <= 0)
+            if (CurrentEncounter.IsPlayerReset() || CurrentEncounter.IsDead)
                 TimeOutCombatEvents();
         }
 
@@ -275,7 +275,10 @@ namespace Nekres.Music_Mixer
         }
 
         private void CombatEventReceived(object o, RawCombatEventArgs e) {
-            if (e.CombatEvent == null || e.CombatEvent.Ev == null || e.EventType == RawCombatEventArgs.CombatEventType.Local) return;
+            if (_encounterData == null ||
+                e.CombatEvent == null || 
+                e.CombatEvent.Ev == null || 
+                e.EventType == RawCombatEventArgs.CombatEventType.Local) return;
 
             //TODO: StateChange.Reward for Victory fanfare!
 
@@ -293,7 +296,7 @@ namespace Nekres.Music_Mixer
                 CurrentEncounter = new Encounter(encounterData);
 
             } else if (CurrentEncounter.Ids.Any(x => x.Equals(dstProf))) {
-                CurrentEncounter.DoDamage(e.CombatEvent.Ev);
+                CurrentEncounter.CheckPhase(e);
             }
         }
 
