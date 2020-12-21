@@ -58,7 +58,7 @@ namespace Nekres.Music_Mixer
 
         #region _Constants
 
-        private const int _combatDelayMs = 5000;
+        private const int _combatDelayMs = 10000;
         private const int _arcDpsDelayMs = 2500;
 
         #endregion

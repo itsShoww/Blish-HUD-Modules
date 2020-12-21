@@ -28,14 +28,21 @@ namespace Nekres.Music_Mixer.Player
         private Regex _youtubeVideoID = new Regex(@"youtu(?:\.be|be\.com)/(?:.*v(?:/|=)|(?:.*/)?)([a-zA-Z0-9-_]+)", RegexOptions.Compiled);
         //private Regex _vimeoVideoID = new Regex(@"(http|https)?:\/\/(www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|video\/|)(\d+)(?:|\/\?)", RegexOptions.Compiled);
         
+
+
         private const int _sampleRate = 44100;
-        private const int _bits = 16; // streaming only.
-        private const int _channels = 1; // streaming only. (Converted to stereo)
-        private const int _bitRate = 196; // kbps
+        private const int _bits = 32;
+        private const int _channels = 2;
+        private const string _audioCodec = "mp3";
+
+        private const int _rawSampleRate = 44100;
+        private const int _rawBits = 16; // streaming only.
+        private const int _rawChannels = 2;
         private const string _rawAudioFormat = "s16le";
         private const string _rawAudioCodec = "pcm_s16le";
 
-        private const string _audioCodec = "mp3";
+        private const int _bitRate = 320; // kbps
+
         private const int _bufferSize = 65536; // 64KB chunks
 
         private SimpleMixer _mixer;
@@ -43,11 +50,12 @@ namespace Nekres.Music_Mixer.Player
         private bool _initialized;
 
         private FadeInOut _fadeInOut;
-        private const double _fadeInSeconds = 2;
+        private const double _fadeSeconds = 1;
         private Equalizer _equalizer;
 
         private Process _streamingProcess;
         private Thread _bufferedPlayback;
+        private WriteableBufferingSource _bufferingSource;
 
         private Process _downloadProcess;
         private Queue<string> _downloadQueue;
@@ -77,7 +85,8 @@ namespace Nekres.Music_Mixer.Player
                 Logger.Warn(e.Exception.Message);
             };
             #endif
-            _mixer = new SimpleMixer(2, _sampleRate){ FillWithZeros = true };
+            _mixer = new SimpleMixer(_channels, _bits, _sampleRate);
+            _equalizer = Equalizer.Create10BandEqualizer(_mixer);
 
             _downloadQueue = new Queue<string>();
             _endTimer = new Timer(){ AutoReset = false };
@@ -90,7 +99,7 @@ namespace Nekres.Music_Mixer.Player
 
         private void Initialize() {
             if (_initialized) return;
-            _outputDevice.Initialize(_mixer.ToWaveSource());
+            _outputDevice.Initialize(_equalizer.ToWaveSource());
             _initialized = true;
         }
 
@@ -117,7 +126,6 @@ namespace Nekres.Music_Mixer.Player
         }
 
         public void Fade(float? from, float to, TimeSpan duration) => _fadeInOut?.FadeStrategy.StartFading(from, MathHelper.Clamp(to, 0, 1), duration);
-        public void FadeOut() => _mixer?.TryStartFadingAll(null, 0, TimeSpan.FromSeconds(1));
 
         public void SetVolume(float volume) {
             if (!_initialized) return;
@@ -170,9 +178,9 @@ namespace Nekres.Music_Mixer.Player
 
                     GetDuration(id);
                     StreamTrack(id);
-                    var wbs = new WriteableBufferingSource(new WaveFormat(_sampleRate, _bits, _channels)){ FillWithZeros = true };
-                    source = wbs;
-                    StartBufferedPlayback(wbs);
+                    _bufferingSource = new WriteableBufferingSource(new WaveFormat(_rawSampleRate, _rawBits, _rawChannels)){ FillWithZeros = true };
+                    source = _bufferingSource;
+                    StartBufferedPlayback();
                 }
 
             } else {
@@ -183,28 +191,28 @@ namespace Nekres.Music_Mixer.Player
                 SetNextTimer(source.GetLength());
             }
 
-            var finalSource = source.ToSampleSource()
-                                    .ChangeSampleRate(_sampleRate)
-                                    .ToStereo()
-                                    .AppendSource(Equalizer.Create10BandEqualizer, out _equalizer)
-                                    .AppendSource(x => new FadeInOut(x){FadeStrategy = new LinearFadeStrategy()}, out _fadeInOut);
+            _fadeInOut?.FadeStrategy.StartFading(null, 0, TimeSpan.FromSeconds(_fadeSeconds));
             
-            // Restore previous sound effects.
-            ToggleSubmergedFx(_submergedFxEnabled); 
+            var finalSource = source.ChangeSampleRate(_sampleRate)
+                                    .ToSampleSource()
+                                    .ToStereo()
+                                    .AppendSource(x => new FadeInOut(x){FadeStrategy = new LinearFadeStrategy()}, out _fadeInOut);
 
             // Add our new source.
             _mixer.AddSource(finalSource);
 
+            // Restore previous sound effects.
+            ToggleSubmergedFx(_submergedFxEnabled);
+
             Initialize();
 
-            finalSource.FadeStrategy.StartFading(null, _masterVolume, TimeSpan.FromSeconds(_fadeInSeconds));
             _currentTitle = uri;
 
             SetVolume(_masterVolume);
             _outputDevice.Play();
 
             // Setup dispose event when fade target volume has reached 0.
-            finalSource.FadeStrategy.FadingFinished += (s, e) => {
+            _fadeInOut.FadeStrategy.FadingFinished += (s, e) => {
                 if ((s as LinearFadeStrategy).CurrentVolume > 0)
                     return;
                 _mixer.RemoveSource(finalSource);
@@ -217,22 +225,30 @@ namespace Nekres.Music_Mixer.Player
         /// Listens in to the <see cref="_streamingProcess">_streamingProcess</see> and
         /// writes data to a <paramref name="bufferingSource"/>.
         /// </summary>
-        public void StartBufferedPlayback(WriteableBufferingSource bufferingSource) {
+        public void StartBufferedPlayback() {
             _bufferedPlayback = new Thread(o => {
                 byte[] buffer = new byte[_bufferSize];
                 int read = 0;
+                var started = false;
                 while (_initialized && _streamingProcess != null) {
-                    if(bufferingSource.MaxBufferSize - bufferingSource.Length > buffer.Length)
+                    if(_bufferingSource.MaxBufferSize - _bufferingSource.Length > buffer.Length)
                     {
                         try {
                             read = _streamingProcess.StandardOutput.BaseStream.Read(buffer, 0, buffer.Length);
+                        
+                            if (read <= 0)
+                                break;
+                            if (!started) {
+                                started = true;
+                                _fadeInOut.FadeStrategy.StartFading(0, _masterVolume, _fadeSeconds);
+                            }
+                            _bufferingSource.Write(buffer, 0, read);
                         } catch (InvalidOperationException ex) {
+                            #if DEBUG
                             Logger.Warn(ex.Message);
+                            #endif
                             break;
                         }
-                        if (read <= 0)
-                            break;
-                        bufferingSource?.Write(buffer, 0, read);
                     }
                     Thread.Sleep(50);
                 }
@@ -292,7 +308,7 @@ namespace Nekres.Music_Mixer.Player
             var url = "https://youtu.be/" + youtubeId;
 
             var fileName = @"C:\Windows\System32\cmd.exe";
-            var args = $"/C youtube-dl \"{url}\" -o - -f \"(mp4/webm)[asr={_sampleRate}][abr<={_bitRate}]\" | ffmpeg -i pipe:0 -f {_rawAudioFormat} -c:a {_rawAudioCodec} -ar {_sampleRate} -ac {_channels} pipe:1";
+            var args = $"/C youtube-dl \"{url}\" -o - -f \"(mp4/bestaudio)[asr={_sampleRate}][abr<={_bitRate}]\" | ffmpeg -i pipe:0 -f {_rawAudioFormat} -c:a {_rawAudioCodec} -ac {_rawChannels} pipe:1";
             var wd = Path.GetDirectoryName(_youtubeDLPath);
 
             _streamingProcess = ProcessUtil.CreateProcess(fileName, wd, args, true);

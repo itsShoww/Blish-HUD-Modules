@@ -16,15 +16,14 @@ namespace Nekres.Music_Mixer.Player
 
         public bool DivideResult { get; set; }
 
-        public SimpleMixer(int channelCount, int sampleRate)
+        public SimpleMixer(int channelCount, int bits, int sampleRate)
         {
             if(channelCount < 1)
                 throw new ArgumentOutOfRangeException("channelCount");
             if(sampleRate < 1)
                 throw new ArgumentOutOfRangeException("sampleRate");
 
-            _waveFormat = new WaveFormat(sampleRate, 16, channelCount, AudioEncoding.Pcm);
-            FillWithZeros = false;
+            _waveFormat = new WaveFormat(sampleRate, bits, channelCount, AudioEncoding.IeeeFloat);
         }
 
         public void AddSource(ISampleSource source)
@@ -43,16 +42,6 @@ namespace Nekres.Music_Mixer.Player
             }
         }
 
-        public void TryStartFadingAll(float? from, float to, TimeSpan duration) {
-            foreach (var other in _sampleSources) {
-                if (!other.GetType().Equals(typeof(FadeInOut)))
-                    continue;
-                var fade = (other as FadeInOut).FadeStrategy;
-                if (fade == null) 
-                    continue;
-                fade.StartFading(from, to, duration);
-            }
-        }
 
         public void RemoveSource(ISampleSource source)
         {

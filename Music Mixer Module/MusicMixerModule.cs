@@ -45,7 +45,7 @@ namespace Nekres.Music_Mixer
 
         #endregion
 
-        public float MasterVolume => MathHelper.Clamp(MasterVolumeSetting.Value / 1000, 0, 1);
+        public float MasterVolume => MathHelper.Clamp(MasterVolumeSetting.Value / 500, 0, 1);
         private MusicPlayer _musicPlayer;
         private PlaylistManager _playlistManager;
         private Gw2StateService _gw2State;
@@ -73,7 +73,7 @@ namespace Nekres.Music_Mixer
 
 
         private void OnMasterVolumeSettingChanged(object o, ValueChangedEventArgs<float> e) {
-            _musicPlayer?.SetVolume(e.NewValue / 1000);
+            _musicPlayer?.SetVolume(e.NewValue / 500);
         }
 
 
@@ -167,7 +167,6 @@ namespace Nekres.Music_Mixer
                 case State.Combat:
                 case State.Encounter:
                 case State.Submerged:
-                    _musicPlayer.FadeOut();
                     break;
                 default:
                     break;
