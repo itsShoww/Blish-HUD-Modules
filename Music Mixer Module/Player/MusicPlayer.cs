@@ -31,21 +31,20 @@ namespace Nekres.Music_Mixer.Player
 
 
         private const int _sampleRate = 44100;
-        private const int _bits = 32;
+        private const int _bits = 16;
         private const int _channels = 2;
         private const string _audioCodec = "mp3";
 
         private const int _rawSampleRate = 44100;
         private const int _rawBits = 16; // streaming only.
-        private const int _rawChannels = 2;
+        private const int _rawChannels = 1;
         private const string _rawAudioFormat = "s16le";
         private const string _rawAudioCodec = "pcm_s16le";
 
-        private const int _bitRate = 320; // kbps
+        private const int _bitRate = 196; // kbps
 
         private const int _bufferSize = 65536; // 64KB chunks
 
-        private SimpleMixer _mixer;
         private WasapiOut _outputDevice;
         private bool _initialized;
 
@@ -77,30 +76,13 @@ namespace Nekres.Music_Mixer.Player
 
             _FFmpegPath = FFmpegPath;
             _youtubeDLPath = youtubeDLPath;
-            
-            _outputDevice = new WasapiOut() { Latency = 200 };
-            #if DEBUG
-            _outputDevice.Stopped += (o, e) => {
-                if (!e.HasError) return;
-                Logger.Warn(e.Exception.Message);
-            };
-            #endif
-            _mixer = new SimpleMixer(_channels, _bits, _sampleRate);
-            _equalizer = Equalizer.Create10BandEqualizer(_mixer);
 
             _downloadQueue = new Queue<string>();
             _endTimer = new Timer(){ AutoReset = false };
             _endTimer.Elapsed += (o, e) => {
-                _mixer.RemoveSource(_fadeInOut);
                 _fadeInOut?.Dispose();
                 AudioEnded?.Invoke(this, new ValueEventArgs<string>(_currentTitle));
             };
-        }
-
-        private void Initialize() {
-            if (_initialized) return;
-            _outputDevice.Initialize(_equalizer.ToWaveSource());
-            _initialized = true;
         }
 
         public void Dispose() {
@@ -134,7 +116,7 @@ namespace Nekres.Music_Mixer.Player
 
         public void ToggleSubmergedFx(bool enable) {
             _submergedFxEnabled = enable;
-            if (!_initialized) return;
+            if (!_initialized || _equalizer == null) return;
             _equalizer.SampleFilters[1].AverageGainDB = enable ? +19.5 : 0; // Bass
             _equalizer.SampleFilters[9].AverageGainDB = enable ? -13.4 : 0; // Treble
             SetVolume(enable ? 0.4f * _masterVolume : _masterVolume);
@@ -192,31 +174,43 @@ namespace Nekres.Music_Mixer.Player
             }
 
             _fadeInOut?.FadeStrategy.StartFading(null, 0, TimeSpan.FromSeconds(_fadeSeconds));
-            
-            var finalSource = source.ChangeSampleRate(_sampleRate)
-                                    .ToSampleSource()
-                                    .ToStereo()
-                                    .AppendSource(x => new FadeInOut(x){FadeStrategy = new LinearFadeStrategy()}, out _fadeInOut);
 
-            // Add our new source.
-            _mixer.AddSource(finalSource);
+            var outputDevice = new WasapiOut(){ Latency = 100 };
+
+            #if DEBUG
+            outputDevice.Stopped += (o, e) => {
+                if (!e.HasError) return;
+                Logger.Warn(e.Exception.Message);
+            };
+            #endif
+
+            var fadeStrat = new LinearFadeStrategy(){ SampleRate = source.WaveFormat.SampleRate, Channels = source.WaveFormat.Channels };
+            _fadeInOut = new FadeInOut(source.ToSampleSource()){FadeStrategy = fadeStrat};
+            _equalizer = Equalizer.Create10BandEqualizer(_fadeInOut);
+
+            var finalSource = _equalizer
+                    .ToStereo()
+                    .ChangeSampleRate(source.WaveFormat.SampleRate)
+                    .ToWaveSource(source.WaveFormat.BitsPerSample);
+
+            outputDevice.Initialize(finalSource);
+            _initialized = true;
+
+            _outputDevice = outputDevice;
+            _currentTitle = uri;
 
             // Restore previous sound effects.
             ToggleSubmergedFx(_submergedFxEnabled);
-
-            Initialize();
-
-            _currentTitle = uri;
-
             SetVolume(_masterVolume);
-            _outputDevice.Play();
+
+            outputDevice.Play();
 
             // Setup dispose event when fade target volume has reached 0.
-            _fadeInOut.FadeStrategy.FadingFinished += (s, e) => {
-                if ((s as LinearFadeStrategy).CurrentVolume > 0)
+            fadeStrat.FadingFinished += (s, e) => {
+                if ((s as LinearFadeStrategy)?.CurrentVolume > 0)
                     return;
-                _mixer.RemoveSource(finalSource);
-                finalSource.Dispose();
+                finalSource?.Dispose();
+                outputDevice?.Dispose();
             };
         }
 
@@ -308,7 +302,7 @@ namespace Nekres.Music_Mixer.Player
             var url = "https://youtu.be/" + youtubeId;
 
             var fileName = @"C:\Windows\System32\cmd.exe";
-            var args = $"/C youtube-dl \"{url}\" -o - -f \"(mp4/bestaudio)[asr={_sampleRate}][abr<={_bitRate}]\" | ffmpeg -i pipe:0 -f {_rawAudioFormat} -c:a {_rawAudioCodec} -ac {_rawChannels} pipe:1";
+            var args = $"/C youtube-dl \"{url}\" -o - -f \"(mp4/bestaudio)[asr={_rawSampleRate}][abr<={_bitRate}]\" | ffmpeg -i pipe:0 -f {_rawAudioFormat} -c:a {_rawAudioCodec} -ar {_rawSampleRate} -ac {_rawChannels} pipe:1";
             var wd = Path.GetDirectoryName(_youtubeDLPath);
 
             _streamingProcess = ProcessUtil.CreateProcess(fileName, wd, args, true);

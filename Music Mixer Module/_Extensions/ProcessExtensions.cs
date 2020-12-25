@@ -6,7 +6,7 @@ namespace Nekres.Music_Mixer
     internal static class ProcessExtensions
     {
         public static void SafeClose(this Process process) {
-            try { process.Close(); } catch (InvalidOperationException) { }
+            try { process?.Close(); } catch (InvalidOperationException) {}
         }
     }
 }

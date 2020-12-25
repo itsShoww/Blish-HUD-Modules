@@ -73,7 +73,6 @@
     <Compile Include="Models\EncounterData.cs" />
     <Compile Include="Models\Playlists.cs" />
     <Compile Include="Player\PlaylistManager.cs" />
-    <Compile Include="Player\SimpleMixer.cs" />
     <Compile Include="Utils\FileUtil.cs" />
     <Compile Include="Utils\ProcessUtil.cs" />
     <Compile Include="Utils\TyrianTimeUtil.cs" />

@@ -45,7 +45,7 @@ namespace Nekres.Music_Mixer
 
         #endregion
 
-        public float MasterVolume => MathHelper.Clamp(MasterVolumeSetting.Value / 500, 0, 1);
+        public float MasterVolume => MathHelper.Clamp(MasterVolumeSetting.Value / 200f, 0, 1);
         private MusicPlayer _musicPlayer;
         private PlaylistManager _playlistManager;
         private Gw2StateService _gw2State;
@@ -67,13 +67,11 @@ namespace Nekres.Music_Mixer
 
         protected override void Initialize() {
             _moduleDirectory = DirectoriesManager.GetFullDirectoryPath("music_mixer");
-
-            _gw2State = new Gw2StateService();
         }
 
 
         private void OnMasterVolumeSettingChanged(object o, ValueChangedEventArgs<float> e) {
-            _musicPlayer?.SetVolume(e.NewValue / 500);
+            _musicPlayer?.SetVolume(e.NewValue / 200f);
         }
 
 
@@ -105,6 +103,7 @@ namespace Nekres.Music_Mixer
         protected override async Task LoadAsync() {
             await Task.Run(LoadEncounterData);
             await Task.Run(() => {
+                _gw2State = new Gw2StateService();
                 ExtractFile(_FFmpegPath);
                 ExtractFile(_youtubeDLPath);
                 _playlistManager = new PlaylistManager(_moduleDirectory);
@@ -160,17 +159,6 @@ namespace Nekres.Music_Mixer
         private void OnPhaseChanged(object o, ValueEventArgs<int> e) => PlayNext();
         private void OnStateChanged(object sender, ValueChangedEventArgs<State> e) {
             if (_musicPlayer == null) return;
-
-            // Fade out
-            switch (e.PreviousValue) {
-                case State.Mounted:
-                case State.Combat:
-                case State.Encounter:
-                case State.Submerged:
-                    break;
-                default:
-                    break;
-            }
 
             // Set playlist
             switch (e.NewValue) {
