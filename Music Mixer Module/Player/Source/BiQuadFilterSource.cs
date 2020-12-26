@@ -4,9 +4,10 @@ namespace Nekres.Music_Mixer.Player.Source
 {
     public class BiQuadFilterSource : SampleAggregatorBase
     {
+        public bool Enabled { get; set; }
+
         private readonly object _lockObject = new object();
         private BiQuad _biquad;
-
         public BiQuad Filter
         {
             get { return _biquad; }
@@ -28,7 +29,7 @@ namespace Nekres.Music_Mixer.Player.Source
             int read = base.Read(buffer, offset, count);
             lock (_lockObject)
             {
-                if (Filter != null)
+                if (Filter != null && Enabled)
                 {
                     for (int i = 0; i < read; i++)
                     {

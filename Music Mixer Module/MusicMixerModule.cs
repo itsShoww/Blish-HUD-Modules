@@ -69,6 +69,7 @@ namespace Nekres.Music_Mixer
 
         protected override void Initialize() {
             ModuleDirectory = DirectoriesManager.GetFullDirectoryPath("music_mixer");
+            _gw2State = new Gw2StateService();
         }
 
 
@@ -105,7 +106,6 @@ namespace Nekres.Music_Mixer
         protected override async Task LoadAsync() {
             await Task.Run(LoadEncounterData);
             await Task.Run(() => {
-                _gw2State = new Gw2StateService();
                 ExtractFile(_FFmpegPath);
                 ExtractFile(_youtubeDLPath);
                 _playlistManager = new PlaylistManager(ModuleDirectory);
@@ -116,9 +116,9 @@ namespace Nekres.Music_Mixer
 
         private void OnIsMapOpenChanged(object o, ValueEventArgs<bool> e) {
             if (e.Value)
-                _musicPlayer.Fade(null, 0.4f * MasterVolume, TimeSpan.FromSeconds(0.45));
+                _musicPlayer.Fade(null, 0.5f, TimeSpan.FromSeconds(0.45));
             else
-                _musicPlayer.Fade(null, MasterVolume, TimeSpan.FromSeconds(0.45));
+                _musicPlayer.Fade(null, 1, TimeSpan.FromSeconds(0.45));
         }
 
         private void OnIsSubmergedChanged(object o, ValueEventArgs<bool> e) {
@@ -129,7 +129,7 @@ namespace Nekres.Music_Mixer
 
         protected override void OnModuleLoaded(EventArgs e) {
             MasterVolumeSetting.Value = MathHelper.Clamp(MasterVolumeSetting.Value, 0f, 100f);
-            OnStateChanged(_gw2State, new ValueChangedEventArgs<State>(0,_gw2State.CurrentState));
+            OnStateChanged(_gw2State, new ValueChangedEventArgs<State>(_gw2State.CurrentState,_gw2State.CurrentState));
 
             MasterVolumeSetting.SettingChanged += OnMasterVolumeSettingChanged;
             GameIntegration.Gw2Closed += OnGw2Closed;

@@ -81,6 +81,7 @@
     <Compile Include="Utils\ProcessUtil.cs" />
     <Compile Include="Utils\TyrianTimeUtil.cs" />
     <Compile Include="_Extensions\ProcessExtensions.cs" />
+    <Compile Include="_Extensions\TimerExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Blish HUD, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">

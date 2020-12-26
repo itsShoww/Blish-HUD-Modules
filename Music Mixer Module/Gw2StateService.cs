@@ -271,7 +271,6 @@ namespace Nekres.Music_Mixer
                 TimeOutCombatEvents();
         }
 
-
         private void OnGw2Closed(object sender, EventArgs e) => _stateMachine.Fire(Trigger.StandBy);
 
         #region ArcDps Events
@@ -279,7 +278,7 @@ namespace Nekres.Music_Mixer
         private void TimeOutCombatEvents() {
             ArcDps.RawCombatEvent -= CombatEventReceived;
             CurrentEncounter = null;
-            _arcDpsTimeOut.Start();
+            _arcDpsTimeOut.Restart();
         }
 
         private void CombatEventReceived(object o, RawCombatEventArgs e) {
@@ -313,8 +312,7 @@ namespace Nekres.Music_Mixer
         #region Mumble Events
 
         private void OnIsInCombatChanged(object o, ValueEventArgs<bool> e) {
-            _combatDelay.Stop();
-            _combatDelay.Start();
+            _combatDelay.Restart();
         }
 
         private void OnMountChanged(object o, ValueEventArgs<Gw2Sharp.Models.MountType> e) => _stateMachine.Fire(e.Value > 0 ? Trigger.Mounting : Trigger.Unmounting);

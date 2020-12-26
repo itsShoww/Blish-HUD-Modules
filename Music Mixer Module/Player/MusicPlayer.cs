@@ -38,7 +38,6 @@ namespace Nekres.Music_Mixer.Player
         private const double _fadeSeconds = 3;
         private Equalizer _equalizer;
         private BiQuadFilterSource _biQuadFilter;
-        private LowpassFilter _lowPassFilter;
 
         private string _currentTitle;
 
@@ -84,7 +83,7 @@ namespace Nekres.Music_Mixer.Player
             if (!_initialized || _equalizer == null) return;
             _equalizer.SampleFilters[1].AverageGainDB = enable ? 19.5 : 0; // Bass
             _equalizer.SampleFilters[9].AverageGainDB = enable ? 13.4 : 0; // Treble
-            _biQuadFilter.Filter = enable ? _lowPassFilter : null;
+            _biQuadFilter.Enabled = enable;
         }
 
         private void SetNextTimer(TimeSpan duration) {
@@ -143,10 +142,9 @@ namespace Nekres.Music_Mixer.Player
             };
             #endif
 
-            _lowPassFilter = new LowpassFilter(source.WaveFormat.SampleRate, 400);
             var fadeStrat = new LinearFadeStrategy(){ SampleRate = source.WaveFormat.SampleRate, Channels = source.WaveFormat.Channels };
             _fadeInOut = new FadeInOut(source.ToSampleSource()){FadeStrategy = fadeStrat};
-            _biQuadFilter = new BiQuadFilterSource(_fadeInOut);
+            _biQuadFilter = new BiQuadFilterSource(_fadeInOut) { Filter = new LowpassFilter(source.WaveFormat.SampleRate, 400) };
             _equalizer = Equalizer.Create10BandEqualizer(_biQuadFilter);
 
             var finalSource = _equalizer
@@ -163,6 +161,8 @@ namespace Nekres.Music_Mixer.Player
             // Restore previous sound effects.
             ToggleSubmergedFx(_submergedFxEnabled);
             SetVolume(_masterVolume);
+
+            fadeStrat.StartFading(0, 1, _fadeSeconds);
 
             outputDevice.Play();
 
