@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Nekres.Music_Mixer
 {
-    public class Track
+    public class Context
     {
         [JsonProperty("mapId")]
         public int MapId { get; set; }
@@ -18,7 +18,7 @@ namespace Nekres.Music_Mixer
         public string Uri { get; set; }
     }
 
-    public class EncounterTrack
+    public class EncounterContext
     {
         [JsonProperty("encounterIds"), JsonConverter(typeof(HexStringJsonConverter))]
         public IReadOnlyList<uint> EncounterIds { get; set; }
@@ -29,23 +29,23 @@ namespace Nekres.Music_Mixer
     public class MountPlaylists
     {
         [JsonProperty("raptor")]
-        public IList<Track> Raptor { get; set; }
+        public IList<Context> Raptor { get; set; }
         [JsonProperty("springer")]
-        public IList<Track> Springer { get; set; }
+        public IList<Context> Springer { get; set; }
         [JsonProperty("skimmer")]
-        public IList<Track> Skimmer { get; set; }
+        public IList<Context> Skimmer { get; set; }
         [JsonProperty("jackal")]
-        public IList<Track> Jackal { get; set; }
+        public IList<Context> Jackal { get; set; }
         [JsonProperty("griffon")]
-        public IList<Track> Griffon { get; set; }
+        public IList<Context> Griffon { get; set; }
         [JsonProperty("rollerbeetle")]
-        public IList<Track> Rollerbeetle { get; set; }
+        public IList<Context> Rollerbeetle { get; set; }
         [JsonProperty("warclaw")]
-        public IList<Track> Warclaw { get; set; }
+        public IList<Context> Warclaw { get; set; }
         [JsonProperty("skyscale")]
-        public IList<Track> Skyscale { get; set; }
+        public IList<Context> Skyscale { get; set; }
 
-        public IList<Track> GetPlaylist(MountType mount) {
+        public IList<Context> GetPlaylist(MountType mount) {
             switch (mount) {
                 case MountType.Jackal:
                     return Jackal;

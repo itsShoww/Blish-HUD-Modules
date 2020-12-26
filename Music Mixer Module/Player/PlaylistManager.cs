@@ -24,28 +24,28 @@ namespace Nekres.Music_Mixer.Player
 
         #region Playlists
         
-        private IList<Track> _combatPlaylist;
-        private IList<EncounterTrack> _encounterPlaylist;
-        private IList<Track> _instancePlaylist;
+        private IList<Context> _combatPlaylist;
+        private IList<EncounterContext> _encounterPlaylist;
+        private IList<Context> _instancePlaylist;
         private MountPlaylists _mountedPlaylist;
-        private IList<Track> _pvpPlaylist;
-        private IList<Track> _openWorldPlaylist;
-        private IList<Track> _wvwPlaylist;
-        private IList<Track> _submergedPlaylist;
+        private IList<Context> _pvpPlaylist;
+        private IList<Context> _openWorldPlaylist;
+        private IList<Context> _wvwPlaylist;
+        private IList<Context> _submergedPlaylist;
 
         #endregion
 
-        private IList<Track> _currentPlaylist;
+        private IList<Context> _currentPlaylist;
 
         public PlaylistManager(string playlistDirectory) {
-            _combatPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "combat.json"));
-            _encounterPlaylist = LoadPlaylist<List<EncounterTrack>>(Path.Combine(playlistDirectory, "encounter.json"));
-            _instancePlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "instance.json"));
+            _combatPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "combat.json"));
+            _encounterPlaylist = LoadPlaylist<List<EncounterContext>>(Path.Combine(playlistDirectory, "encounter.json"));
+            _instancePlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "instance.json"));
             _mountedPlaylist = LoadPlaylist<MountPlaylists>(Path.Combine(playlistDirectory, "mounted.json"));
-            _pvpPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "pvp.json"));
-            _openWorldPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "world.json"));
-            _wvwPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "wvw.json"));
-            _submergedPlaylist = LoadPlaylist<List<Track>>(Path.Combine(playlistDirectory, "submerged.json"));
+            _pvpPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "pvp.json"));
+            _openWorldPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "world.json"));
+            _wvwPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "wvw.json"));
+            _submergedPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "submerged.json"));
         }
 
 
@@ -106,7 +106,7 @@ namespace Nekres.Music_Mixer.Player
             if (mapTracks.Count() == 0)
                 mapTracks = _currentPlaylist.Where(x => x.MapId == -1);
 
-            IEnumerable<Track> timeTracks;
+            IEnumerable<Context> timeTracks;
 
             if (_toggleFourDayCycle)
                 timeTracks = mapTracks.Where(x => x.DayTime == time);

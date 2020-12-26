@@ -40,17 +40,18 @@ namespace Nekres.Music_Mixer
 
         private SettingEntry<float> MasterVolumeSetting;
         internal SettingEntry<bool> ToggleSubmergedPlaylist;
+        internal SettingEntry<bool> ToggleMountedPlaylist;
         internal SettingEntry<bool> ToggleFourDayCycle;
         internal SettingEntry<bool> ToggleKeepAudioFiles;
 
         #endregion
 
-        public float MasterVolume => MathHelper.Clamp(MasterVolumeSetting.Value / 200f, 0, 1);
+        public float MasterVolume => MathHelper.Clamp(MasterVolumeSetting.Value / 1000f, 0, 1);
         private MusicPlayer _musicPlayer;
         private PlaylistManager _playlistManager;
         private Gw2StateService _gw2State;
 
-        private string _moduleDirectory;
+        public string ModuleDirectory { get; private set; }
 
         private const string _FFmpegPath = "bin/ffmpeg.exe";
         private const string _youtubeDLPath = "bin/youtube-dl.exe";
@@ -60,18 +61,19 @@ namespace Nekres.Music_Mixer
         protected override void DefineSettings(SettingCollection settings) {
             MasterVolumeSetting = settings.DefineSetting("MasterVolume", 50f, "Master Volume", "Sets the audio volume.");
             ToggleSubmergedPlaylist = settings.DefineSetting("EnableSubmergedPlaylist", false, "Use submerged playlist", "Whether songs of the underwater playlist should be played while submerged.");
+            ToggleMountedPlaylist = settings.DefineSetting("EnableMountedPlaylist", true, "Use mounted playlist", "Whether songs of the mounted playlist should be played while mounted.");
             ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "Whether dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
-            ToggleKeepAudioFiles = settings.DefineSetting("KeepAudioFiles", false, "Keep audio files on disk", "Whether streamed audio should be kept on disk.\nReduces delay for all future playback events after the first at the expense of disk space.");
+            ToggleKeepAudioFiles = settings.DefineSetting("KeepAudioFiles", false, "Keep audio files on disk", "Whether streamed audio should be kept on disk.\nReduces delay for all future playback events after the first at the expense of disk space.\nMay also result in better audio quality.");
         }
 
 
         protected override void Initialize() {
-            _moduleDirectory = DirectoriesManager.GetFullDirectoryPath("music_mixer");
+            ModuleDirectory = DirectoriesManager.GetFullDirectoryPath("music_mixer");
         }
 
 
         private void OnMasterVolumeSettingChanged(object o, ValueChangedEventArgs<float> e) {
-            _musicPlayer?.SetVolume(e.NewValue / 200f);
+            _musicPlayer?.SetVolume(e.NewValue / 1000f);
         }
 
 
@@ -106,10 +108,8 @@ namespace Nekres.Music_Mixer
                 _gw2State = new Gw2StateService();
                 ExtractFile(_FFmpegPath);
                 ExtractFile(_youtubeDLPath);
-                _playlistManager = new PlaylistManager(_moduleDirectory);
-                _musicPlayer = new MusicPlayer(Path.Combine(_moduleDirectory, "cache"), 
-                                               Path.Combine(_moduleDirectory, _FFmpegPath), 
-                                               Path.Combine(_moduleDirectory, _youtubeDLPath));
+                _playlistManager = new PlaylistManager(ModuleDirectory);
+                _musicPlayer = new MusicPlayer(Path.Combine(ModuleDirectory, "cache"));
                 _musicPlayer.AudioEnded += OnAudioEnded;
             });
         }
@@ -129,7 +129,7 @@ namespace Nekres.Music_Mixer
 
         protected override void OnModuleLoaded(EventArgs e) {
             MasterVolumeSetting.Value = MathHelper.Clamp(MasterVolumeSetting.Value, 0f, 100f);
-            OnStateChanged(this, new ValueChangedEventArgs<State>(0, _gw2State.CurrentState));
+            OnStateChanged(_gw2State, new ValueChangedEventArgs<State>(0,_gw2State.CurrentState));
 
             MasterVolumeSetting.SettingChanged += OnMasterVolumeSettingChanged;
             GameIntegration.Gw2Closed += OnGw2Closed;
@@ -213,7 +213,7 @@ namespace Nekres.Music_Mixer
 
 
         private void ExtractFile(string filePath) {
-            var fullPath = Path.Combine(_moduleDirectory, filePath);
+            var fullPath = Path.Combine(ModuleDirectory, filePath);
             if (File.Exists(fullPath)) return;
             using (var fs = ContentsManager.GetFileStream(filePath)) {
                 fs.Position = 0;

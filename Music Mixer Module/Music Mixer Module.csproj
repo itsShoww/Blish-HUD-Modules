@@ -69,6 +69,10 @@
     <Compile Include="MainView.cs" />
     <Compile Include="Models\Encounter.cs" />
     <Compile Include="MusicMixerModule.cs" />
+    <Compile Include="Player\API\ffmpeg.cs" />
+    <Compile Include="Player\API\youtube-dl.cs" />
+    <Compile Include="Player\Source\BiQuadFilterSource.cs" />
+    <Compile Include="Player\Source\CutSource.cs" />
     <Compile Include="Player\MusicPlayer.cs" />
     <Compile Include="Models\EncounterData.cs" />
     <Compile Include="Models\Playlists.cs" />
@@ -154,6 +158,7 @@
   <ItemGroup>
     <None Include="BuildScripts\_DoNotModify.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>powershell.exe -ExecutionPolicy Bypass -NoProfile -NonInteractive -File "$(ProjectDir)BuildScripts\CopyRef.ps1" -Project "$(ProjectDir)\" -Output "$(OutDir)\"</PreBuildEvent>

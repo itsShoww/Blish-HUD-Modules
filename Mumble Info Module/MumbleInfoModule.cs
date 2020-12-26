@@ -52,7 +52,7 @@ namespace Nekres.Mumble_Info_Module
         private DateTime _timeOutPc = DateTime.Now;
 
         protected override void DefineSettings(SettingCollection settings) {
-            ToggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.F12),
+            ToggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.OemPlus),
                 "Toggle Mumble Data", "Toggles the display of mumble data.");
             CaptureMouseOnLCtrl = settings.DefineSetting("ForceInterceptMouseOnCtrl", true, 
                 "Capture mouse on [Left Control]", "Whether the mouse should be intercepted forcibly while [Left Control] is pressed.");
