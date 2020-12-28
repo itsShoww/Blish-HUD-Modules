@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using static Blish_HUD.GameService;
 using static Nekres.Music_Mixer.Gw2StateService;
@@ -55,6 +56,7 @@ namespace Nekres.Music_Mixer
 
         private const string _FFmpegPath = "bin/ffmpeg.exe";
         private const string _youtubeDLPath = "bin/youtube-dl.exe";
+        private const string _silenceWavPath = "bin/silence.wav";
 
         internal IReadOnlyList<EncounterData> EncounterData;
 
@@ -65,7 +67,6 @@ namespace Nekres.Music_Mixer
             ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "Whether dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
             ToggleKeepAudioFiles = settings.DefineSetting("KeepAudioFiles", false, "Keep audio files on disk", "Whether streamed audio should be kept on disk.\nReduces delay for all future playback events after the first at the expense of disk space.\nMay also result in better audio quality.");
         }
-
 
         protected override void Initialize() {
             ModuleDirectory = DirectoriesManager.GetFullDirectoryPath("music_mixer");
@@ -78,14 +79,13 @@ namespace Nekres.Music_Mixer
         }
 
 
-        protected override void Update(GameTime gameTime) {
-            _gw2State.CheckTyrianTime();
-            _gw2State.CheckWaterLevel();
-            _gw2State.CheckEncounterReset();
+        /*protected override void Update(GameTime gameTime) {
+        }*/
+
+
+        private void OnGw2Closed(object sender, EventArgs e) {
+            _musicPlayer?.Stop();
         }
-
-
-        private void OnGw2Closed(object sender, EventArgs e) => _musicPlayer?.Stop();
 
 
         private void OnTyrianTimeChanged(object sender, ValueEventArgs<TyrianTime> e) {
@@ -108,6 +108,7 @@ namespace Nekres.Music_Mixer
             await Task.Run(() => {
                 ExtractFile(_FFmpegPath);
                 ExtractFile(_youtubeDLPath);
+                ExtractFile(_silenceWavPath);
                 _playlistManager = new PlaylistManager(ModuleDirectory);
                 _musicPlayer = new MusicPlayer(Path.Combine(ModuleDirectory, "cache"));
                 _musicPlayer.AudioEnded += OnAudioEnded;
@@ -138,6 +139,7 @@ namespace Nekres.Music_Mixer
             _gw2State.TyrianTimeChanged += OnTyrianTimeChanged;
             _gw2State.StateChanged += OnStateChanged;
             _gw2State.EncounterChanged += OnEncounterChanged;
+
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
@@ -151,8 +153,7 @@ namespace Nekres.Music_Mixer
         }
 
         private void PlayNext() {
-            if (GameIntegration.IsInGame)
-                _musicPlayer.PlayTrack(_playlistManager.SelectTrack());
+            _musicPlayer.PlayTrack(_playlistManager.SelectTrack());
         }
 
         private void OnAudioEnded(object o, ValueEventArgs<string> e) => PlayNext();
@@ -171,8 +172,8 @@ namespace Nekres.Music_Mixer
                 case State.OpenWorld:
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.OpenWorld);
                     break;
-                case State.Combat:
-                    _playlistManager.SetPlaylist(PlaylistManager.Playlist.Combat);
+                case State.Battle:
+                    _playlistManager.SetPlaylist(PlaylistManager.Playlist.Battle);
                     break;
                 case State.CompetitiveMode:
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.Pvp);
@@ -186,9 +187,27 @@ namespace Nekres.Music_Mixer
                 case State.Submerged:
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.Submerged);
                     break;
+                case State.Defeated:
+                    _playlistManager.SetPlaylist(PlaylistManager.Playlist.Defeated);
+                    break;
+                case State.Victory:
+                    _playlistManager.SetPlaylist(PlaylistManager.Playlist.Victory);
+                    break;
+                case State.MainMenu:
+                    _playlistManager.SetPlaylist(PlaylistManager.Playlist.MainMenu);
+                    break;
+                case State.Crafting:
+                    _playlistManager.SetPlaylist(PlaylistManager.Playlist.Crafting);
+                    break;
+                case State.BossBattle:
+                    _playlistManager.SetPlaylist(PlaylistManager.Playlist.BossBattle);
+                    break;
+                case State.Downed:
+                    _musicPlayer?.ToggleSubmergedFx(true);
+                    return;
                 default: break;
             }
-
+            _musicPlayer?.ToggleSubmergedFx(false);
             // Select track from playlist and play it.
             PlayNext();
         }

@@ -12,19 +12,24 @@ namespace Nekres.Music_Mixer.Player
 
         public enum Playlist
         {
-            Combat,
+            Battle,
             Encounter,
             Instance,
             Mounted,
             Pvp,
             OpenWorld,
             Wvw,
-            Submerged
+            Submerged,
+            Victory,
+            Defeated,
+            MainMenu,
+            BossBattle,
+            Crafting
         }
 
         #region Playlists
         
-        private IList<Context> _combatPlaylist;
+        private IList<Context> _battlePlaylist;
         private IList<EncounterContext> _encounterPlaylist;
         private IList<Context> _instancePlaylist;
         private MountPlaylists _mountedPlaylist;
@@ -32,13 +37,18 @@ namespace Nekres.Music_Mixer.Player
         private IList<Context> _openWorldPlaylist;
         private IList<Context> _wvwPlaylist;
         private IList<Context> _submergedPlaylist;
+        private IList<Context> _victoryPlaylist;
+        private IList<Context> _defeatedPlaylist;
+        private IList<Context> _mainMenuPlaylist;
+        private IList<Context> _bossBattlePlaylist;
+        private IList<Context> _craftingPlaylist;
 
         #endregion
 
         private IList<Context> _currentPlaylist;
 
         public PlaylistManager(string playlistDirectory) {
-            _combatPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "combat.json"));
+            _battlePlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "battle.json"));
             _encounterPlaylist = LoadPlaylist<List<EncounterContext>>(Path.Combine(playlistDirectory, "encounter.json"));
             _instancePlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "instance.json"));
             _mountedPlaylist = LoadPlaylist<MountPlaylists>(Path.Combine(playlistDirectory, "mounted.json"));
@@ -46,6 +56,10 @@ namespace Nekres.Music_Mixer.Player
             _openWorldPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "world.json"));
             _wvwPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "wvw.json"));
             _submergedPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "submerged.json"));
+            _victoryPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "victory.json"));
+            _defeatedPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "defeated.json"));
+            _mainMenuPlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "mainmenu.json"));
+            _bossBattlePlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "crafting.json"));
         }
 
 
@@ -70,8 +84,8 @@ namespace Nekres.Music_Mixer.Player
 
         public void SetPlaylist(Playlist playlist) {
             switch (playlist) {
-                case Playlist.Combat:
-                    _currentPlaylist = _combatPlaylist;
+                case Playlist.Battle:
+                    _currentPlaylist = _battlePlaylist;
                     break;
                 case Playlist.Encounter:
                     break;
@@ -92,6 +106,21 @@ namespace Nekres.Music_Mixer.Player
                     break;
                 case Playlist.Submerged:
                     _currentPlaylist = _submergedPlaylist;
+                    break;
+                case Playlist.Victory:
+                    _currentPlaylist = _victoryPlaylist;
+                    break;
+                case Playlist.Defeated:
+                    _currentPlaylist = _defeatedPlaylist;
+                    break;
+                case Playlist.MainMenu:
+                    _currentPlaylist = _mainMenuPlaylist;
+                    break;
+                case Playlist.BossBattle:
+                    _currentPlaylist = _bossBattlePlaylist;
+                    break;
+                case Playlist.Crafting:
+                    _currentPlaylist = _craftingPlaylist;
                     break;
             }
         }
@@ -127,12 +156,12 @@ namespace Nekres.Music_Mixer.Player
         private string SelectEncounterTrack(Encounter encounter) {
             var track = _encounterPlaylist.FirstOrDefault(x => x.EncounterIds.Except(encounter.Ids).Count() == 0);
             if (track == null) {
-                SetPlaylist(Playlist.Combat);
+                SetPlaylist(Playlist.Battle);
                 return SelectTrack();
             }
             var count = track.Uris.Count;
             if (count == 0) {
-                SetPlaylist(Playlist.Combat);
+                SetPlaylist(Playlist.Battle);
                 return SelectTrack();
             }
             var trackNr = encounter.CurrentPhase;
