@@ -50,7 +50,6 @@ namespace Nekres.Music_Mixer
             WorldVsWorld,
             StoryInstance,
             Submerged,
-            Downed,
             Defeated,
             Victory,
             MainMenu,
@@ -70,7 +69,6 @@ namespace Nekres.Music_Mixer
             EncounterPull,
             EncounterReset,
             Victory,
-            Downed,
             Death,
             MainMenu,
             Crafting,
@@ -84,15 +82,16 @@ namespace Nekres.Music_Mixer
         public event EventHandler<ValueEventArgs<TyrianTime>> TyrianTimeChanged;
         public event EventHandler<ValueChangedEventArgs<State>> StateChanged;
         public event EventHandler<ValueEventArgs<bool>> IsSubmergedChanged;
+        public event EventHandler<ValueEventArgs<bool>> IsDownedChanged;
         public event EventHandler<ValueChangedEventArgs<Encounter>> EncounterChanged;
 
         #endregion
 
         #region _Constants
 
-        private const int _mainMenuDelayMs = 10000;
         private const int _arcDpsDelayMs = 2500;
         private const int _enemyThreshold = 6;
+
         #endregion
 
         #region Public Fields
@@ -120,6 +119,18 @@ namespace Nekres.Music_Mixer
                 IsSubmergedChanged?.Invoke(this, new ValueEventArgs<bool>(value));
 
                 _stateMachine?.Fire(value ? Trigger.Submerging : Trigger.Emerging);
+            }
+        }
+
+        private bool _prevIsDowned = false;
+        public bool IsDowned {
+            get => _prevIsDowned; 
+            private set {
+                if (_prevIsDowned == value) return; 
+
+                _prevIsDowned = value;
+
+                IsDownedChanged?.Invoke(this, new ValueEventArgs<bool>(value));
             }
         }
 
@@ -230,7 +241,6 @@ namespace Nekres.Music_Mixer
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
                             .Permit(Trigger.InCombat, State.Battle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .Permit(Trigger.Crafting, State.Crafting)
                             .Permit(Trigger.EncounterPull, State.Encounter)
@@ -245,7 +255,6 @@ namespace Nekres.Music_Mixer
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .PermitDynamic(Trigger.Unmounting, GameModeStateSelector)
                             .Permit(Trigger.EncounterPull, State.Encounter)
@@ -257,12 +266,12 @@ namespace Nekres.Music_Mixer
                             .Ignore(Trigger.MapChanged);
 
                 _stateMachine.Configure(State.Battle)
+                            .OnExit(() => _enemyCount = 0)
                             .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .PermitDynamic(Trigger.OutOfCombat, GameModeStateSelector)
                             .Permit(Trigger.EncounterPull, State.Encounter)
@@ -277,7 +286,6 @@ namespace Nekres.Music_Mixer
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.BossBattle, State.BossBattle)
                             .PermitDynamic(Trigger.EncounterReset, GameModeStateSelector)
                             .Ignore(Trigger.OutOfCombat)
@@ -289,7 +297,6 @@ namespace Nekres.Music_Mixer
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                             .Permit(Trigger.EncounterPull, State.Encounter)
@@ -304,7 +311,6 @@ namespace Nekres.Music_Mixer
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .Permit(Trigger.Crafting, State.Crafting)
                             .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
@@ -321,7 +327,6 @@ namespace Nekres.Music_Mixer
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .Permit(Trigger.Crafting, State.Crafting)
                             .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
@@ -341,7 +346,6 @@ namespace Nekres.Music_Mixer
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .PermitDynamic(Trigger.MapChanged, GameModeStateSelector)
                             .PermitIf(Trigger.Mounting, State.Mounted, () => _toggleMountedPlaylist)
@@ -356,7 +360,6 @@ namespace Nekres.Music_Mixer
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .Permit(Trigger.Crafting, State.Crafting);
 
@@ -366,7 +369,6 @@ namespace Nekres.Music_Mixer
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated)
                             .Permit(Trigger.Crafting, State.Crafting);
 
@@ -376,7 +378,6 @@ namespace Nekres.Music_Mixer
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Death, State.Defeated);
 
                 _stateMachine.Configure(State.Defeated)
@@ -386,21 +387,10 @@ namespace Nekres.Music_Mixer
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
                             .Permit(Trigger.Crafting, State.Crafting);
 
                 _stateMachine.Configure(State.Crafting)
                             .Ignore(Trigger.Crafting)
-                            .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
-                            .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
-                            .Permit(Trigger.MainMenu, State.MainMenu)
-                            .Permit(Trigger.Victory, State.Victory)
-                            .Permit(Trigger.BossBattle, State.BossBattle)
-                            .Permit(Trigger.Downed, State.Downed)
-                            .Permit(Trigger.Death, State.Defeated);
-
-                _stateMachine.Configure(State.Downed)
-                            .Ignore(Trigger.Downed)
                             .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.MainMenu, State.MainMenu)
@@ -485,10 +475,10 @@ namespace Nekres.Music_Mixer
                         _stateMachine.Fire(Trigger.Death);
                         return;
                     case ArcDpsEnums.StateChange.ChangeDown:
-                        _stateMachine.Fire(Trigger.Downed);
+                        IsDowned = true;
                         return;
                     case ArcDpsEnums.StateChange.ChangeUp:
-                        _stateMachine.Fire(Trigger.StandBy);
+                        IsDowned = false;
                         return;
                     case ArcDpsEnums.StateChange.Reward:
                         _stateMachine.Fire(Trigger.Victory);
@@ -530,15 +520,16 @@ namespace Nekres.Music_Mixer
         private void OnMapChanged(object o, ValueEventArgs<int> e) => _stateMachine.Fire(Trigger.MapChanged);
         private void OnIsInCombatChanged(object o, ValueEventArgs<bool> e) {
             if (!e.Value) {
-                _enemyCount = 0;
                 _stateMachine.Fire(Trigger.OutOfCombat);
             }
         }
+
         #endregion
 
         #region State Guards
 
         private State GameModeStateSelector() {
+            IsDowned = false;
             if (Gw2Mumble.PlayerCharacter.CurrentMount > 0)
                 return State.Mounted;
             if (_toggleSubmergedPlaylist && _prevIsSubmerged) 

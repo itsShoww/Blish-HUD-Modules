@@ -1,15 +1,8 @@
-﻿using Microsoft.Win32.SafeHandles;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
-using System.Text;
-using System.Threading;
 
 namespace Nekres.Music_Mixer
 {
@@ -35,7 +28,7 @@ namespace Nekres.Music_Mixer
         /// <remarks>
         /// Suffers from thread race condition.
         /// </remarks>
-        /// <param name="file">The file info.</param>
+        /// <param name="file">The filename.</param>
         /// <returns><see langword="True"/> if file is locked or does not exist. Otherwise <see langword="false"/>.</returns>
         public static bool IsFileLocked(string uri)
         {

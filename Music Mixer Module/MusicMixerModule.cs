@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using static Blish_HUD.GameService;
 using static Nekres.Music_Mixer.Gw2StateService;
@@ -127,6 +126,9 @@ namespace Nekres.Music_Mixer
             _musicPlayer?.ToggleSubmergedFx(e.Value);
         }
 
+        private void OnIsDownedChanged(object o, ValueEventArgs<bool> e) {
+            _musicPlayer?.ToggleSubmergedFx(e.Value);
+        }
 
         protected override void OnModuleLoaded(EventArgs e) {
             MasterVolumeSetting.Value = MathHelper.Clamp(MasterVolumeSetting.Value, 0f, 100f);
@@ -136,6 +138,7 @@ namespace Nekres.Music_Mixer
             GameIntegration.Gw2Closed += OnGw2Closed;
             Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
             _gw2State.IsSubmergedChanged += OnIsSubmergedChanged;
+            _gw2State.IsDownedChanged += OnIsDownedChanged;
             _gw2State.TyrianTimeChanged += OnTyrianTimeChanged;
             _gw2State.StateChanged += OnStateChanged;
             _gw2State.EncounterChanged += OnEncounterChanged;
@@ -202,12 +205,8 @@ namespace Nekres.Music_Mixer
                 case State.BossBattle:
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.BossBattle);
                     break;
-                case State.Downed:
-                    _musicPlayer?.ToggleSubmergedFx(true);
-                    return;
                 default: break;
             }
-            _musicPlayer?.ToggleSubmergedFx(false);
             // Select track from playlist and play it.
             PlayNext();
         }
@@ -219,6 +218,7 @@ namespace Nekres.Music_Mixer
             Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
             _gw2State.StateChanged -= OnStateChanged;
             _gw2State.IsSubmergedChanged -= OnIsSubmergedChanged;
+            _gw2State.IsDownedChanged -= OnIsDownedChanged;
             _gw2State.TyrianTimeChanged -= OnTyrianTimeChanged;
             _gw2State.EncounterChanged -= OnEncounterChanged;
             _musicPlayer.AudioEnded -= OnAudioEnded;
