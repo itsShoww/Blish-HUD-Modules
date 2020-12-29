@@ -21,6 +21,7 @@ namespace Nekres.Music_Mixer
         private static readonly Logger Logger = Logger.GetLogger(typeof(Gw2StateService));
 
         private Dictionary<State, Trigger> _gw2SupportedContexts = new Dictionary<State, Trigger>() {
+            { State.MainMenu, Trigger.MainMenu },
             { State.Crafting, Trigger.Crafting },
             { State.Victory, Trigger.Victory },
             { State.BossBattle, Trigger.BossBattle },
@@ -28,6 +29,7 @@ namespace Nekres.Music_Mixer
         private string[] _gw2SupportedPlaylistFormats = new [] {".m3u", ".asx", ".pls", ".wax", ".wpl"};
         private string _silenceWavPath = Path.Combine(MusicMixerModule.ModuleInstance.ModuleDirectory, "bin\\silence{0}.wav");
         private Dictionary<State, int> _lockCount = new Dictionary<State, int>() {
+            { State.MainMenu, 0 },
             { State.Crafting, 0 },
             { State.Victory, 0 },
             { State.BossBattle, 0 },
@@ -141,13 +143,8 @@ namespace Nekres.Music_Mixer
 
         private StateMachine<State, Trigger> _stateMachine;
         private Timer _arcDpsTimeOut;
-        private Timer _mainMenuTimer;
 
         public Gw2StateService() {
-            _mainMenuTimer = new Timer(_mainMenuDelayMs) { AutoReset = false };
-            _mainMenuTimer.Elapsed += (o, e) => {
-                _stateMachine.Fire(GameIntegration.IsInGame ? Trigger.StandBy : Trigger.MainMenu);
-            };
             _arcDpsTimeOut = new Timer(_arcDpsDelayMs){ AutoReset = false };
             _arcDpsTimeOut.Elapsed += (o, e) => ArcDps.RawCombatEvent += CombatEventReceived;
 
@@ -160,7 +157,7 @@ namespace Nekres.Music_Mixer
             if (Directory.Exists(backupDir)) {
                 var files = new DirectoryInfo(DirectoryUtil.MusicPath).GetFiles();
                 foreach (var file in files) {
-                    if (!_gw2SupportedPlaylistFormats.Any(x => string.Equals(x, file.Extension))) continue;
+                    if (!_gw2SupportedPlaylistFormats.Any(x => x.ToLower().Equals(file.Extension))) continue;
                     try {
                         file.MoveTo(Path.Combine(backupDir, file.Name));
                     } catch (IOException) {} // Target file already exists. We don't want to overwrite an existing backup.
@@ -186,7 +183,6 @@ namespace Nekres.Music_Mixer
             Gw2Mumble.PlayerCharacter.CurrentMountChanged -= OnMountChanged;
             Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
             Gw2Mumble.PlayerCharacter.IsInCombatChanged -= OnIsInCombatChanged;
-            GameIntegration.IsInGameChanged -= OnIsInGameChanged;
         }
 
 
@@ -418,7 +414,6 @@ namespace Nekres.Music_Mixer
                 Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
                 Gw2Mumble.PlayerCharacter.IsInCombatChanged += OnIsInCombatChanged;
                 GameIntegration.Gw2Closed += OnGw2Closed;
-                GameIntegration.IsInGameChanged += OnIsInGameChanged;
 
                 CreatePseudoNativePlaylists();
                 var updateTask = new Task(() => {
@@ -533,7 +528,6 @@ namespace Nekres.Music_Mixer
 
         private void OnMountChanged(object o, ValueEventArgs<Gw2Sharp.Models.MountType> e) => _stateMachine.Fire(e.Value > 0 ? Trigger.Mounting : Trigger.Unmounting);
         private void OnMapChanged(object o, ValueEventArgs<int> e) => _stateMachine.Fire(Trigger.MapChanged);
-        private void OnIsInGameChanged(object o, ValueEventArgs<bool> e) => _mainMenuTimer.Restart();
         private void OnIsInCombatChanged(object o, ValueEventArgs<bool> e) {
             if (!e.Value) {
                 _enemyCount = 0;
