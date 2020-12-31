@@ -517,11 +517,16 @@ namespace Nekres.Music_Mixer
                 }
 
                 // track enemy
-                var enemyCount = _enemyIds.Count();
-                if (enemyCount < _enemyThreshold && !_enemyIds.Any(x => x.Equals(enemyId)))
+
+                if (_enemyIds.Any(x => x.Equals(enemyId))) {
+                    if (enemyId.Equals(ev.SrcAgent) && ev.IsStateChange == ArcDpsEnums.StateChange.ChangeDead)
+                        _enemyIds.Remove(enemyId);
+                } else if (_enemyIds.Count() < _enemyThreshold) {
                     _enemyIds.Add(enemyId);
-                if (enemyCount == _enemyThreshold)
+                } else {
                     _stateMachine.Fire(Trigger.InCombat);
+                }
+
             }
 
             // Encounter tracking
