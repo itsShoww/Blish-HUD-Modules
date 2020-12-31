@@ -18,159 +18,39 @@ namespace Nekres.Music_Mixer.Player
 {
     public class MusicPlayer : IDisposable
     {
-        private static readonly Logger Logger = Logger.GetLogger(typeof(MusicPlayer));
-
-        private float _masterVolume => MusicMixerModule.ModuleInstance.MasterVolume;
-        private bool _toggleKeepAudioFiles => MusicMixerModule.ModuleInstance.ToggleKeepAudioFiles.Value;
-
-        public event EventHandler<ValueEventArgs<string>> AudioEnded;
-
-        //private Regex _vimeoVideoID = new Regex(@"(http|https)?:\/\/(www\.|player\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|video\/|)(\d+)(?:|\/\?)", RegexOptions.Compiled);
-
-        private WasapiOut _outputDevice;
-        private bool _initialized;
-
-        private FadeInOut _fadeInOut;
-        private const double _fadeSeconds = 3;
-        private Equalizer _equalizer;
-        private BiQuadFilterSource _biQuadFilter;
-
-        private string _currentTitle;
-
-        private Timer _endTimer;
-
-        private bool _submergedFxEnabled;
+        public event EventHandler AudioEnded;
 
         private string _cachePath;
 
+        private Soundtrack _currentTrack;
+
+        private bool _submergedFxEnabled;
+
         public MusicPlayer(string cachePath) {
             _cachePath = Directory.CreateDirectory(cachePath).FullName;
-
-            _endTimer = new Timer(){ AutoReset = false };
-            _endTimer.Elapsed += (o, e) => {
-                _fadeInOut?.Dispose();
-                AudioEnded?.Invoke(this, new ValueEventArgs<string>(_currentTitle));
-            };
         }
 
-        public void Dispose() {
-            _outputDevice?.Stop();
-            _outputDevice?.Dispose();
-            _outputDevice = null;
-            _endTimer?.Stop();
-            _endTimer?.Dispose();
-        }
-
-        public void Stop() {
-            if (!_initialized) return;
-            _initialized = false;
-            _outputDevice?.Stop();
-        }
-
-        public void Fade(float? from, float to, TimeSpan duration) => _fadeInOut?.FadeStrategy.StartFading(from, MathHelper.Clamp(to, 0, 1), duration);
-
-        public void SetVolume(float volume) {
-            if (!_initialized) return;
-            _outputDevice.Volume = MathHelper.Clamp(volume, 0, _masterVolume);
-        }
-
+        public void Dispose() => _currentTrack?.Dispose();
+        public void Stop() => _currentTrack?.Stop();
         public void ToggleSubmergedFx(bool enable) {
             _submergedFxEnabled = enable;
-            if (!_initialized || _equalizer == null) return;
-            _equalizer.SampleFilters[1].AverageGainDB = enable ? 19.5 : 0; // Bass
-            _equalizer.SampleFilters[9].AverageGainDB = enable ? 13.4 : 0; // Treble
-            _biQuadFilter.Enabled = enable;
+            _currentTrack?.ToggleSubmergedFx(enable);
+        }
+        public void Fade(float? from, float to, TimeSpan duration) => _currentTrack?.Fade(from, to, duration);
+        public void SetVolume(float volume) => _currentTrack?.SetVolume(volume);
+
+        public void PlayTrack(string uri) {
+            if (_currentTrack != null) {
+                _currentTrack.Disposed -= OnAudioEnded;
+                _currentTrack.FadeOut();
+            }
+            _currentTrack = new Soundtrack(uri, _cachePath, _submergedFxEnabled);
+            _currentTrack.Play();
+            _currentTrack.Disposed += OnAudioEnded;
         }
 
-        private void SetNextTimer(TimeSpan duration) {
-            _endTimer.Stop();
-            if (duration <= TimeSpan.Zero) return;
-            _endTimer.Interval = duration.TotalMilliseconds;
-            _endTimer.Start();
-        }
-
-        public async void PlayTrack(string uri, float volume = 0) {
-            await Task.Run (async () => {
-                if (uri == null || uri.Equals("")) return;
-
-                IWaveSource source;
-
-                if (!FileUtil.IsLocalPath(uri)) {
-
-                    var id = youtube_dl.Instance.GetYouTubeIdFromLink(uri);
-                    if (id.Equals(string.Empty)) return;
-                    var dir = Path.Combine(_cachePath, id);
-
-                    FileInfo file = null; 
-
-                    if (Directory.Exists(dir))
-                        file = new DirectoryInfo(dir).GetFiles().FirstOrDefault();
-                
-                    if (file != null && !FileUtil.IsFileLocked(file.FullName)) {
-
-                        source = CodecFactory.Instance.GetCodec(file.FullName);
-                        SetNextTimer(source.GetLength());
-
-                    } else {
-
-                        if (file == null && _toggleKeepAudioFiles)
-                            await youtube_dl.Instance.Download(uri, dir, AudioFormat.FLAC, null);
-
-                        source = await youtube_dl.Instance.GetSoundSource(uri);
-                        SetNextTimer(source.GetLength());
-                    }
-
-                } else {
-
-                    if (!File.Exists(uri)) return;
-
-                    source = CodecFactory.Instance.GetCodec(uri);
-                    SetNextTimer(source.GetLength());
-                }
-
-                _fadeInOut?.FadeStrategy.StartFading(null, 0, TimeSpan.FromSeconds(_fadeSeconds));
-
-                var outputDevice = new WasapiOut(){ Latency = 100 };
-
-                #if DEBUG
-                outputDevice.Stopped += (o, e) => {
-                    if (!e.HasError) return;
-                    Logger.Warn(e.Exception.Message);
-                };
-                #endif
-
-                var fadeStrat = new LinearFadeStrategy(){ SampleRate = source.WaveFormat.SampleRate, Channels = source.WaveFormat.Channels };
-                _fadeInOut = new FadeInOut(source.ToSampleSource()){FadeStrategy = fadeStrat};
-                _biQuadFilter = new BiQuadFilterSource(_fadeInOut) { Filter = new LowpassFilter(source.WaveFormat.SampleRate, 400) };
-                _equalizer = Equalizer.Create10BandEqualizer(_biQuadFilter);
-
-                var finalSource = _equalizer
-                        .ToStereo()
-                        .ChangeSampleRate(source.WaveFormat.SampleRate)
-                        .ToWaveSource(source.WaveFormat.BitsPerSample);
-
-                outputDevice.Initialize(finalSource);
-                _initialized = true;
-
-                _outputDevice = outputDevice;
-                _currentTitle = uri;
-
-                // Restore previous sound effects.
-                ToggleSubmergedFx(_submergedFxEnabled);
-                SetVolume(_masterVolume);
-
-                fadeStrat.StartFading(0, 1, _fadeSeconds);
-
-                outputDevice.Play();
-
-                // Setup dispose event when fade target volume has reached 0.
-                fadeStrat.FadingFinished += (s, e) => {
-                    if ((s as LinearFadeStrategy)?.CurrentVolume > 0.01f)
-                        return;
-                    finalSource?.Dispose();
-                    outputDevice?.Dispose();
-                };
-            });
+        private void OnAudioEnded(object o, EventArgs e) {
+            AudioEnded?.Invoke(this, null);
         }
     }
 }

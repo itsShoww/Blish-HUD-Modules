@@ -22,6 +22,7 @@ namespace Nekres.Music_Mixer
 
         private Dictionary<State, Trigger> _gw2SupportedContexts = new Dictionary<State, Trigger>() {
             { State.MainMenu, Trigger.MainMenu },
+            { State.Defeated, Trigger.Death },
             { State.Crafting, Trigger.Crafting },
             { State.Victory, Trigger.Victory },
             { State.BossBattle, Trigger.BossBattle },
@@ -30,6 +31,7 @@ namespace Nekres.Music_Mixer
         private string _silenceWavPath = Path.Combine(MusicMixerModule.ModuleInstance.ModuleDirectory, "bin\\silence{0}.wav");
         private Dictionary<State, int> _lockCount = new Dictionary<State, int>() {
             { State.MainMenu, 0 },
+            { State.Defeated, 0 },
             { State.Crafting, 0 },
             { State.Victory, 0 },
             { State.BossBattle, 0 },
@@ -382,7 +384,10 @@ namespace Nekres.Music_Mixer
 
                 _stateMachine.Configure(State.Defeated)
                             .Ignore(Trigger.Death)
-                            .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
+                            .OnEntry(t => {
+                                    IsDowned = false;
+                                    StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination));
+                                })
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
@@ -471,9 +476,6 @@ namespace Nekres.Music_Mixer
             var ev = e.CombatEvent.Ev;
             if (e.CombatEvent.Src.Self > 0) {
                 switch (ev.IsStateChange) {
-                    case ArcDpsEnums.StateChange.ChangeDead:
-                        _stateMachine.Fire(Trigger.Death);
-                        return;
                     case ArcDpsEnums.StateChange.ChangeDown:
                         IsDowned = true;
                         return;

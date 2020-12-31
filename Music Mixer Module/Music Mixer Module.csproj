@@ -65,12 +65,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controls\DataPanel.cs" />
     <Compile Include="Gw2StateService.cs" />
     <Compile Include="MainView.cs" />
     <Compile Include="Models\Encounter.cs" />
     <Compile Include="MusicMixerModule.cs" />
     <Compile Include="Player\API\ffmpeg.cs" />
     <Compile Include="Player\API\youtube-dl.cs" />
+    <Compile Include="Player\Soundtrack.cs" />
     <Compile Include="Player\Source\BiQuadFilterSource.cs" />
     <Compile Include="Player\Source\CutSource.cs" />
     <Compile Include="Player\MusicPlayer.cs" />
@@ -99,6 +101,10 @@
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.1.1.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoGame.Extended, Version=3.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MonoGame.Extended.3.7.0\lib\netstandard2.0\MonoGame.Extended.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MonoGame.Framework, Version=3.6.0.1625, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

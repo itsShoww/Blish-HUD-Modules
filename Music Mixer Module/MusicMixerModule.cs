@@ -1,8 +1,10 @@
 ﻿using Blish_HUD;
+using Blish_HUD.Controls;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
 using Microsoft.Xna.Framework;
+using Nekres.Music_Mixer.Controls;
 using Nekres.Music_Mixer.Player;
 using Newtonsoft.Json;
 using System;
@@ -43,6 +45,7 @@ namespace Nekres.Music_Mixer
         internal SettingEntry<bool> ToggleMountedPlaylist;
         internal SettingEntry<bool> ToggleFourDayCycle;
         internal SettingEntry<bool> ToggleKeepAudioFiles;
+        private SettingEntry<bool> ToggleDebugHelper;
 
         #endregion
 
@@ -59,12 +62,15 @@ namespace Nekres.Music_Mixer
 
         internal IReadOnlyList<EncounterData> EncounterData;
 
+        private DataPanel _debugPanel;
+
         protected override void DefineSettings(SettingCollection settings) {
             MasterVolumeSetting = settings.DefineSetting("MasterVolume", 50f, "Master Volume", "Sets the audio volume.");
             ToggleSubmergedPlaylist = settings.DefineSetting("EnableSubmergedPlaylist", false, "Use submerged playlist", "Whether songs of the underwater playlist should be played while submerged.");
             ToggleMountedPlaylist = settings.DefineSetting("EnableMountedPlaylist", true, "Use mounted playlist", "Whether songs of the mounted playlist should be played while mounted.");
             ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "Whether dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
             ToggleKeepAudioFiles = settings.DefineSetting("KeepAudioFiles", false, "Keep audio files on disk", "Whether streamed audio should be kept on disk.\nReduces delay for all future playback events after the first at the expense of disk space.\nMay also result in better audio quality.");
+            ToggleDebugHelper = settings.DefineSetting("EnableDebugHelper", false, "Developer Mode", "Exposes internal information helpful for development.");
         }
 
         protected override void Initialize() {
@@ -132,9 +138,10 @@ namespace Nekres.Music_Mixer
 
         protected override void OnModuleLoaded(EventArgs e) {
             MasterVolumeSetting.Value = MathHelper.Clamp(MasterVolumeSetting.Value, 0f, 100f);
-            OnStateChanged(_gw2State, new ValueChangedEventArgs<State>(_gw2State.CurrentState,_gw2State.CurrentState));
 
             MasterVolumeSetting.SettingChanged += OnMasterVolumeSettingChanged;
+            ToggleDebugHelper.SettingChanged += OnToggleDebugHelperChanged;
+
             GameIntegration.Gw2Closed += OnGw2Closed;
             Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
             _gw2State.IsSubmergedChanged += OnIsSubmergedChanged;
@@ -143,10 +150,32 @@ namespace Nekres.Music_Mixer
             _gw2State.StateChanged += OnStateChanged;
             _gw2State.EncounterChanged += OnEncounterChanged;
 
+            if (ToggleDebugHelper.Value)
+                BuildDebugPanel();
+
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
 
+        private void OnToggleDebugHelperChanged(object o, ValueChangedEventArgs<bool> e) {
+            if (!GameIntegration.Gw2IsRunning) return;
+            if (!e.NewValue) {
+                _debugPanel?.Dispose();
+                _debugPanel = null;
+            } else
+                BuildDebugPanel();
+        }
+
+        private void BuildDebugPanel() {
+            _debugPanel?.Dispose();
+            _debugPanel = new DataPanel() {
+                Parent = Graphics.SpriteScreen,
+                Size = new Point(Graphics.SpriteScreen.Width, Graphics.SpriteScreen.Height),
+                Location = new Point(0,0),
+                ZIndex = -9999,
+                CurrentState = _gw2State.CurrentState
+            };
+        }
 
         private void OnEncounterChanged(object o, ValueChangedEventArgs<Encounter> e) {
             if (e.PreviousValue != null)
@@ -159,9 +188,15 @@ namespace Nekres.Music_Mixer
             _musicPlayer.PlayTrack(_playlistManager.SelectTrack());
         }
 
-        private void OnAudioEnded(object o, ValueEventArgs<string> e) => PlayNext();
+        private void OnAudioEnded(object o, EventArgs e) => PlayNext();
         private void OnPhaseChanged(object o, ValueEventArgs<int> e) => PlayNext();
         private void OnStateChanged(object sender, ValueChangedEventArgs<State> e) {
+            if (ToggleDebugHelper.Value) {
+                if (_debugPanel != null)
+                    _debugPanel.CurrentState = e.NewValue;
+                ScreenNotification.ShowNotification($"{e.PreviousValue} -> {e.NewValue}", ScreenNotification.NotificationType.Info);
+            }
+
             if (_musicPlayer == null) return;
 
             // Set playlist
@@ -216,6 +251,7 @@ namespace Nekres.Music_Mixer
             MasterVolumeSetting.SettingChanged -= OnMasterVolumeSettingChanged;
             GameIntegration.Gw2Closed -= OnGw2Closed;
             Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
+            ToggleDebugHelper.SettingChanged -= OnToggleDebugHelperChanged;
             _gw2State.StateChanged -= OnStateChanged;
             _gw2State.IsSubmergedChanged -= OnIsSubmergedChanged;
             _gw2State.IsDownedChanged -= OnIsDownedChanged;
