@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mumble Info Module", "Mumbl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music Mixer Module", "Music Mixer Module\Music Mixer Module.csproj", "{198F1394-AE12-4C1D-8D9B-C1272AD1631A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Regions Of Tyria Module", "RegionsOfTyriaModule\Regions Of Tyria Module.csproj", "{6060ACE7-6392-4C1D-8398-2A9FFCD77982}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +97,12 @@ Global
 		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|Any CPU.ActiveCfg = Release|x64
 		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|x64.ActiveCfg = Release|x64
 		{198F1394-AE12-4C1D-8D9B-C1272AD1631A}.Release|x64.Build.0 = Release|x64
+		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Debug|x64.ActiveCfg = Debug|x64
+		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Debug|x64.Build.0 = Debug|x64
+		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Release|Any CPU.ActiveCfg = Release|x64
+		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Release|x64.ActiveCfg = Release|x64
+		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

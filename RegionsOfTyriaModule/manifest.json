@@ -1,0 +1,19 @@
+{
+  "name": "Regions Of Tyria",
+  "version": "0.1.0",
+  "namespace": "Nekres.Regions_Of_Tyria",
+  "package": "RegionsOfTyriaModule.dll",
+  "manifest_version": 1,
+
+  "description": "Shows region and area when entering a map.",
+  "dependencies": {
+    "bh.blishhud": ">=0.7.0"
+  },
+  "url": "https://github.com/blish-hud/",
+  "contributors": [
+    {
+      "name": "Nekres",
+      "username": "Nekres.1038"
+    }
+  ]
+}
