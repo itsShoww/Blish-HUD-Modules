@@ -1,4 +1,5 @@
 ﻿using Blish_HUD;
+using Blish_HUD.Controls;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
@@ -31,11 +32,21 @@ namespace Nekres.Regions_Of_Tyria
         internal Gw2ApiManager Gw2ApiManager => this.ModuleParameters.Gw2ApiManager;
         #endregion
 
+        private SettingEntry<float> ShowDurationSetting;
+        private SettingEntry<float> FadeInDurationSetting;
+        private SettingEntry<float> FadeOutDurationSetting;
+
+        private float _showDuration;
+        private float _fadeInDuration;
+        private float _fadeOutDuration;
+
         [ImportingConstructor]
         public RegionsOfTyriaModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
 
         protected override void DefineSettings(SettingCollection settings) {
-            /* NOOP */
+            ShowDurationSetting = settings.DefineSetting("ShowDuration", 40.0f, "Show duration", "The duration in which to stay in full opacity.");
+            FadeInDurationSetting = settings.DefineSetting("FadeInDuration", 20.0f, "Fade-In duration", "The duration of the fade-in.");
+            FadeOutDurationSetting = settings.DefineSetting("FadeOutDuration", 20.0f, "Fade-Out duration", "The duration of the fade-out.");
         }
 
         protected override void Initialize() {
@@ -44,14 +55,30 @@ namespace Nekres.Regions_Of_Tyria
 
         protected override void OnModuleLoaded(EventArgs e) {
             Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
+
+            OnShowDurationSettingChanged(ShowDurationSetting, new ValueChangedEventArgs<float>(0,ShowDurationSetting.Value));
+            OnFadeInDurationSettingChanged(FadeInDurationSetting, new ValueChangedEventArgs<float>(0,FadeInDurationSetting.Value));
+            OnFadeOutDurationSettingChanged(FadeOutDurationSetting, new ValueChangedEventArgs<float>(0,FadeOutDurationSetting.Value));
+
+            ShowDurationSetting.SettingChanged += OnShowDurationSettingChanged;
+            FadeInDurationSetting.SettingChanged += OnFadeInDurationSettingChanged;
+            FadeOutDurationSetting.SettingChanged += OnFadeOutDurationSettingChanged;
+
             BuildDataPanel();
 
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
 
+        private void OnShowDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _showDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100;
+        private void OnFadeInDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeInDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100;
+        private void OnFadeOutDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeOutDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100;
+
         /// <inheritdoc />
         protected override void Unload() {
+            ShowDurationSetting.SettingChanged -= OnShowDurationSettingChanged;
+            FadeInDurationSetting.SettingChanged -= OnFadeInDurationSettingChanged;
+            FadeOutDurationSetting.SettingChanged -= OnFadeOutDurationSettingChanged;
             Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
             _dataPanel?.Dispose();
 
@@ -93,8 +120,9 @@ namespace Nekres.Regions_Of_Tyria
         }
 
         private async void DoFade() {
-            _dataPanel.Fade(1, TimeSpan.FromMilliseconds(2000));
-            await Task.Delay(4000).ContinueWith(_ => _dataPanel?.Fade(0, TimeSpan.FromMilliseconds(2000), true));
+            _dataPanel.Fade(1, TimeSpan.FromMilliseconds(_fadeInDuration));
+            await Task.Delay(TimeSpan.FromMilliseconds(_fadeInDuration + _showDuration))
+                      .ContinueWith(_ => _dataPanel?.Fade(0, TimeSpan.FromMilliseconds(_fadeOutDuration), true));
         }
 
     }

@@ -46,7 +46,7 @@ namespace Nekres.Regions_Of_Tyria.Controls
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds) {
             if (!GameIntegration.Gw2IsRunning || CurrentMap == null) return;
 
-            var left = HorizontalAlignment.Left;
+            var center = HorizontalAlignment.Center;
             var top = VerticalAlignment.Top;
 
             string text;
@@ -58,18 +58,18 @@ namespace Nekres.Regions_Of_Tyria.Controls
             width = (int)_smallFont.MeasureString(text).Width;
             height = (int)_smallFont.MeasureString(text).Height;
 
-            rect = new Rectangle((Width / 2) - (width / 2), 0, width, height);
-            spriteBatch.DrawStringOnCtrl(this, text, _smallFont, rect, _brightGold, false, true, _strokeDist, left, top);
+            rect = new Rectangle(0, 0, bounds.Width, bounds.Height);
+            spriteBatch.DrawStringOnCtrl(this, text, _smallFont, rect, _brightGold, false, true, _strokeDist, center, top);
 
-            rect = new Rectangle(rect.X - 1, rect.Y + height + 2, width + 2, _underlineSize + 2);
+            rect = new Rectangle((Size.X / 2) - (width / 2) - 1, rect.Y + height + 2, width + 2, _underlineSize + 2);
             spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, new Color(0,0,0,200));
             rect = new Rectangle(rect.X + 1, rect.Y + 1, width, _underlineSize);
             spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, _brightGold);
 
             text = CurrentMap.Name;
-            width = (int)_smallFont.MeasureString(text).Width;
-            rect = new Rectangle(rect.X - (width / 2), rect.Y + _topMargin, bounds.Width, bounds.Height);
-            spriteBatch.DrawStringOnCtrl(this, text, _mediumFont, rect, _brightGold, false, true, _strokeDist, left, top);
+            height = (int)_smallFont.MeasureString(text).Height;
+            rect = new Rectangle(0, _topMargin + height, bounds.Width, bounds.Height);
+            spriteBatch.DrawStringOnCtrl(this, text, _mediumFont, rect, _brightGold, false, true, _strokeDist, center, top);
         }
     }
 }
