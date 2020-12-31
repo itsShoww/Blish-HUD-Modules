@@ -39,7 +39,8 @@ namespace Nekres.Music_Mixer
         };
 
         private bool _unload;
-        private List<ulong> _enemies;
+        private List<ulong> _enemyIds;
+        private ulong _playerId;
 
         #region _Enums
 
@@ -92,7 +93,7 @@ namespace Nekres.Music_Mixer
 
         #region _Constants
 
-        private const int _arcDpsDelayMs = 2500;
+        private const int _arcDpsTimeoutMs = 2500;
         private const int _enemyThreshold = 6;
 
         #endregion
@@ -159,8 +160,9 @@ namespace Nekres.Music_Mixer
         private Timer _arcDpsTimeOut;
 
         public Gw2StateService() {
-            _enemies = new List<ulong>();
-            _arcDpsTimeOut = new Timer(_arcDpsDelayMs){ AutoReset = false };
+            _playerId = 0;
+            _enemyIds = new List<ulong>();
+            _arcDpsTimeOut = new Timer(_arcDpsTimeoutMs){ AutoReset = false };
             _arcDpsTimeOut.Elapsed += (o, e) => ArcDps.RawCombatEvent += CombatEventReceived;
 
             InitializeStateMachine();
@@ -272,7 +274,6 @@ namespace Nekres.Music_Mixer
                             .Ignore(Trigger.MapChanged);
 
                 _stateMachine.Configure(State.Battle)
-                            .OnExit(() => _enemies.Clear())
                             .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.MainMenu, State.MainMenu)
@@ -435,8 +436,10 @@ namespace Nekres.Music_Mixer
         private void CheckTyrianTime() => TyrianTime = TyrianTimeUtil.GetCurrentDayCycle();
         private void CheckEncounterReset() {
             if (!ArcDps.Loaded || CurrentEncounter == null) return;
-            if (CurrentEncounter.IsPlayerReset() || CurrentEncounter.IsDead)
+            if (CurrentEncounter.IsPlayerReset() || CurrentEncounter.IsDead) {
                 TimeOutCombatEvents();
+                CurrentEncounter = null;
+            }
         }
         private void CheckNativeStates() {
             foreach (var ctx in _gw2SupportedContexts) {
@@ -468,7 +471,6 @@ namespace Nekres.Music_Mixer
 
         private void TimeOutCombatEvents() {
             ArcDps.RawCombatEvent -= CombatEventReceived;
-            CurrentEncounter = null;
             _arcDpsTimeOut.Restart();
         }
 
@@ -479,6 +481,14 @@ namespace Nekres.Music_Mixer
                 e.EventType == RawCombatEventArgs.CombatEventType.Local) return;
 
             var ev = e.CombatEvent.Ev;
+
+            // Save player id
+            if (e.CombatEvent.Src.Self > 0)
+                _playerId = e.CombatEvent.Src.Id;
+            else if (e.CombatEvent.Dst.Self > 0)
+                _playerId = e.CombatEvent.Dst.Id;
+
+            // Check state changes
             if (e.CombatEvent.Src.Self > 0) {
                 switch (ev.IsStateChange) {
                     case ArcDpsEnums.StateChange.ChangeDown:
@@ -495,13 +505,26 @@ namespace Nekres.Music_Mixer
             }
 
             if (ev.Iff == ArcDpsEnums.IFF.Foe) {
-                var enemy = e.CombatEvent.Src.Self > 0 ? e.CombatEvent.Dst : e.CombatEvent.Src;
-                var enemyCount = _enemies.Count();
-                if (enemyCount < _enemyThreshold && !_enemies.Any(x => x.Equals(enemy.Id)))
-                    _enemies.Add(enemy.Id);
-                if (enemyCount == _enemyThreshold) 
+                
+                ulong enemyId = e.CombatEvent.Src.Self > 0 ? e.CombatEvent.Dst.Id : e.CombatEvent.Src.Id;
+
+                // allied minion/pet event
+                if (_playerId != 0) {
+                    if (ev.SrcMasterInstId.Equals(_playerId))
+                        enemyId = e.CombatEvent.Dst.Id;
+                    else if (ev.DstMasterInstId.Equals(_playerId))
+                        enemyId = e.CombatEvent.Src.Id;
+                }
+
+                // track enemy
+                var enemyCount = _enemyIds.Count();
+                if (enemyCount < _enemyThreshold && !_enemyIds.Any(x => x.Equals(enemyId)))
+                    _enemyIds.Add(enemyId);
+                if (enemyCount == _enemyThreshold)
                     _stateMachine.Fire(Trigger.InCombat);
             }
+
+            // Encounter tracking
 
             var dstProf = e.CombatEvent.Dst?.Profession ?? 0;
 
@@ -529,6 +552,8 @@ namespace Nekres.Music_Mixer
         private void OnMapChanged(object o, ValueEventArgs<int> e) => _stateMachine.Fire(Trigger.MapChanged);
         private void OnIsInCombatChanged(object o, ValueEventArgs<bool> e) {
             if (!e.Value) {
+                TimeOutCombatEvents(); 
+                _enemyIds.Clear();
                 _stateMachine.Fire(Trigger.OutOfCombat);
             }
         }
