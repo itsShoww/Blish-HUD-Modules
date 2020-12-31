@@ -8,7 +8,7 @@ namespace Nekres.Music_Mixer.Player
 {
     internal class PlaylistManager
     {
-        private bool _toggleFourDayCycle => MusicMixerModule.ModuleInstance.ToggleFourDayCycle.Value;
+        private bool _toggleFourDayCycle => MusicMixerModule.ModuleInstance.ToggleFourDayCycle;
 
         public enum Playlist
         {

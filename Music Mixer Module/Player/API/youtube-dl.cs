@@ -38,6 +38,8 @@ namespace Nekres.Music_Mixer.Player.API
 
         private bool _isLoaded;
 
+        private AudioBitrate _averageBitrate => MusicMixerModule.ModuleInstance.AverageBitrate;
+
         public async Task Load()
         {
             if (_isLoaded) return;
@@ -106,7 +108,7 @@ namespace Nekres.Music_Mixer.Player.API
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
                     FileName = ExecutablePath,
-                    Arguments = string.Format("-g {0} -f bestaudio", youTubeLink)
+                    Arguments = string.Format("-g {0} -f \"bestaudio[ext=m4a][abr<={1}]/bestaudio[ext=aac][abr<={1}]/bestaudio[abr<={1}]/bestaudio\"", youTubeLink, _averageBitrate.ToString().Substring(1))
                 }
             })
             {

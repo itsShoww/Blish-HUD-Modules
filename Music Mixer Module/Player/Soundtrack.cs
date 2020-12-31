@@ -19,7 +19,7 @@ namespace Nekres.Music_Mixer.Player
 {
     public class Soundtrack : IDisposable
     {
-        private bool _toggleKeepAudioFiles => MusicMixerModule.ModuleInstance.ToggleKeepAudioFiles.Value;
+        private bool _toggleKeepAudioFiles => MusicMixerModule.ModuleInstance.ToggleKeepAudioFiles;
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(Soundtrack));
 
@@ -53,8 +53,6 @@ namespace Nekres.Music_Mixer.Player
                     if (response.Exception != null && response.Result == null) return;
                     Play(response.Result);
                     ToggleSubmergedFx(submergedFxEnabled);
-                    while (!_isDisposing) {}
-                    Dispose();
                 });
             });
         }
@@ -67,7 +65,6 @@ namespace Nekres.Music_Mixer.Player
             _isDisposing = true;
             _outputDevice?.Dispose();
             _outputDevice = null;
-            _playbackThread?.Abort();
             Disposed?.Invoke(this, null);
         }
 

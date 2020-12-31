@@ -1,5 +1,6 @@
 ﻿using Blish_HUD;
 using Blish_HUD.ArcDps;
+using Blish_HUD.ArcDps.Models;
 using Microsoft.Xna.Framework;
 using Stateless;
 using System;
@@ -14,8 +15,8 @@ namespace Nekres.Music_Mixer
 {
     internal class Gw2StateService
     {
-        private bool _toggleSubmergedPlaylist => MusicMixerModule.ModuleInstance.ToggleSubmergedPlaylist.Value;
-        private bool _toggleMountedPlaylist => MusicMixerModule.ModuleInstance.ToggleMountedPlaylist.Value;
+        private bool _toggleSubmergedPlaylist => MusicMixerModule.ModuleInstance.ToggleSubmergedPlaylist;
+        private bool _toggleMountedPlaylist => MusicMixerModule.ModuleInstance.ToggleMountedPlaylist;
         private IReadOnlyList<EncounterData> _encounterData => MusicMixerModule.ModuleInstance.EncounterData;
 
         private static readonly Logger Logger = Logger.GetLogger(typeof(Gw2StateService));
@@ -38,7 +39,7 @@ namespace Nekres.Music_Mixer
         };
 
         private bool _unload;
-        private int _enemyCount;
+        private List<ulong> _enemies;
 
         #region _Enums
 
@@ -158,6 +159,7 @@ namespace Nekres.Music_Mixer
         private Timer _arcDpsTimeOut;
 
         public Gw2StateService() {
+            _enemies = new List<ulong>();
             _arcDpsTimeOut = new Timer(_arcDpsDelayMs){ AutoReset = false };
             _arcDpsTimeOut.Elapsed += (o, e) => ArcDps.RawCombatEvent += CombatEventReceived;
 
@@ -211,6 +213,8 @@ namespace Nekres.Music_Mixer
                         case Trigger.Submerging: 
                         case Trigger.Emerging:
                             if (!_toggleSubmergedPlaylist) return; break;
+                        case Trigger.BossBattle:
+                            if (s == State.Encounter) return; break;
                         default: break;
                     }
                     Logger.Info($"Warning: Trigger '{t}' was fired from state '{s}', but has no valid leaving transitions.");
@@ -268,7 +272,7 @@ namespace Nekres.Music_Mixer
                             .Ignore(Trigger.MapChanged);
 
                 _stateMachine.Configure(State.Battle)
-                            .OnExit(() => _enemyCount = 0)
+                            .OnExit(() => _enemies.Clear())
                             .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
                             .Permit(Trigger.MainMenu, State.MainMenu)
@@ -286,9 +290,9 @@ namespace Nekres.Music_Mixer
                             .Ignore(Trigger.EncounterPull)
                             .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
+                            .Ignore(Trigger.BossBattle)
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
-                            .Permit(Trigger.BossBattle, State.BossBattle)
                             .PermitDynamic(Trigger.EncounterReset, GameModeStateSelector)
                             .Ignore(Trigger.OutOfCombat)
                             .Ignore(Trigger.Emerging);
@@ -378,6 +382,7 @@ namespace Nekres.Music_Mixer
                             .Ignore(Trigger.BossBattle)
                             .OnEntry(t => StateChanged?.Invoke(this, new ValueChangedEventArgs<State>(t.Source, t.Destination)))
                             .PermitDynamic(Trigger.StandBy, GameModeStateSelector)
+                            .Permit(Trigger.EncounterPull, State.Encounter)
                             .Permit(Trigger.MainMenu, State.MainMenu)
                             .Permit(Trigger.Victory, State.Victory)
                             .Permit(Trigger.Death, State.Defeated);
@@ -487,13 +492,15 @@ namespace Nekres.Music_Mixer
                         return;
                     default: break;
                 }
-            } else if (e.CombatEvent.Dst.Self > 0) {
-                if (ev.Iff == ArcDpsEnums.IFF.Foe) {
-                    if (_enemyCount < _enemyThreshold) {
-                        _enemyCount++;
-                        if (_enemyCount == _enemyThreshold) _stateMachine.Fire(Trigger.InCombat);
-                    }
-                }
+            }
+
+            if (ev.Iff == ArcDpsEnums.IFF.Foe) {
+                var enemy = e.CombatEvent.Src.Self > 0 ? e.CombatEvent.Dst : e.CombatEvent.Src;
+                var enemyCount = _enemies.Count();
+                if (enemyCount < _enemyThreshold && !_enemies.Any(x => x.Equals(enemy.Id)))
+                    _enemies.Add(enemy.Id);
+                if (enemyCount == _enemyThreshold) 
+                    _stateMachine.Fire(Trigger.InCombat);
             }
 
             var dstProf = e.CombatEvent.Dst?.Profession ?? 0;

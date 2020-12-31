@@ -6,6 +6,7 @@ using Blish_HUD.Settings;
 using Microsoft.Xna.Framework;
 using Nekres.Music_Mixer.Controls;
 using Nekres.Music_Mixer.Player;
+using Nekres.Music_Mixer.Player.API;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -41,15 +42,22 @@ namespace Nekres.Music_Mixer
         #region Settings
 
         private SettingEntry<float> MasterVolumeSetting;
-        internal SettingEntry<bool> ToggleSubmergedPlaylist;
-        internal SettingEntry<bool> ToggleMountedPlaylist;
-        internal SettingEntry<bool> ToggleFourDayCycle;
-        internal SettingEntry<bool> ToggleKeepAudioFiles;
+        private SettingEntry<bool> ToggleSubmergedPlaylistSetting;
+        private SettingEntry<bool> ToggleMountedPlaylistSetting;
+        private SettingEntry<bool> ToggleFourDayCycleSetting;
+        private SettingEntry<bool> ToggleKeepAudioFilesSetting;
+        private SettingEntry<AudioBitrate> AverageBitrateSetting;
         private SettingEntry<bool> ToggleDebugHelper;
 
         #endregion
 
         public float MasterVolume => MathHelper.Clamp(MasterVolumeSetting.Value / 1000f, 0, 1);
+        public bool ToggleSubmergedPlaylist => ToggleSubmergedPlaylistSetting.Value;
+        public bool ToggleMountedPlaylist => ToggleMountedPlaylistSetting.Value;
+        public bool ToggleFourDayCycle => ToggleFourDayCycleSetting.Value;
+        public bool ToggleKeepAudioFiles => ToggleKeepAudioFilesSetting.Value;
+        public AudioBitrate AverageBitrate => AverageBitrateSetting.Value;
+
         private MusicPlayer _musicPlayer;
         private PlaylistManager _playlistManager;
         private Gw2StateService _gw2State;
@@ -66,10 +74,11 @@ namespace Nekres.Music_Mixer
 
         protected override void DefineSettings(SettingCollection settings) {
             MasterVolumeSetting = settings.DefineSetting("MasterVolume", 50f, "Master Volume", "Sets the audio volume.");
-            ToggleSubmergedPlaylist = settings.DefineSetting("EnableSubmergedPlaylist", false, "Use submerged playlist", "Whether songs of the underwater playlist should be played while submerged.");
-            ToggleMountedPlaylist = settings.DefineSetting("EnableMountedPlaylist", true, "Use mounted playlist", "Whether songs of the mounted playlist should be played while mounted.");
-            ToggleFourDayCycle = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "Whether dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
-            ToggleKeepAudioFiles = settings.DefineSetting("KeepAudioFiles", false, "Keep audio files on disk", "Whether streamed audio should be kept on disk.\nReduces delay for all future playback events after the first at the expense of disk space.\nMay also result in better audio quality.");
+            ToggleSubmergedPlaylistSetting = settings.DefineSetting("EnableSubmergedPlaylist", false, "Use submerged playlist", "Whether songs of the underwater playlist should be played while submerged.");
+            ToggleMountedPlaylistSetting = settings.DefineSetting("EnableMountedPlaylist", true, "Use mounted playlist", "Whether songs of the mounted playlist should be played while mounted.");
+            ToggleFourDayCycleSetting = settings.DefineSetting("EnableFourDayCycle", false, "Use dusk and dawn day cycles", "Whether dusk and dawn track attributes should be interpreted as unique day cycles.\nOtherwise dusk and dawn will be interpreted as night and day respectively.");
+            ToggleKeepAudioFilesSetting = settings.DefineSetting("KeepAudioFiles", false, "Keep audio files on disk", "Whether streamed audio should be kept on disk.\nReduces delay for all future playback events after the first at the expense of disk space.\nMay also result in better audio quality.");
+            AverageBitrateSetting = settings.DefineSetting("AverageBitrate", AudioBitrate.B320, "Average bitrate limit", "Sets the average bitrate of the audio used in streaming.");
             ToggleDebugHelper = settings.DefineSetting("EnableDebugHelper", false, "Developer Mode", "Exposes internal information helpful for development.");
         }
 
@@ -99,7 +108,7 @@ namespace Nekres.Music_Mixer
                     return;
                 case TyrianTime.Dawn:
                 case TyrianTime.Dusk:
-                    if (!ToggleFourDayCycle.Value) 
+                    if (!ToggleFourDayCycleSetting.Value) 
                         return;
                     break;
                 default: break;
@@ -128,7 +137,7 @@ namespace Nekres.Music_Mixer
         }
 
         private void OnIsSubmergedChanged(object o, ValueEventArgs<bool> e) {
-            if (ToggleSubmergedPlaylist.Value) return;
+            if (ToggleSubmergedPlaylistSetting.Value) return;
             _musicPlayer?.ToggleSubmergedFx(e.Value);
         }
 

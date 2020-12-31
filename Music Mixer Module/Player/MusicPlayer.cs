@@ -1,18 +1,5 @@
-﻿using Blish_HUD;
-using CSCore;
-using CSCore.Codecs;
-using CSCore.DSP;
-using CSCore.SoundOut;
-using CSCore.Streams;
-using CSCore.Streams.Effects;
-using Microsoft.Xna.Framework;
-using Nekres.Music_Mixer.Player.API;
-using Nekres.Music_Mixer.Player.Source;
-using System;
+﻿using System;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Timer = System.Timers.Timer;
 
 namespace Nekres.Music_Mixer.Player
 {
