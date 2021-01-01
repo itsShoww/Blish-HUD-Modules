@@ -214,7 +214,6 @@ namespace Nekres.Mumble_Info_Module
             // All static members must be manually unset
             ModuleInstance = null;
         }
-
     }
 
 }

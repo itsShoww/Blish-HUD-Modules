@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="DataPanel.cs" />
     <Compile Include="MumbleInfoModule.cs" />
+    <Compile Include="Utils\DirectionUtil.cs" />
     <Compile Include="_Extensions\PointExtension.cs" />
     <Compile Include="_Extensions\RectangleExtension.cs" />
   </ItemGroup>

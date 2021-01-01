@@ -1,6 +1,6 @@
 {
   "name": "Regions of Tyria",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "namespace": "Nekres.Regions_Of_Tyria",
   "package": "RegionsOfTyriaModule.dll",
   "manifest_version": 1,

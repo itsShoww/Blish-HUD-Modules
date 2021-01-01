@@ -14,7 +14,8 @@ namespace Nekres.Regions_Of_Tyria.Controls
     internal class DataPanel : Container
     {
          
-        public Map CurrentMap;
+        public string Header;
+        public string Footer;
 
         private BitmapFont _smallFont;
         private BitmapFont _mediumFont;
@@ -44,7 +45,7 @@ namespace Nekres.Regions_Of_Tyria.Controls
         private void UpdateLocation(object sender, EventArgs e) => Location = new Point(0, 0);
 
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds) {
-            if (!GameIntegration.Gw2IsRunning || CurrentMap == null) return;
+            if (!GameIntegration.Gw2IsRunning || Header == null || Footer == null) return;
 
             var center = HorizontalAlignment.Center;
             var top = VerticalAlignment.Top;
@@ -54,7 +55,7 @@ namespace Nekres.Regions_Of_Tyria.Controls
             int width;
             Rectangle rect;
 
-            text = CurrentMap.RegionName;
+            text = Header;
             width = (int)_smallFont.MeasureString(text).Width;
             height = (int)_smallFont.MeasureString(text).Height;
 
@@ -66,7 +67,7 @@ namespace Nekres.Regions_Of_Tyria.Controls
             rect = new Rectangle(rect.X + 1, rect.Y + 1, width, _underlineSize);
             spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, _brightGold);
 
-            text = CurrentMap.Name;
+            text = Footer;
             height = (int)_smallFont.MeasureString(text).Height;
             rect = new Rectangle(0, _topMargin + height, bounds.Width, bounds.Height);
             spriteBatch.DrawStringOnCtrl(this, text, _mediumFont, rect, _brightGold, false, true, _strokeDist, center, top);
