@@ -138,23 +138,51 @@ namespace Nekres.Regions_Of_Tyria
                 });
         }
 
+        private int GetCurrentFloor(Map map) {
+            // Currently not working. Request for mumble exposion of the current floor is pending.
+            float temp = 0;
+            int currentFloor = 0;
+            foreach (var floor in map.Floors) {
+                var dist = Math.Abs((float)Gw2Mumble.RawClient.AvatarPosition.Y - floor);
+
+                if (dist < temp || temp == 0) {
+                    temp = dist;
+                    currentFloor = floor;
+                }
+            }
+            return currentFloor;
+        }
+
+        private async Task<IEnumerable<ContinentFloorRegionMapSector>> GetSectors(int continentId, int floor, int regionId, int mapId) {
+            return await Gw2ApiManager.Gw2ApiClient.V2.Continents[continentId].Floors[floor].Regions[regionId].Maps[mapId].Sectors.AllAsync();
+        }
+
         private void GetSectors(Map map) {
             _checkThread?.Abort();
             _checkThread = new Thread(async () => {
-                var rawSectors = new HashSet<ContinentFloorRegionMapSector>();
+
+                /*var currentFloor = GetCurrentFloor(map);
+                var sectors = await GetSectors(map.ContinentId, currentFloor, map.RegionId, map.Id);*/
+
+                var sectors = new HashSet<ContinentFloorRegionMapSector>();
                 foreach (var floor in map.Floors) {
-                    await Gw2ApiManager.Gw2ApiClient.V2.Continents[map.ContinentId].Floors[floor].Regions[map.RegionId].Maps[map.Id].Sectors.AllAsync()
-                            .ContinueWith(response => { 
-                                if (response.Exception != null || response.IsFaulted || response.IsCanceled) return;
-                                var result = response.Result;
-                                rawSectors.UnionWith(result);
-                            });
+                    sectors.UnionWith(await GetSectors(map.ContinentId, floor, map.RegionId, map.Id));
                 }
+
                 // Check in which sector the player is.
                 string currentSector = "";
                 while (ToggleSectorsSetting.Value && Gw2Mumble.CurrentMap.Id == map.Id) {
+
+                    // Update sectors to check if floor has changed.
+                    /*var tempFloor = GetCurrentFloor(map);
+                    if (tempFloor != currentFloor) {
+                        currentFloor = tempFloor;
+                        sectors = await GetSectors(map.ContinentId, currentFloor, map.RegionId, map.Id);
+                    }*/
+
+                    // Check for sector change.
                     string tempSector = null;
-                    foreach (var sector in rawSectors) {
+                    foreach (var sector in sectors) {
                         var overlapCount = 0;
                             var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, map.MapRect, map.ContinentRect);
                             if (ConvexHullUtil.InBounds(new Coordinates2(playerLocation.X, playerLocation.Z), sector.Bounds)) {
@@ -163,6 +191,7 @@ namespace Nekres.Regions_Of_Tyria
                                 tempSector = sector.Name;
                         }
                     }
+
                     // Display the name of the area when player enters.
                     if (tempSector != null && !tempSector.Equals(currentSector)) {
                         currentSector = tempSector;
