@@ -23,7 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mumble Info Module", "Mumbl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music Mixer Module", "Music Mixer Module\Music Mixer Module.csproj", "{198F1394-AE12-4C1D-8D9B-C1272AD1631A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Regions Of Tyria Module", "RegionsOfTyriaModule\Regions Of Tyria Module.csproj", "{6060ACE7-6392-4C1D-8398-2A9FFCD77982}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Regions Of Tyria Module", "Regions Of Tyria Module\Regions Of Tyria Module.csproj", "{6060ACE7-6392-4C1D-8398-2A9FFCD77982}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
