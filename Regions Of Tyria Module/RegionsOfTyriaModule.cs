@@ -22,8 +22,6 @@ namespace Nekres.Regions_Of_Tyria
 
         internal static RegionsOfTyriaModule ModuleInstance;
 
-        private DataPanel _dataPanel;
-
         #region Service Managers
         internal SettingsManager SettingsManager => this.ModuleParameters.SettingsManager;
         internal ContentsManager ContentsManager => this.ModuleParameters.ContentsManager;
@@ -40,8 +38,7 @@ namespace Nekres.Regions_Of_Tyria
         private float _fadeInDuration;
         private float _fadeOutDuration;
 
-        private Thread _checkThread;
-        private Map _currentMap;
+        private bool _isDisposing;
 
         [ImportingConstructor]
         public RegionsOfTyriaModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
@@ -70,71 +67,43 @@ namespace Nekres.Regions_Of_Tyria
             ShowDurationSetting.SettingChanged += OnShowDurationSettingChanged;
             FadeInDurationSetting.SettingChanged += OnFadeInDurationSettingChanged;
             FadeOutDurationSetting.SettingChanged += OnFadeOutDurationSettingChanged;
-            ToggleSectorsSetting.SettingChanged += OnToggleSectorsSettingChanged;
 
-            GetCurrentMap(Gw2Mumble.CurrentMap.Id);
+            RequestMap(Gw2Mumble.CurrentMap.Id);
 
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
 
-        private void OnShowDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _showDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100;
-        private void OnFadeInDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeInDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100;
-        private void OnFadeOutDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeOutDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100;
-        private void OnToggleSectorsSettingChanged(object o, ValueChangedEventArgs<bool> e) {
-            if (e.NewValue) {
-                GetSectors(_currentMap);
-            } else if (!e.NewValue) {
-                GetSectors(_currentMap);
-            }
-        }
+        private void OnShowDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _showDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100 / 1000;
+        private void OnFadeInDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeInDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100 / 1000;
+        private void OnFadeOutDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeOutDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100 / 1000;
+
         /// <inheritdoc />
         protected override void Unload() {
+            _isDisposing = true;
             ShowDurationSetting.SettingChanged -= OnShowDurationSettingChanged;
             FadeInDurationSetting.SettingChanged -= OnFadeInDurationSettingChanged;
             FadeOutDurationSetting.SettingChanged -= OnFadeOutDurationSettingChanged;
-            ToggleSectorsSetting.SettingChanged -= OnToggleSectorsSettingChanged;
             Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
-            _checkThread?.Abort();
-            _dataPanel?.Dispose();
 
             // All static members must be manually unset
             ModuleInstance = null;
         }
 
         private void OnMapChanged(object o, ValueEventArgs<int> e) {
-            GetCurrentMap(e.Value);
-        }
-        private void BuildDataPanel(string header, string footer) {
-            _dataPanel?.Dispose();
-            var dataPanel = new DataPanel() {
-                Parent = Graphics.SpriteScreen,
-                Size = new Point(500, 500),
-                Location = new Point((Graphics.SpriteScreen.Width / 2) - 250, (Graphics.SpriteScreen.Height / 2) - 500),
-                ZIndex = -9999,
-                Opacity = 0,
-                Header = header,
-                Footer = footer
-            };
-
-            DoFade(dataPanel);
-            _dataPanel = dataPanel;
+            RequestMap(e.Value);
         }
 
-        private async void GetCurrentMap(int id) {
+        private async void RequestMap(int id) {
             await Gw2ApiManager.Gw2ApiClient.V2.Maps.GetAsync(id)
                 .ContinueWith(response => {
                     if (response.Exception != null || response.IsFaulted || response.IsCanceled) return;
                     var result = response.Result;
-                    
-                    _currentMap = result;
 
-                    BuildDataPanel(result.RegionName, result.Name);
-                    if (ToggleSectorsSetting.Value) {
-                        Task.Delay(TimeSpan.FromMilliseconds(_fadeInDuration + _showDuration + _fadeOutDuration)).ContinueWith(o => {
-                            GetSectors(result);
-                        });
-                    }
+                    MapNotification.ShowNotification(result.RegionName, result.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
+                    Task.Delay(TimeSpan.FromMilliseconds(_fadeInDuration + _showDuration + _fadeOutDuration)).ContinueWith(o => {
+                        StartSectorTask(result);
+                    });
                 });
         }
 
@@ -153,61 +122,61 @@ namespace Nekres.Regions_Of_Tyria
             return currentFloor;
         }
 
-        private async Task<IEnumerable<ContinentFloorRegionMapSector>> GetSectors(int continentId, int floor, int regionId, int mapId) {
-            return await Gw2ApiManager.Gw2ApiClient.V2.Continents[continentId].Floors[floor].Regions[regionId].Maps[mapId].Sectors.AllAsync();
+        private async Task<IEnumerable<ContinentFloorRegionMapSector>> RequestSectorsForFloor(int continentId, int floor, int regionId, int mapId) {
+            try {
+                return await Gw2ApiManager.Gw2ApiClient.V2.Continents[continentId].Floors[floor].Regions[regionId].Maps[mapId].Sectors.AllAsync();
+            } catch (Gw2Sharp.WebApi.Exceptions.BadRequestException e) {
+                Logger.Info("The map id {0} does not exist on floor {1}. Ref.: {2}", mapId, floor, e.Request);
+                return new HashSet<ContinentFloorRegionMapSector>();
+            }
         }
 
-        private void GetSectors(Map map) {
-            _checkThread?.Abort();
-            _checkThread = new Thread(async () => {
+        private void StartSectorTask(Map map) {
+            new Task(async () => {
 
                 /*var currentFloor = GetCurrentFloor(map);
                 var sectors = await GetSectors(map.ContinentId, currentFloor, map.RegionId, map.Id);*/
 
-                var sectors = new HashSet<ContinentFloorRegionMapSector>();
-                foreach (var floor in map.Floors) {
-                    sectors.UnionWith(await GetSectors(map.ContinentId, floor, map.RegionId, map.Id));
-                }
-
                 // Check in which sector the player is.
                 string currentSector = "";
-                while (ToggleSectorsSetting.Value && Gw2Mumble.CurrentMap.Id == map.Id) {
+                var sectors = new HashSet<ContinentFloorRegionMapSector>();
+                foreach (var floor in map.Floors) {
+                    sectors.UnionWith(await RequestSectorsForFloor(map.ContinentId, floor, map.RegionId, map.Id));
+                }
+                while (!_isDisposing) {
+                    if (!ToggleSectorsSetting.Value) continue;
 
                     // Update sectors to check if floor has changed.
                     /*var tempFloor = GetCurrentFloor(map);
                     if (tempFloor != currentFloor) {
                         currentFloor = tempFloor;
-                        sectors = await GetSectors(map.ContinentId, currentFloor, map.RegionId, map.Id);
+                        sectors = await RequestSectorsForFloor(map.ContinentId, currentFloor, map.RegionId, map.Id);
                     }*/
-
-                    // Check for sector change.
-                    string tempSector = null;
-                    foreach (var sector in sectors) {
-                        var overlapCount = 0;
-                            var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, map.MapRect, map.ContinentRect);
-                            if (ConvexHullUtil.InBounds(new Coordinates2(playerLocation.X, playerLocation.Z), sector.Bounds)) {
-                            overlapCount++;
-                            if (overlapCount == 1)
-                                tempSector = sector.Name;
+                    if (Gw2Mumble.CurrentMap.Id != map.Id) {
+                        sectors = new HashSet<ContinentFloorRegionMapSector>();
+                        foreach (var floor in map.Floors) {
+                            sectors.UnionWith(await RequestSectorsForFloor(map.ContinentId, floor, map.RegionId, map.Id));
+                        }
+                    } else {
+                        // Check for sector change.
+                        string tempSector = null;
+                        foreach (var sector in sectors) {
+                            var overlapCount = 0;
+                                var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, map.MapRect, map.ContinentRect);
+                                if (ConvexHullUtil.InBounds(new Coordinates2(playerLocation.X, playerLocation.Z), sector.Bounds)) {
+                                overlapCount++;
+                                if (overlapCount == 1)
+                                    tempSector = sector.Name;
+                            }
+                        }
+                        // Display the name of the area when player enters.
+                        if (tempSector != null && !tempSector.Equals(currentSector)) {
+                            currentSector = tempSector;
+                            MapNotification.ShowNotification(map.Name, currentSector, null, _showDuration, _fadeInDuration, _fadeOutDuration);
                         }
                     }
-
-                    // Display the name of the area when player enters.
-                    if (tempSector != null && !tempSector.Equals(currentSector)) {
-                        currentSector = tempSector;
-                        BuildDataPanel(map.Name, currentSector);
-                    }
                 }
-            });
-            _checkThread.Start();
+            }).Start();
         }
-
-        private async void DoFade(DataPanel panel) {
-            panel.Fade(1, TimeSpan.FromMilliseconds(_fadeInDuration));
-            await Task.Delay(TimeSpan.FromMilliseconds(_fadeInDuration + _showDuration))
-                      .ContinueWith(_ => panel?.Fade(0, TimeSpan.FromMilliseconds(_fadeOutDuration), true));
-        }
-
     }
-
 }
