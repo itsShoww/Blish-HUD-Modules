@@ -6,7 +6,7 @@ namespace Nekres.Regions_Of_Tyria
 {
     public class ConvexHullUtil
     {
-        private static double cross(Coordinates2 O, Coordinates2 A, Coordinates2 B)
+        private static double Cross(Coordinates2 O, Coordinates2 A, Coordinates2 B)
         {
             return (A.X - O.X) * (B.Y - O.Y) - (A.Y - O.Y) * (B.X - O.X);
         }
@@ -28,7 +28,7 @@ namespace Nekres.Regions_Of_Tyria
             // Build lower hull
             for (int i = 0; i < n; ++i)
             {
-                while (k >= 2 && cross(H[k - 2], H[k - 1], points[i]) <= 0)
+                while (k >= 2 && Cross(H[k - 2], H[k - 1], points[i]) <= 0)
                     k--;
                 H[k++] = points[i];
             }
@@ -36,7 +36,7 @@ namespace Nekres.Regions_Of_Tyria
             // Build upper hull
             for (int i = n - 2, t = k + 1; i >= 0; i--)
             {
-                while (k >= t && cross(H[k - 2], H[k - 1], points[i]) <= 0)
+                while (k >= t && Cross(H[k - 2], H[k - 1], points[i]) <= 0)
                     k--;
                 H[k++] = points[i];
             }
