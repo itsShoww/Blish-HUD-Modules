@@ -78,9 +78,9 @@ namespace Nekres.Regions_Of_Tyria
             base.OnModuleLoaded(e);
         }
 
-        private void OnShowDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _showDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100 / 1000;
-        private void OnFadeInDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeInDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100 / 1000;
-        private void OnFadeOutDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeOutDuration = MathHelper.Clamp(e.NewValue, 0, 100) * 100 / 1000;
+        private void OnShowDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _showDuration = MathHelper.Clamp(e.NewValue, 0, 100) / 10;
+        private void OnFadeInDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeInDuration = MathHelper.Clamp(e.NewValue, 0, 100) / 10;
+        private void OnFadeOutDurationSettingChanged(object o, ValueChangedEventArgs<float> e) => _fadeOutDuration = MathHelper.Clamp(e.NewValue, 0, 100) / 10;
 
         /// <inheritdoc />
         protected override void Unload() {
@@ -159,8 +159,8 @@ namespace Nekres.Regions_Of_Tyria
                     ContinentFloorRegionMapSector tempSector = null;
                     foreach (var sector in _currentSectors) {
                         var overlapCount = 0;
-                            var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, _currentMap.MapRect, _currentMap.ContinentRect);
-                            if (ConvexHullUtil.InBounds(new Coordinates2(playerLocation.X, playerLocation.Z), sector.Bounds)) {
+                        var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, _currentMap.MapRect, _currentMap.ContinentRect);
+                        if (ConvexHullUtil.InBounds(new Coordinates2(playerLocation.X, playerLocation.Z), sector.Bounds)) {
                             overlapCount++;
                             if (overlapCount == 1)
                                 tempSector = sector;
