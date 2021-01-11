@@ -70,12 +70,12 @@ namespace Nekres.Regions_Of_Tyria.Controls
         private Glide.Tween _animFadeLifecycle;
         private int _targetTop = 0;
 
-        private MapNotification(string header, string footer, Texture2D icon = null, float showDurationMs = 4000, float fadeInDurationMs = 2000, float fadeOutDurationMs = 2000) {
+        private MapNotification(string header, string footer, Texture2D icon = null, float showDuration = 4, float fadeInDuration = 2, float fadeOutDuration = 2) {
             _header = header;
             _footer = footer;
-            _showDuration = showDurationMs;
-            _fadeInDuration = fadeInDurationMs;
-            _fadeOutDuration = fadeOutDurationMs;
+            _showDuration = showDuration;
+            _fadeInDuration = fadeInDuration;
+            _fadeOutDuration = fadeOutDuration;
 
             this.Opacity = 0f;
             this.Size = new Point(500, 500);
@@ -156,8 +156,8 @@ namespace Nekres.Regions_Of_Tyria.Controls
             base.DisposeControl();
         }
 
-        public static void ShowNotification(string header, string footer, Texture2D icon = null, float showDurationMs = 4000, float fadeInDurationMs = 2000, float fadeOutDurationMs = 2000) {
-            var nNot = new MapNotification(header, footer, icon, showDurationMs, fadeInDurationMs, fadeOutDurationMs) {
+        public static void ShowNotification(string header, string footer, Texture2D icon = null, float showDuration = 4, float fadeInDuration = 2, float fadeOutDuration = 2) {
+            var nNot = new MapNotification(header, footer, icon, showDuration, fadeInDuration, fadeOutDuration) {
                 Parent = Graphics.SpriteScreen
             };
 
