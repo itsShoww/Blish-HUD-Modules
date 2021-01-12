@@ -5,7 +5,7 @@
   "package": "RegionsOfTyriaModule.dll",
   "manifest_version": 1,
 
-  "description": "Shows region and area when entering a map.",
+  "description": "Shows the name of the place you are entering.",
   "dependencies": {
     "bh.blishhud": ">=0.7.0"
   },
