@@ -40,7 +40,7 @@ namespace Nekres.Quick_Surrender_Module
                 "Shows a skill with a white flag to the right of\nyour skill bar while in an instance. Clicking it defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
 
             var keyBindingCol = settings.AddSubCollection("Hotkey", true, false);
-            SurrenderBinding = keyBindingCol.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.None),
+            SurrenderBinding = keyBindingCol.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.OemPeriod),
                 "Surrender", "Defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
         }
 

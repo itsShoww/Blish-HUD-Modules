@@ -37,7 +37,8 @@ namespace Nekres.Random_Generator_Module
 
         protected override void DefineSettings(SettingCollection settings)
         {
-            ShowDie = settings.DefineSetting("ShowDie", true, "Show Die", "Shows a die.");
+            ToggleShowDieSetting = settings.DefineSetting("ShowDie", true, "Show die", "Whether a die should be displayed to the right of your skill bar.");
+            ToggleSendToChatSetting = settings.DefineSetting("SendToChat", false, "Send to chat", "Whether results should be displayed and emphasised in chat.\nWarning: Can trigger supression of similar messages if results are generated too frequently.");
             var selfManagedSettings = settings.AddSubCollection("ManagedSettings", false, false);
             DieSides = selfManagedSettings.DefineSetting("DieSides", 6, "Die Sides", "Indicates the amount of sides the die has.");
         }
@@ -58,7 +59,8 @@ namespace Nekres.Random_Generator_Module
         #region Settings
 
         private SettingEntry<int> DieSides;
-        private SettingEntry<bool> ShowDie;
+        private SettingEntry<bool> ToggleShowDieSetting;
+        private SettingEntry<bool> ToggleSendToChatSetting;
 
         #endregion
 
@@ -81,7 +83,7 @@ namespace Nekres.Random_Generator_Module
 
         protected override void OnModuleLoaded(EventArgs e)
         {
-            ShowDie.SettingChanged += OnShowDieSettingChanged;
+            ToggleShowDieSetting.SettingChanged += OnShowDieSettingChanged;
 
             Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
             GameIntegration.IsInGameChanged += OnIsInGameChanged;
@@ -100,7 +102,7 @@ namespace Nekres.Random_Generator_Module
         /// <inheritdoc />
         protected override void Unload()
         {
-            ShowDie.SettingChanged -= OnShowDieSettingChanged;
+            ToggleShowDieSetting.SettingChanged -= OnShowDieSettingChanged;
             Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
             GameIntegration.IsInGameChanged -= OnIsInGameChanged;
             Die?.Dispose();
@@ -127,7 +129,7 @@ namespace Nekres.Random_Generator_Module
         {
             Die?.Dispose();
 
-            if (!ShowDie.Value || !IsUiAvailable()) return;
+            if (!ToggleShowDieSetting.Value || !IsUiAvailable()) return;
 
             DieSides.Value = DieSides.Value > 100 || DieSides.Value < 2 ? 6 : DieSides.Value;
 
@@ -258,7 +260,7 @@ namespace Nekres.Random_Generator_Module
                         interval?.Dispose();
                         duration?.Stop();
                         duration = null;
-                        if (!Gw2Mumble.UI.IsTextInputFocused)
+                        if (ToggleSendToChatSetting.Value && !Gw2Mumble.UI.IsTextInputFocused)
                             GameIntegration.Chat.Send($"/me rolls {value} on a {DieSides.Value} sided die.");
                         ScreenNotification.ShowNotification(
                             $"{(Gw2Mumble.IsAvailable ? Gw2Mumble.PlayerCharacter.Name : "You")} rolls {value} on a {DieSides.Value} sided die.");
