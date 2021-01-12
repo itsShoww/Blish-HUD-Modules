@@ -6,7 +6,7 @@ namespace Nekres.Regions_Of_Tyria
     {
         private const float INCH_TO_METER = 0.0254F;
 
-        public static Coordinates3 SwapZY(this Coordinates3 coords) {
+        public static Coordinates3 SwapYZ(this Coordinates3 coords) {
             return new Coordinates3(coords.X, coords.Z, coords.Y);
         }
 

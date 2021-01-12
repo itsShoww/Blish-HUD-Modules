@@ -51,13 +51,12 @@ namespace Nekres.Regions_Of_Tyria
             ShowDurationSetting = settings.DefineSetting("ShowDuration", 40.0f, "Show duration", "The duration in which to stay in full opacity.");
             FadeInDurationSetting = settings.DefineSetting("FadeInDuration", 20.0f, "Fade-In duration", "The duration of the fade-in.");
             FadeOutDurationSetting = settings.DefineSetting("FadeOutDuration", 20.0f, "Fade-Out duration", "The duration of the fade-out.");
-            ToggleMapNotificationSetting = settings.DefineSetting("EnableMapChangedNotification", true, "Notify map change", "Whether a \"continent & map\" label should be shown when entering a map.");
-            ToggleSectorNotificationSetting = settings.DefineSetting("EnableSectorChangedNotification", true, "Notify sector change", "Whether a \"map & sector\" label should be shown when entering a sector.");
+            ToggleMapNotificationSetting = settings.DefineSetting("EnableMapChangedNotification", true, "Notify map change", "Whether a map's name should be shown when entering a map.");
+            ToggleSectorNotificationSetting = settings.DefineSetting("EnableSectorChangedNotification", true, "Notify sector change", "Whether a sector's name should be shown when entering a sector.");
         }
 
-        protected override void Initialize() {
-            _currentSectors = new HashSet<ContinentFloorRegionMapSector>();
-        }
+        /*protected override void Initialize() {
+        }*/
 
         /*protected override void Update(GameTime gameTime) {
         }*/
@@ -109,14 +108,13 @@ namespace Nekres.Regions_Of_Tyria
                     if (ToggleMapNotificationSetting.Value)
                         MapNotification.ShowNotification(result.RegionName, result.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
 
-                     _currentSectors.Clear();
-
-                    _currentMap = result;
-
-                    foreach (var floor in _currentMap.Floors) {
-                        _currentSectors.UnionWith(await RequestSectorsForFloor(_currentMap.ContinentId, floor, _currentMap.RegionId, _currentMap.Id));
+                    _currentSectors = null;
+                    var sectors = new HashSet<ContinentFloorRegionMapSector>();
+                    foreach (var floor in result.Floors) {
+                        sectors.UnionWith(await RequestSectorsForFloor(result.ContinentId, floor, result.RegionId, result.Id));
                     }
-
+                    _currentSectors = sectors;
+                    _currentMap = result;
                 });
         }
 
@@ -124,7 +122,7 @@ namespace Nekres.Regions_Of_Tyria
             try {
                 return await Gw2ApiManager.Gw2ApiClient.V2.Continents[continentId].Floors[floor].Regions[regionId].Maps[mapId].Sectors.AllAsync();
             } catch (Gw2Sharp.WebApi.Exceptions.BadRequestException e) {
-                Logger.Info("The map id {0} does not exist on floor {1}. Ref.: {2}", mapId, floor, e.Request);
+                Logger.Info("{0} | The map id {1} does not exist on floor {2}.", e.GetType().FullName, mapId, floor);
                 return new HashSet<ContinentFloorRegionMapSector>();
             }
         }
@@ -134,7 +132,7 @@ namespace Nekres.Regions_Of_Tyria
                 // Check in which sector the player is.
                 ContinentFloorRegionMapSector currentSector = null;
                 while (!_isDisposing) {
-                    if (!ToggleSectorNotificationSetting.Value || _currentMap == null || _currentMap.Id != Gw2Mumble.CurrentMap.Id) continue;
+                    if (!ToggleSectorNotificationSetting.Value || !GameIntegration.IsInGame || _currentMap == null || _currentMap.Id != Gw2Mumble.CurrentMap.Id) continue;
                     
                     //var currentFloor = Gw2Mumble.      Not enough data exposed to calculate floor.
                     //var sectors = _currentSectors[currentFloor]
@@ -143,7 +141,7 @@ namespace Nekres.Regions_Of_Tyria
                     ContinentFloorRegionMapSector tempSector = null;
                     foreach (var sector in _currentSectors) {
                         var overlapCount = 0;
-                        var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, _currentMap.MapRect, _currentMap.ContinentRect).SwapZY();
+                        var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, _currentMap.MapRect, _currentMap.ContinentRect).SwapYZ();
                         if (ConvexHullUtil.InBounds(playerLocation.ToPlane(), sector.Bounds)) {
                             overlapCount++;
                             if (overlapCount == 1)
