@@ -68,8 +68,10 @@
     <Compile Include="DataPanel.cs" />
     <Compile Include="MumbleInfoModule.cs" />
     <Compile Include="Utils\DirectionUtil.cs" />
-    <Compile Include="_Extensions\PointExtension.cs" />
-    <Compile Include="_Extensions\RectangleExtension.cs" />
+    <Compile Include="_Extensions\Coordinates3Extensions.cs" />
+    <Compile Include="_Extensions\PointExtensions.cs" />
+    <Compile Include="_Extensions\RectangleExtensions.cs" />
+    <Compile Include="_Extensions\StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="AsyncClipboardService, Version=1.7.1.0, Culture=neutral, processorArchitecture=MSIL">

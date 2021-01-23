@@ -7,7 +7,6 @@ using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Management;
@@ -24,9 +23,9 @@ namespace Nekres.Mumble_Info_Module
         internal static MumbleInfoModule ModuleInstance;
 
         #region Service Managers
-        internal SettingsManager SettingsManager => this.ModuleParameters.SettingsManager;
+        /*internal SettingsManager SettingsManager => this.ModuleParameters.SettingsManager;
         internal ContentsManager ContentsManager => this.ModuleParameters.ContentsManager;
-        internal DirectoriesManager DirectoriesManager => this.ModuleParameters.DirectoriesManager;
+        internal DirectoriesManager DirectoriesManager => this.ModuleParameters.DirectoriesManager;*/
         internal Gw2ApiManager Gw2ApiManager => this.ModuleParameters.Gw2ApiManager;
         #endregion
 
@@ -35,33 +34,32 @@ namespace Nekres.Mumble_Info_Module
 
         #region Settings
 
-        private SettingEntry<KeyBinding> ToggleInfoBinding;
-        internal SettingEntry<bool> CaptureMouseOnLCtrl;
+        private SettingEntry<KeyBinding> _toggleInfoBinding;
+        internal SettingEntry<bool>      CaptureMouseOnLCtrl { get; private set; }
 
         #endregion
 
-        public Dictionary<int, Map> MapRepository { get; private set; }
-        public Dictionary<int, Specialization> EliteSpecRepository { get; private set; }
-        public float MemoryUsage { get; private set; }
-        public float CpuUsage { get; private set; }
-        public string CpuName { get; private set; }
+        public Map            CurrentMap  { get; private set; }
+        public Specialization CurrentSpec { get; private set; }
+        public float          MemoryUsage { get; private set; }
+        public float          CpuUsage    { get; private set; }
+        public string         CpuName     { get; private set; }
 
-        private DataPanel _dataPanel;
+        private DataPanel          _dataPanel;
         private PerformanceCounter _ramCounter;
         private PerformanceCounter _cpuCounter;
-        private DateTime _timeOutPc = DateTime.Now;
+        private DateTime           _timeOutPc;
 
         protected override void DefineSettings(SettingCollection settings) {
-            ToggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.OemPlus),
+            _toggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.OemPlus),
                 "Toggle Mumble Data", "Toggles the display of mumble data.");
             CaptureMouseOnLCtrl = settings.DefineSetting("ForceInterceptMouseOnCtrl", true, 
                 "Capture mouse on [Left Control]", "Whether the mouse should be intercepted forcibly while [Left Control] is pressed.");
         }
 
         protected override void Initialize() {
-            CpuName = "";
-            MapRepository = new Dictionary<int, Map>();
-            EliteSpecRepository = new Dictionary<int, Specialization>();
+            _timeOutPc = DateTime.Now;
+            CpuName    = "";
         }
 
 
@@ -77,8 +75,8 @@ namespace Nekres.Mumble_Info_Module
 
 
         protected override void OnModuleLoaded(EventArgs e) {
-            ToggleInfoBinding.Value.Enabled = true;
-            ToggleInfoBinding.Value.Activated += OnToggleInfoBindingActivated;
+            _toggleInfoBinding.Value.Enabled = true;
+            _toggleInfoBinding.Value.Activated += OnToggleInfoBindingActivated;
             Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
             Gw2Mumble.PlayerCharacter.SpecializationChanged += OnSpecializationChanged;
             GameIntegration.Gw2Closed += OnGw2Closed;
@@ -111,7 +109,8 @@ namespace Nekres.Mumble_Info_Module
         private Task QueryManagementObjects() {
             return Task.Run(() => {
                 using (var mos = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_Processor")) {
-                    foreach (ManagementObject mo in mos.Get()) {
+                    foreach (var o in mos.Get()) {
+                        var mo = (ManagementObject) o;
                         var name = (string)mo["Name"];
                         if (name.Length < CpuName.Length) continue;
                         CpuName = name.Trim();
@@ -127,9 +126,7 @@ namespace Nekres.Mumble_Info_Module
             _ramCounter?.Dispose();
         }
 
-
         private void OnGw2Started(object o, EventArgs e) => LoadPerformanceCounters();
-
 
         private void UpdateCounter() {
             if (!GameIntegration.Gw2IsRunning || _ramCounter == null || _cpuCounter == null) return;
@@ -166,47 +163,33 @@ namespace Nekres.Mumble_Info_Module
         private void OnSpecializationChanged(object o, ValueEventArgs<int> e) => GetCurrentElite(e.Value);
 
         private async void GetCurrentMap(int id) {
-            if (MapRepository.ContainsKey(id)) {
-                if (_dataPanel == null) return;
-                _dataPanel.CurrentMap = MapRepository[id];
-            } else {
-                await Gw2ApiManager.Gw2ApiClient.V2.Maps.GetAsync(id)
+            await Gw2ApiManager.Gw2ApiClient.V2.Maps.GetAsync(id)
                     .ContinueWith(response => {
                         if (response.Exception != null || response.IsFaulted || response.IsCanceled) return;
                         var result = response.Result;
-                        MapRepository.Add(result.Id, result);
                         if (_dataPanel == null) return;
-                        _dataPanel.CurrentMap = result;
-                });
-            }
+                        CurrentMap = result;
+                    });
         }
 
         private async void GetCurrentElite(int id) {
-            if (EliteSpecRepository.ContainsKey(id)) {
-                if (_dataPanel == null) return;
-                _dataPanel.CurrentEliteSpec = EliteSpecRepository[id];
-            } else {
-                await Gw2ApiManager.Gw2ApiClient.V2.Specializations.GetAsync(id)
+            await Gw2ApiManager.Gw2ApiClient.V2.Specializations.GetAsync(id)
                     .ContinueWith(response => {
                         if (response.Exception != null || response.IsFaulted || response.IsCanceled) return;
                         var result = response.Result;
-                        EliteSpecRepository.Add(result.Id, result);
                         if (_dataPanel == null) return;
-                        _dataPanel.CurrentEliteSpec = result;
-                });
-            }
+                        CurrentSpec = result;
+                    });
         }
 
         /// <inheritdoc />
         protected override void Unload() {
             _dataPanel?.Dispose();
-            MapRepository?.Clear();
-            EliteSpecRepository?.Clear();
             _ramCounter?.Close();
             _ramCounter?.Dispose();
             _cpuCounter?.Close();
             _cpuCounter?.Dispose();
-            ToggleInfoBinding.Value.Activated -= OnToggleInfoBindingActivated;
+            _toggleInfoBinding.Value.Activated -= OnToggleInfoBindingActivated;
             Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
             Gw2Mumble.PlayerCharacter.SpecializationChanged -= OnSpecializationChanged;
             GameIntegration.Gw2Closed -= OnGw2Closed;
@@ -215,5 +198,4 @@ namespace Nekres.Mumble_Info_Module
             ModuleInstance = null;
         }
     }
-
 }

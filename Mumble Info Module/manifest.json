@@ -1,11 +1,11 @@
 {
   "name": "Mumble Info",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "namespace": "Nekres.Mumble_Info_Module",
   "package": "MumbleInfo.dll",
   "manifest_version": 1,
 
-  "description": "Shows real time mumble link data.\nHold [Left Control] to show unformatted values.\nUse [Left Click] to copy infos.",
+  "description": "Shows real time mumble link data and computer.\nHold [Left Control] to show unformatted values.\nUse [Left Click] to copy infos.",
   "dependencies": {
     "bh.blishhud": ">=0.7.0"
   },

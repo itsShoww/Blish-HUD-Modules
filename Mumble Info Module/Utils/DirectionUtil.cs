@@ -10,6 +10,8 @@ namespace Nekres.Mumble_Info_Module
         }
         public static Direction GetDirectionFromAngle(double angle)
         {
+            angle -= 90;
+
             if (angle < -168.75)
                 return Direction.West;
             else if (angle < -146.25)

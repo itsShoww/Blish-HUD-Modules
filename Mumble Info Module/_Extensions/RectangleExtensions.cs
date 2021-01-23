@@ -3,7 +3,7 @@ using System;
 
 namespace Nekres.Mumble_Info_Module
 {
-    internal static class RectangleExtension
+    internal static class RectangleExtensions
     {
         public static Rectangle Union(this Rectangle value1, Rectangle value2)
         {

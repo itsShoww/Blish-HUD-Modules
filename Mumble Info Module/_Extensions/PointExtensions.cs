@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 namespace Nekres.Mumble_Info_Module
 {
-    internal static class PointExtension
+    internal static class PointExtensions
     {
         public static bool IsInBounds(this Point p, Rectangle bounds) {
             return p.X < bounds.X + bounds.Width &&
