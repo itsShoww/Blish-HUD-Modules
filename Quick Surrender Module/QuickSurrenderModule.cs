@@ -1,6 +1,5 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
-using Blish_HUD.Controls.Extern;
 using Blish_HUD.Input;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
@@ -39,9 +38,9 @@ namespace Nekres.Quick_Surrender_Module
             SurrenderButtonEnabled = settings.DefineSetting("SurrenderButtonEnabled", true, "Show Surrender Skill",
                 "Shows a skill with a white flag to the right of\nyour skill bar while in an instance. Clicking it defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
 
-            var keyBindingCol = settings.AddSubCollection("Hotkey", true, false);
-            SurrenderBinding = keyBindingCol.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.OemPeriod),
-                "Surrender", "Defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
+            //var keyBindingCol = settings.AddSubCollection("Hotkey", true, false);
+            SurrenderBinding = settings.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.OemPeriod),
+                "Surrender Hotkey", "Defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
         }
 
         #region PInvoke
