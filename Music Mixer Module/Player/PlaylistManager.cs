@@ -45,9 +45,14 @@ namespace Nekres.Music_Mixer.Player
 
         #endregion
 
-        private IList<Context> _currentPlaylist;
+        private IList<Context> _activeMainPlaylist;
+        private IList<Context> _activeIntermediatePlaylist;
 
-        public PlaylistManager(string playlistDirectory) {
+        public PlaylistManager(string playlistDirectory)
+        {
+            _activeMainPlaylist = new List<Context>();
+            _activeIntermediatePlaylist = new List<Context>();
+
             _battlePlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "battle.json"));
             _encounterPlaylist = LoadPlaylist<List<EncounterContext>>(Path.Combine(playlistDirectory, "encounter.json"));
             _instancePlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "instance.json"));
@@ -62,12 +67,10 @@ namespace Nekres.Music_Mixer.Player
             _bossBattlePlaylist = LoadPlaylist<List<Context>>(Path.Combine(playlistDirectory, "crafting.json"));
         }
 
-
         private void SavePlaylist(object o, string fileName) {
             var json = JsonConvert.SerializeObject(o, Formatting.Indented);
             System.IO.File.WriteAllText(fileName, json);
         }
-
 
         private T LoadPlaylist<T>(string url) {
             if (!File.Exists(url)) return default;
@@ -81,88 +84,100 @@ namespace Nekres.Music_Mixer.Player
             }
         }
 
-
         public void SetPlaylist(Playlist playlist) {
             switch (playlist) {
                 case Playlist.Battle:
-                    _currentPlaylist = _battlePlaylist;
+                    _activeIntermediatePlaylist = _battlePlaylist;
                     break;
                 case Playlist.Encounter:
                     break;
                 case Playlist.Instance:
-                    _currentPlaylist = _instancePlaylist;
+                    _activeMainPlaylist = _instancePlaylist;
                     break;
                 case Playlist.Mounted:
-                    _currentPlaylist = _mountedPlaylist.GetPlaylist(Gw2Mumble.PlayerCharacter.CurrentMount);
+                    _activeIntermediatePlaylist = _mountedPlaylist.GetPlaylist(Gw2Mumble.PlayerCharacter.CurrentMount);
                     break;
                 case Playlist.Pvp:
-                    _currentPlaylist = _pvpPlaylist;
+                    _activeMainPlaylist = _pvpPlaylist;
                     break;
                 case Playlist.OpenWorld:
-                    _currentPlaylist = _openWorldPlaylist;
+                    _activeMainPlaylist = _openWorldPlaylist;
                     break;
                 case Playlist.Wvw:
-                    _currentPlaylist = _wvwPlaylist;
+                    _activeMainPlaylist = _wvwPlaylist;
                     break;
                 case Playlist.Submerged:
-                    _currentPlaylist = _submergedPlaylist;
+                    _activeIntermediatePlaylist = _submergedPlaylist;
                     break;
                 case Playlist.Victory:
-                    _currentPlaylist = _victoryPlaylist;
+                    _activeIntermediatePlaylist = _victoryPlaylist;
                     break;
                 case Playlist.Defeated:
-                    _currentPlaylist = _defeatedPlaylist;
+                    _activeIntermediatePlaylist = _defeatedPlaylist;
                     break;
                 case Playlist.MainMenu:
-                    _currentPlaylist = _mainMenuPlaylist;
+                    _activeMainPlaylist = _mainMenuPlaylist;
                     break;
                 case Playlist.BossBattle:
-                    _currentPlaylist = _bossBattlePlaylist;
+                    _activeIntermediatePlaylist = _bossBattlePlaylist;
                     break;
                 case Playlist.Crafting:
-                    _currentPlaylist = _craftingPlaylist;
+                    _activeIntermediatePlaylist = _craftingPlaylist;
                     break;
+                default: break;
             }
         }
 
-        public string SelectTrack() {
-            if (_currentPlaylist == null) return "";
-
+        private void CheckContexts(IList<Context> contexts)
+        {
             var mapId = Gw2Mumble.CurrentMap.Id;
             var time = TyrianTimeUtil.GetCurrentDayCycle();
+            foreach (var ctx in contexts)
+            {
+                var timeMatch = _toggleFourDayCycle ? ctx.DayTime.Equals(time) : ctx.DayTime.ContextEquals(time);
+                var mapMatch = mapId == ctx.MapId;
 
-            var mapTracks = _currentPlaylist.Where(x => x.MapId == mapId);
-            if (mapTracks.Count() == 0)
-                mapTracks = _currentPlaylist.Where(x => x.MapId == -1);
+                var noneTimeMatch = ctx.DayTime.Equals(TyrianTime.None);
+                var noMapId = ctx.MapId == -1;
 
-            IEnumerable<Context> timeTracks;
+                ctx.Active = timeMatch && mapMatch ||
+                             noneTimeMatch && mapMatch ||
+                             timeMatch && noMapId ||
+                             noneTimeMatch && noMapId;
+            }
+        }
 
-            if (_toggleFourDayCycle)
-                timeTracks = mapTracks.Where(x => x.DayTime == time);
-            else
-                timeTracks = mapTracks.Where(x => x.DayTime.ContextEquals(time));
+        public void Refresh()
+        {
+            CheckContexts(_activeMainPlaylist);
+            CheckContexts(_activeIntermediatePlaylist);
+        }
 
-            if (timeTracks.Count() == 0)
-                timeTracks = mapTracks.Where(x => x.DayTime == TyrianTime.None);
+        public string SelectTrack(MusicPlayer.SoundLayer soundLayer)
+        {
+            var playlist = soundLayer.Equals(MusicPlayer.SoundLayer.Main)
+                ? _activeMainPlaylist
+                : _activeIntermediatePlaylist;
 
-            var filter = timeTracks.Select(x => x.Uri).ToList();
-            var count = filter.Count;
+            if (playlist == null) return "";
+            var tracks = playlist.Where(x => x.Active).ToList();
+            var count = tracks.Count;
             if (count == 0) return "";
-            var track = filter[RandomUtil.GetRandom(0, count - 1)];
-            return track;
+            var track = tracks[RandomUtil.GetRandom(0, count - 1)];
+            return track.Uri;
         }
 
 
-        private string SelectEncounterTrack(Encounter encounter) {
+        public string SelectEncounterTrack(Encounter encounter) {
             var track = _encounterPlaylist.FirstOrDefault(x => x.EncounterIds.Except(encounter.Ids).Count() == 0);
             if (track == null) {
                 SetPlaylist(Playlist.Battle);
-                return SelectTrack();
+                return SelectTrack(MusicPlayer.SoundLayer.Intermediate);
             }
             var count = track.Uris.Count;
             if (count == 0) {
                 SetPlaylist(Playlist.Battle);
-                return SelectTrack();
+                return SelectTrack(MusicPlayer.SoundLayer.Intermediate);
             }
             var trackNr = encounter.CurrentPhase;
             if (trackNr > count - 1) return "";

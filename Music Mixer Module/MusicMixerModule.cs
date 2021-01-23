@@ -98,7 +98,8 @@ namespace Nekres.Music_Mixer
 
 
         private void OnGw2Closed(object sender, EventArgs e) {
-            _musicPlayer?.Stop();
+            _musicPlayer?.StopMainTrack();
+            _musicPlayer?.StopIntermediateTrack();
         }
 
 
@@ -113,7 +114,7 @@ namespace Nekres.Music_Mixer
                     break;
                 default: break;
             }
-            _musicPlayer.PlayTrack(_playlistManager.SelectTrack());
+            _playlistManager.Refresh();
         }
 
 
@@ -185,7 +186,7 @@ namespace Nekres.Music_Mixer
                 CurrentState = _gw2State.CurrentState
             };
         }
-
+        
         private void OnEncounterChanged(object o, ValueChangedEventArgs<Encounter> e) {
             if (e.PreviousValue != null)
                 e.PreviousValue.PhaseChanged -= OnPhaseChanged;
@@ -193,21 +194,41 @@ namespace Nekres.Music_Mixer
                 e.NewValue.PhaseChanged += OnPhaseChanged;
         }
 
-        private void PlayNext() {
-            _musicPlayer.PlayTrack(_playlistManager.SelectTrack());
+        private void OnPhaseChanged(object o, ValueEventArgs<int> e)
+        {
+            _musicPlayer.PlayTrack(MusicPlayer.SoundLayer.Intermediate, _playlistManager.SelectEncounterTrack(_gw2State.CurrentEncounter));
         }
 
-        private void OnAudioEnded(object o, EventArgs e) => PlayNext();
-        private void OnPhaseChanged(object o, ValueEventArgs<int> e) => PlayNext();
+        private void OnAudioEnded(object o, ValueEventArgs<MusicPlayer.SoundLayer> e)
+        {
+            _musicPlayer.PlayTrack(e.Value, _playlistManager.SelectTrack(e.Value));
+        }
+        
+
+        private State _previousMainState;
         private void OnStateChanged(object sender, ValueChangedEventArgs<State> e) {
             if (ToggleDebugHelper.Value) {
                 if (_debugPanel != null)
                     _debugPanel.CurrentState = e.NewValue;
-                ScreenNotification.ShowNotification($"{e.PreviousValue} -> {e.NewValue}", ScreenNotification.NotificationType.Info);
+                ScreenNotification.ShowNotification($"{e.PreviousValue} -> {e.NewValue}");
             }
 
             if (_musicPlayer == null) return;
 
+            switch (e.PreviousValue)
+            {
+                case State.Mounted:
+                case State.Battle:
+                case State.Submerged:
+                case State.Defeated:
+                case State.Victory:
+                case State.Crafting:
+                case State.BossBattle:
+                case State.Encounter:
+                    _musicPlayer.StopIntermediateTrack();
+                    break;
+                default: break;
+            }
             // Set playlist
             switch (e.NewValue) {
                 case State.Encounter:
@@ -231,19 +252,19 @@ namespace Nekres.Music_Mixer
                 case State.StoryInstance:
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.Instance);
                     break;
-                case State.Submerged:
+                case State.Submerged: 
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.Submerged);
                     break;
-                case State.Defeated:
+                case State.Defeated: 
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.Defeated);
                     break;
-                case State.Victory:
+                case State.Victory: 
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.Victory);
                     break;
-                case State.MainMenu:
+                case State.MainMenu: 
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.MainMenu);
                     break;
-                case State.Crafting:
+                case State.Crafting: 
                     _playlistManager.SetPlaylist(PlaylistManager.Playlist.Crafting);
                     break;
                 case State.BossBattle:
@@ -251,8 +272,34 @@ namespace Nekres.Music_Mixer
                     break;
                 default: break;
             }
-            // Select track from playlist and play it.
-            PlayNext();
+
+            _playlistManager.Refresh();
+
+            switch (e.NewValue)
+            {
+                case State.Mounted:
+                case State.Battle:
+                case State.Submerged:
+                case State.Defeated:
+                case State.Victory:
+                case State.Crafting:
+                case State.BossBattle:
+                case State.Encounter:
+                    _musicPlayer.PlayTrack(MusicPlayer.SoundLayer.Intermediate, _playlistManager.SelectTrack(MusicPlayer.SoundLayer.Intermediate));
+                    break;
+                case State.OpenWorld:
+                case State.CompetitiveMode:
+                case State.WorldVsWorld:
+                case State.StoryInstance:
+                case State.MainMenu:
+                    if (e.NewValue.Equals(_previousMainState)) 
+                        _musicPlayer.Resume();
+                    else
+                        _musicPlayer.PlayTrack(MusicPlayer.SoundLayer.Main, _playlistManager.SelectTrack(MusicPlayer.SoundLayer.Main));
+                    _previousMainState = e.NewValue;
+                    break;
+                default: break;
+            }
         }
 
         /// <inheritdoc />
@@ -266,7 +313,6 @@ namespace Nekres.Music_Mixer
             _gw2State.IsDownedChanged -= OnIsDownedChanged;
             _gw2State.TyrianTimeChanged -= OnTyrianTimeChanged;
             _gw2State.EncounterChanged -= OnEncounterChanged;
-            _musicPlayer.AudioEnded -= OnAudioEnded;
             if (_gw2State.CurrentEncounter != null)
                 _gw2State.CurrentEncounter.PhaseChanged -= OnPhaseChanged;
             _gw2State.Unload();

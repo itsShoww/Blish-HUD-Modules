@@ -15,6 +15,8 @@ namespace Nekres.Music_Mixer
         public float Volume { get; set; }
         [JsonProperty("uri")]
         public string Uri { get; set; }
+        [JsonIgnore]
+        public bool Active { get; set; }
     }
 
     public class EncounterContext

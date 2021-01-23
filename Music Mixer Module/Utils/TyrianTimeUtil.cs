@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Runtime.Serialization;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Nekres.Music_Mixer {
     public enum TyrianTime {

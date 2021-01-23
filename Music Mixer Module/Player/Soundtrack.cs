@@ -6,6 +6,7 @@ using CSCore.SoundOut;
 using CSCore.Streams;
 using CSCore.Streams.Effects;
 using Microsoft.Xna.Framework;
+using Nekres.Music_Mixer.Controls;
 using Nekres.Music_Mixer.Player.API;
 using Nekres.Music_Mixer.Player.Source;
 using System;
@@ -13,7 +14,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Timer = System.Timers.Timer;
 
 namespace Nekres.Music_Mixer.Player
 {
@@ -29,22 +29,24 @@ namespace Nekres.Music_Mixer.Player
 
         private WasapiOut _outputDevice;
         private bool _initialized;
+        private bool _paused;
 
         private FadeInOut _fadeInOut;
         private const double _fadeSeconds = 3;
         private Equalizer _equalizer;
         private BiQuadFilterSource _biQuadFilter;
 
-        private Timer _endTimer;
+        private NTimer _endTimer;
 
         private string _cachePath;
 
         private Thread _playbackThread;
         private bool _isDisposing;
-        public Soundtrack(string uri, string cachePath, bool submergedFxEnabled = false) {
+        public Soundtrack(string uri, string cachePath, bool submergedFxEnabled = false)
+        {
             _cachePath = cachePath;
 
-            _endTimer = new Timer(){ AutoReset = false };
+            _endTimer = new NTimer(){ AutoReset = false };
             _endTimer.Elapsed += (o, e) => Dispose();
 
 
@@ -55,36 +57,64 @@ namespace Nekres.Music_Mixer.Player
                     ToggleSubmergedFx(submergedFxEnabled);
                 });
             });
-        }
-
-        public void Play() {
             _playbackThread.Start();
         }
 
-        public void Dispose() {
+        private void DisposeOnFadeFinished(object o, EventArgs e)
+        {
+            if ((o as LinearFadeStrategy)?.CurrentVolume > 0.01f)
+                return;
+            _fadeInOut.FadeStrategy.FadingFinished -= DisposeOnFadeFinished;
+
+            Dispose();
+        }
+
+        public void Pause()
+        {
+            _paused = true;
+            if (!_initialized) return;
+            Fade(1, 0, TimeSpan.FromSeconds(_fadeSeconds));
+        }
+
+        public void Resume()
+        {
+            _paused = false;
+            if (!_initialized) return;
+            Fade(0, 1, TimeSpan.FromSeconds(_fadeSeconds));
+            _outputDevice.Resume();
+        }
+
+        public void Dispose()
+        {
+            _initialized = false;
             _isDisposing = true;
             _outputDevice?.Dispose();
             _outputDevice = null;
             Disposed?.Invoke(this, null);
         }
 
-        public void Stop() {
-            if (!_initialized) return;
-            _initialized = false;
-            _outputDevice?.Stop();
+        public void Stop()
+        {
+            if (!_initialized)
+            {
+                Dispose(); 
+                return;
+            }
+            _fadeInOut.FadeStrategy.FadingFinished += DisposeOnFadeFinished;
+            Fade(1, 0, TimeSpan.FromSeconds(_fadeSeconds));
         }
 
-        public void Fade(float? from, float to, TimeSpan duration) => _fadeInOut?.FadeStrategy.StartFading(from, MathHelper.Clamp(to, 0, 1), duration);
-        public void FadeOut() {
-            if (_initialized)
-                _fadeInOut?.FadeStrategy.StartFading(null, 0, TimeSpan.FromSeconds(_fadeSeconds));
-            else
-                Dispose();
+        public void Fade(float? from, float to, TimeSpan duration)
+        {
+            _fadeInOut?.FadeStrategy.StopFading();
+            _fadeInOut?.FadeStrategy.StartFading(from, MathHelper.Clamp(to, 0, 1), duration);
         }
+
         public void SetVolume(float volume) {
             if (!_initialized) return;
             _outputDevice.Volume = MathHelper.Clamp(volume, 0, _masterVolume);
         }
+
         public void ToggleSubmergedFx(bool enable) {
             if (!_initialized || _equalizer == null) return;
             _equalizer.SampleFilters[1].AverageGainDB = enable ? 19.5 : 0; // Bass
@@ -168,17 +198,9 @@ namespace Nekres.Music_Mixer.Player
             // Restore previous sound effects.
             SetVolume(_masterVolume);
 
-            fadeStrat.StartFading(0, 1, _fadeSeconds);
+            Fade(0, 1, TimeSpan.FromSeconds(_fadeSeconds));
+            _outputDevice.Play();
 
-            outputDevice.Play();
-
-            // Setup dispose event when fade target volume has reached 0.
-            fadeStrat.FadingFinished += (s, e) => {
-                if ((s as LinearFadeStrategy)?.CurrentVolume > 0.01f)
-                    return;
-                finalSource?.Dispose();
-                Dispose();
-            };
         }
     }
 }

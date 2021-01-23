@@ -1,6 +1,5 @@
 ﻿using Blish_HUD;
 using Blish_HUD.ArcDps;
-using Blish_HUD.ArcDps.Models;
 using Microsoft.Xna.Framework;
 using Stateless;
 using System;
@@ -482,15 +481,11 @@ namespace Nekres.Music_Mixer
 
             var ev = e.CombatEvent.Ev;
 
-            // Save player id
-            if (e.CombatEvent.Src.Self > 0)
-                _playerId = e.CombatEvent.Src.Id;
-            else if (e.CombatEvent.Dst.Self > 0)
-                _playerId = e.CombatEvent.Dst.Id;
-
-            // Check state changes
+            // Save id and check state changes of local player.
             if (e.CombatEvent.Src.Self > 0) {
-                switch (ev.IsStateChange) {
+                _playerId = e.CombatEvent.Src.Id;
+                switch (ev.IsStateChange)
+                {
                     case ArcDpsEnums.StateChange.ChangeDown:
                         IsDowned = true;
                         return;
@@ -502,7 +497,8 @@ namespace Nekres.Music_Mixer
                         return;
                     default: break;
                 }
-            }
+            } else if (e.CombatEvent.Dst.Self > 0)
+                _playerId = e.CombatEvent.Dst.Id;
 
             if (ev.Iff == ArcDpsEnums.IFF.Foe) {
                 
@@ -510,14 +506,13 @@ namespace Nekres.Music_Mixer
 
                 // allied minion/pet event
                 if (_playerId != 0) {
-                    if (ev.SrcMasterInstId.Equals(_playerId))
+                    if (ev.SrcMasterInstId == _playerId)
                         enemyId = e.CombatEvent.Dst.Id;
-                    else if (ev.DstMasterInstId.Equals(_playerId))
+                    else if (ev.DstMasterInstId == _playerId)
                         enemyId = e.CombatEvent.Src.Id;
                 }
 
-                // track enemy
-
+                // track enemy and start combat if threshold is reached.
                 if (_enemyIds.Any(x => x.Equals(enemyId))) {
                     if (enemyId.Equals(ev.SrcAgent) && ev.IsStateChange == ArcDpsEnums.StateChange.ChangeDead)
                         _enemyIds.Remove(enemyId);

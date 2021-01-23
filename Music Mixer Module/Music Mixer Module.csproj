@@ -66,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controls\DataPanel.cs" />
+    <Compile Include="Controls\NTimer.cs" />
     <Compile Include="Gw2StateService.cs" />
     <Compile Include="MainView.cs" />
     <Compile Include="Models\Encounter.cs" />
