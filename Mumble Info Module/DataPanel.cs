@@ -929,7 +929,7 @@ namespace Nekres.Mumble_Info_Module
             spriteBatch.DrawStringOnCtrl(this, text, _font, rect, _lemonGreen, false, true, _strokeDist, left, top);
 
             infoBounds = rect;
-            _cameraInfo.Item1 += text + '\n';
+            _cameraInfo.Item1 += new string(_clipboardIndentChar, _clipboardIndent) + text + '\n';
             focusedSingleInfo = text + '\n';
 
             if (Input.Mouse.Position.IsInBounds(infoBounds)) {
