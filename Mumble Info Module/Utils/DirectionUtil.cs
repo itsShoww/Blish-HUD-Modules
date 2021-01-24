@@ -10,42 +10,41 @@ namespace Nekres.Mumble_Info_Module
         }
         public static Direction GetDirectionFromAngle(double angle)
         {
-            angle -= 90;
-
             if (angle < -168.75)
-                return Direction.West;
-            else if (angle < -146.25)
-                return Direction.WestNorthWest;
-            else if (angle < -123.75)
-                return Direction.NorthWest;
-            else if (angle < -101.25)
-                return Direction.NorthNorthWest;
-            else if (angle < -78.75)
-                return Direction.North;
-            else if (angle < -56.25)
-                return Direction.NorthNorthEast;
-            else if (angle < -33.75)
-                return Direction.NorthEast;
-            else if (angle < -11.25)
-                return Direction.EastNorthEast;
-            else if (angle < 11.25)
-                return Direction.East;
-            else if (angle < 33.75)
-                return Direction.EastSouthEast;
-            else if (angle < 56.25)
-                return Direction.SouthEast;
-            else if (angle < 78.78)
-                return Direction.SouthSouthEast;
-            else if (angle < 101.25)
                 return Direction.South;
-            else if (angle < 123.75)
+            if (angle < -146.25)
                 return Direction.SouthSouthWest;
-            else if (angle < 146.25)
+            if (angle < -123.75)
                 return Direction.SouthWest;
-            else if (angle < 168.75)
+            if (angle < -101.25)
                 return Direction.WestSouthWest;
-            else
+            if (angle < -78.75)
                 return Direction.West;
+            if (angle < -56.25)
+                return Direction.WestNorthWest;
+            if (angle < -33.75)
+                return Direction.NorthWest;
+            if (angle < -11.25)
+                return Direction.NorthNorthWest;
+            if (angle < 11.25)
+                return Direction.North;
+            if (angle < 33.75)
+                return Direction.NorthNorthEast;
+            if (angle < 56.25)
+                return Direction.NorthEast;
+            if (angle < 78.75)
+                return Direction.EastNorthEast;
+            if (angle < 101.25)
+                return Direction.East;
+            if (angle < 123.75)
+                return Direction.EastSouthEast;
+            if (angle < 146.25)
+                return Direction.SouthEast;
+            if (angle < 168.75)
+                return Direction.SouthSouthEast;
+            if (angle < 180)
+                return Direction.South;
+            return Direction.West;
         }
 
         public enum Direction
