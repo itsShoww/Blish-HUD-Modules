@@ -76,7 +76,7 @@ namespace Nekres.Mumble_Info_Module
             if (_cursorPos != null)
             {
                 _cursorPos.Text = PInvoke.IsLControlPressed() ? 
-                                  $"X: {Input.Mouse.Position.X - Graphics.SpriteScreen.Width / 2}, Y: {Input.Mouse.Position.Y - Graphics.SpriteScreen.Height}" :
+                                  $"X: {Input.Mouse.Position.X - Graphics.SpriteScreen.Width / 2}, Y: {Math.Abs(Input.Mouse.Position.Y - Graphics.SpriteScreen.Height)}" :
                                   $"X: {Input.Mouse.Position.X}, Y: {Input.Mouse.Position.Y}";
                 _cursorPos.Location = new Point(Input.Mouse.Position.X + 50, Input.Mouse.Position.Y);
             }
