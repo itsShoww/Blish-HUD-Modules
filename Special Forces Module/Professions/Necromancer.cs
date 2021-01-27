@@ -70,16 +70,14 @@ namespace Nekres.Special_Forces_Module.Professions
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
-        internal Necromancer(string specialization = "")
+        internal Necromancer(byte specialization)
         {
-            _layout = Scourge;
-            return;
             switch (specialization)
             {
-                case "reaper":
+                case 34:
                     _layout = Reaper;
                     break;
-                case "scourge":
+                case 60:
                     _layout = Scourge;
                     break;
                 default:

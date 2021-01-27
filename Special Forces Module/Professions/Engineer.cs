@@ -70,14 +70,14 @@ namespace Nekres.Special_Forces_Module.Professions
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
-        public Engineer(string specialization = "")
+        public Engineer(byte specialization)
         {
             switch (specialization)
             {
-                case "scrapper":
+                case 43:
                     _layout = Scrapper;
                     break;
-                case "holosmith":
+                case 57:
                     _layout = Holosmith;
                     break;
                 default:

@@ -70,14 +70,14 @@ namespace Nekres.Special_Forces_Module.Professions
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
-        internal Thief(string specialization = "")
+        internal Thief(byte specialization)
         {
             switch (specialization)
             {
-                case "daredevil":
+                case 7:
                     _layout = Daredevil;
                     break;
-                case "deadeye":
+                case 58:
                     _layout = Deadeye;
                     break;
                 default:

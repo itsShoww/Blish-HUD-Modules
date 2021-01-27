@@ -70,14 +70,14 @@ namespace Nekres.Special_Forces_Module.Professions
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
-        internal Elementalist(string specialization = "")
+        internal Elementalist(byte specialization)
         {
             switch (specialization)
             {
-                case "tempest":
+                case 48:
                     _layout = Tempest;
                     break;
-                case "weaver":
+                case 56:
                     _layout = Weaver;
                     break;
                 default:

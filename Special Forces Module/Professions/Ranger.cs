@@ -70,14 +70,14 @@ namespace Nekres.Special_Forces_Module.Professions
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
-        internal Ranger(string specialization = "")
+        internal Ranger(byte specialization)
         {
             switch (specialization)
             {
-                case "druid":
+                case 5:
                     _layout = Druid;
                     break;
-                case "soulbeast":
+                case 55:
                     _layout = Soulbeast;
                     break;
                 default:

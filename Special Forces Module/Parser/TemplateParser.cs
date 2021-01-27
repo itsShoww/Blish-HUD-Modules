@@ -1,6 +1,7 @@
 ﻿using Nekres.Special_Forces_Module.Persistance;
 using Nekres.Special_Forces_Module.Professions;
 using System;
+using Gw2Sharp.Models;
 
 namespace Nekres.Special_Forces_Module.Parser
 {
@@ -10,42 +11,40 @@ namespace Nekres.Special_Forces_Module.Parser
         {
             IProfession obj;
 
-            var profession = template.BuildChatLink.Profession.ToString().ToLowerInvariant();
-            var specialization = template.GetClassFriendlyName().ToLowerInvariant();
+            var profession = template.BuildChatLink.Profession;
+            var specialization = template.BuildChatLink.Specialization3Id;
 
             switch (profession)
             {
-                case "engineer":
+                case ProfessionType.Engineer:
                     obj = new Engineer(specialization);
                     break;
-                case "necromancer":
+                case ProfessionType.Necromancer:
                     obj = new Necromancer(specialization);
                     break;
-                case "ranger":
+                case ProfessionType.Ranger:
                     obj = new Ranger(specialization);
                     break;
-                case "warrior":
+                case ProfessionType.Warrior:
                     obj = new Warrior(specialization);
                     break;
-                case "guardian":
+                case ProfessionType.Guardian:
                     obj = new Guardian(specialization);
                     break;
-                case "thief":
+                case ProfessionType.Thief:
                     obj = new Thief(specialization);
                     break;
-                case "elementalist":
+                case ProfessionType.Elementalist:
                     obj = new Elementalist(specialization);
                     break;
-                case "mesmer":
+                case ProfessionType.Mesmer:
                     obj = new Mesmer(specialization);
                     break;
-                case "revenant":
+                case ProfessionType.Revenant:
                     obj = new Revenant(specialization);
                     break;
-
-                default: throw new NotSupportedException(specialization);
+                default: throw new NotSupportedException($"Profession {profession} is not supported.");
             }
-
             return obj;
         }
     }

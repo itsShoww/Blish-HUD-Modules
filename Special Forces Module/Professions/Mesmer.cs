@@ -70,14 +70,14 @@ namespace Nekres.Special_Forces_Module.Professions
                 {GuildWarsControls.SpecialAction, (-85, 157, 54)}
             };
         private readonly Dictionary<GuildWarsControls, (int, int, int)> _layout;
-        internal Mesmer(string specialization = "")
+        internal Mesmer(byte specialization)
         {
             switch (specialization)
             {
-                case "chronomancer":
+                case 40:
                     _layout = Chronomancer;
                     break;
-                case "mirage":
+                case 59:
                     _layout = Mirage;
                     break;
                 default:

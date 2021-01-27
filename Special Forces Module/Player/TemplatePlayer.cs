@@ -175,7 +175,7 @@ namespace Nekres.Special_Forces_Module.Player
                     Font = _labelFont,
                     TextColor = Color.Red
                 };
-                hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2), (GameService.Graphics.SpriteScreen.Height - hint.Height) - 160);
+                hint.Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2, GameService.Graphics.SpriteScreen.Height - hint.Height - 160);
 
             } else if (action.Equals("dodge")) {
 
@@ -232,8 +232,8 @@ namespace Nekres.Special_Forces_Module.Player
 
                 var transforms = _currentProfession.GetTransformation(skill);
 
-                var X = transforms.Item1;
-                var Y = transforms.Item2;
+                var X = transforms.Item1 <= 0 ? Math.Abs(transforms.Item1) : -transforms.Item1;
+                var Y = transforms.Item2 <= 0 ? Math.Abs(transforms.Item2) : -transforms.Item2;
                 var scale = transforms.Item3 != 0 ? transforms.Item3 : 58;
 
                 if (_currentProfession.IsDynamic(skill))
@@ -254,8 +254,7 @@ namespace Nekres.Special_Forces_Module.Player
                         Font = _labelFont,
                         TextColor = _currentProfession.GetDisplayTextColor(skill)
                     };
-                    hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2) + X,
-                        GameService.Graphics.SpriteScreen.Height - hint.Height - Y);
+                    hint.Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - X, GameService.Graphics.SpriteScreen.Height - Y);
 
                 } else {
 
@@ -267,8 +266,7 @@ namespace Nekres.Special_Forces_Module.Player
                         Visible = GameService.GameIntegration.IsInGame,
                         Tint = Color.Red
                     };
-                    hint.Location = new Point((GameService.Graphics.SpriteScreen.Width / 2 - hint.Width / 2) + X,
-                        (GameService.Graphics.SpriteScreen.Height - hint.Height) - Y);
+                    hint.Location = new Point(GameService.Graphics.SpriteScreen.Width / 2 - X, GameService.Graphics.SpriteScreen.Height - Y);
                 }
             }
 
