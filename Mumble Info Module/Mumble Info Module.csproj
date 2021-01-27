@@ -68,6 +68,7 @@
     <Compile Include="DataPanel.cs" />
     <Compile Include="MumbleInfoModule.cs" />
     <Compile Include="Utils\DirectionUtil.cs" />
+    <Compile Include="Utils\PInvoke.cs" />
     <Compile Include="_Extensions\Coordinates3Extensions.cs" />
     <Compile Include="_Extensions\PointExtensions.cs" />
     <Compile Include="_Extensions\RectangleExtensions.cs" />

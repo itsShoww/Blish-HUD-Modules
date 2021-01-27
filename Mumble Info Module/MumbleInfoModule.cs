@@ -1,4 +1,5 @@
 ﻿using Blish_HUD;
+using Blish_HUD.Controls;
 using Blish_HUD.Input;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
@@ -12,6 +13,8 @@ using System.Diagnostics;
 using System.Management;
 using System.Threading.Tasks;
 using static Blish_HUD.GameService;
+using Color = Microsoft.Xna.Framework.Color;
+
 namespace Nekres.Mumble_Info_Module
 {
     [Export(typeof(Module))]
@@ -46,6 +49,7 @@ namespace Nekres.Mumble_Info_Module
         public string         CpuName     { get; private set; }
 
         private DataPanel          _dataPanel;
+        private Label              _cursorPos;
         private PerformanceCounter _ramCounter;
         private PerformanceCounter _cpuCounter;
         private DateTime           _timeOutPc;
@@ -62,17 +66,21 @@ namespace Nekres.Mumble_Info_Module
             CpuName    = "";
         }
 
-
         protected override async Task LoadAsync() {
             await LoadPerformanceCounters();
             await QueryManagementObjects();
         }
 
-
         protected override void Update(GameTime gameTime) {
             UpdateCounter();
+            if (_cursorPos != null)
+            {
+                _cursorPos.Text = PInvoke.IsLControlPressed() ? 
+                                  $"X: {Input.Mouse.Position.X - Graphics.SpriteScreen.Width / 2}, Y: {Input.Mouse.Position.Y - Graphics.SpriteScreen.Height}" :
+                                  $"X: {Input.Mouse.Position.X}, Y: {Input.Mouse.Position.Y}";
+                _cursorPos.Location = new Point(Input.Mouse.Position.X + 50, Input.Mouse.Position.Y);
+            }
         }
-
 
         protected override void OnModuleLoaded(EventArgs e) {
             _toggleInfoBinding.Value.Enabled = true;
@@ -85,7 +93,6 @@ namespace Nekres.Mumble_Info_Module
             // Base handler must be called
             base.OnModuleLoaded(e);
         }
-
 
         private Task LoadPerformanceCounters() {
             return Task.Run(() => { 
@@ -105,7 +112,6 @@ namespace Nekres.Mumble_Info_Module
             });
         }
 
-
         private Task QueryManagementObjects() {
             return Task.Run(() => {
                 using (var mos = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_Processor")) {
@@ -119,9 +125,9 @@ namespace Nekres.Mumble_Info_Module
             });
         }
 
-
         private void OnGw2Closed(object o, EventArgs e) {
             _dataPanel?.Dispose();
+            _cursorPos?.Dispose();
             _cpuCounter?.Dispose();
             _ramCounter?.Dispose();
         }
@@ -142,8 +148,51 @@ namespace Nekres.Mumble_Info_Module
             if (_dataPanel != null) {
                 _dataPanel.Dispose();
                 _dataPanel = null;
-            } else
+            } else {
                 BuildDisplay();
+            }
+            if (_cursorPos != null) {
+                _cursorPos.Dispose();
+                _cursorPos = null;
+            } else {
+                BuildCursorPosTooltip();
+            }
+        }
+
+        private void BuildCursorPosTooltip()
+        {
+            _cursorPos?.Dispose();
+            _cursorPos = new Label()
+            {
+                Parent = Graphics.SpriteScreen,
+                Size = new Point(130, 20),
+                StrokeText = true,
+                ShowShadow = true,
+                Location = new Point(Input.Mouse.Position.X, Input.Mouse.Position.Y),
+                VerticalAlignment = VerticalAlignment.Top,
+                ZIndex = -9999
+            };
+            Input.Mouse.RightMouseButtonPressed += OnRightMouseButtonPressed;
+            Input.Mouse.RightMouseButtonReleased += OnRightMouseButtonReleased;
+            _cursorPos.Disposed += (o, e) =>
+            {
+                Input.Mouse.RightMouseButtonPressed -= OnRightMouseButtonPressed;
+                Input.Mouse.RightMouseButtonReleased -= OnRightMouseButtonReleased;
+            };
+        }
+
+        private void OnRightMouseButtonPressed(object o, MouseEventArgs e)
+        {
+            if (_cursorPos == null) return;
+            _cursorPos.TextColor = new Color(250, 250, 148);
+        }
+
+        private void OnRightMouseButtonReleased(object o, MouseEventArgs e)
+        {
+            if (_cursorPos == null) return;
+            _cursorPos.TextColor = Color.White;
+            ClipboardUtil.WindowsClipboardService.SetTextAsync(_cursorPos.Text);
+            ScreenNotification.ShowNotification("Copied!");
         }
 
         private void BuildDisplay() {
@@ -185,6 +234,7 @@ namespace Nekres.Mumble_Info_Module
         /// <inheritdoc />
         protected override void Unload() {
             _dataPanel?.Dispose();
+            _cursorPos?.Dispose();
             _ramCounter?.Close();
             _ramCounter?.Dispose();
             _cpuCounter?.Close();

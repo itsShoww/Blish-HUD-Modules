@@ -7,7 +7,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 using System;
-using System.Runtime.InteropServices;
 using static Blish_HUD.GameService;
 using Color = Microsoft.Xna.Framework.Color;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
@@ -38,19 +37,6 @@ namespace Nekres.Mumble_Info_Module
         private readonly Color _softYellow  = new Color(250, 250, 148);
         private readonly Color _borderColor = Color.AntiqueWhite;
         private readonly Color _clickColor  = Color.AliceBlue;
-
-        #endregion
-
-        #region PInvoke
-
-            [DllImport("USER32.dll")]
-            private static extern short GetKeyState(uint vk);
-            private bool IsPressed(uint key){
-                return Convert.ToBoolean(GetKeyState(key) & KEY_PRESSED);
-            }
-            private const uint KEY_PRESSED = 0x8000;
-            private const uint VK_LCONTROL = 0xA2;
-            private const uint VK_LSHIFT = 0xA0;
 
         #endregion
 
@@ -89,9 +75,7 @@ namespace Nekres.Mumble_Info_Module
             Disposed += OnDisposed;
 
             Input.Mouse.LeftMouseButtonReleased += OnLeftMouseButtonReleased;
-            Input.Mouse.RightMouseButtonReleased += OnRightMouseButtonReleased;
             Input.Mouse.LeftMouseButtonPressed += OnMousePressed;
-            Input.Mouse.RightMouseButtonPressed += OnMousePressed;
         }
 
         private void OnLeftMouseButtonReleased(object o, MouseEventArgs e) {
@@ -114,23 +98,17 @@ namespace Nekres.Mumble_Info_Module
             } else if (_userInterfaceInfo.Item2) {
                 ClipboardUtil.WindowsClipboardService.SetTextAsync(_userInterfaceInfo.Item1);
                 ScreenNotification.ShowNotification(_clipboardMessage);
-            }
-        }
-        private void OnRightMouseButtonReleased(object o, MouseEventArgs e) {
-            _isMousePressed = false;
-            if (_computerInfo.Item2) {
+            } else if (_computerInfo.Item2) {
                 ClipboardUtil.WindowsClipboardService.SetTextAsync(_computerInfo.Item1);
                 ScreenNotification.ShowNotification(_clipboardMessage);
             }
         }
         private void OnMousePressed(object o, MouseEventArgs e) => _isMousePressed = true;
 
-        protected override CaptureType CapturesInput() => _captureMouseOnLCtrl && IsPressed(VK_LCONTROL) ? CaptureType.Mouse : CaptureType.ForceNone;
+        protected override CaptureType CapturesInput() => _captureMouseOnLCtrl && PInvoke.IsLControlPressed() ? CaptureType.Mouse : CaptureType.ForceNone;
         private void OnDisposed(object sender, EventArgs e) {
-            Input.Mouse.LeftMouseButtonReleased -= OnLeftMouseButtonReleased; 
-            Input.Mouse.RightMouseButtonReleased -= OnRightMouseButtonReleased;
+            Input.Mouse.LeftMouseButtonReleased -= OnLeftMouseButtonReleased;
             Input.Mouse.LeftMouseButtonPressed -= OnMousePressed;
-            Input.Mouse.RightMouseButtonPressed -= OnMousePressed;
         }
 
         private void UpdateLocation(object sender, EventArgs e) => Location = new Point(0, 0);
@@ -141,7 +119,7 @@ namespace Nekres.Mumble_Info_Module
             const HorizontalAlignment left = HorizontalAlignment.Left;
             const VerticalAlignment top = VerticalAlignment.Top;
 
-            var togglePressed = IsPressed(VK_LCONTROL);
+            var togglePressed = PInvoke.IsLControlPressed();
 
             var calcTopMargin = _topMargin;
             var calcLeftMargin = _leftMargin;
