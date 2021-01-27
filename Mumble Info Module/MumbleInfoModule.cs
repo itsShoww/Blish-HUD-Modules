@@ -138,7 +138,7 @@ namespace Nekres.Mumble_Info_Module
         }
 
         private void OnToggleInfoBindingActivated(object o, EventArgs e) {
-            if (!GameIntegration.Gw2IsRunning) return;
+            if (!GameIntegration.Gw2IsRunning || Gw2Mumble.UI.IsTextInputFocused) return;
             if (_dataPanel != null) {
                 _dataPanel.Dispose();
                 _dataPanel = null;
