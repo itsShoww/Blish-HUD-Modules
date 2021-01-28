@@ -5,7 +5,7 @@
   "package": "MumbleInfo.dll",
   "manifest_version": 1,
 
-  "description": "Shows real time mumble link data.\n\nHold [Left Control] to show unformatted values.\nUse [Left Click] to copy infos.\nUse [Right Click] to copy cursor position (relative to UI scale).",
+  "description": "Shows real time mumble link data and more.\n\nHold [Left Control] to show unformatted values.\nUse [Left Click] to copy infos.",
   "dependencies": {
     "bh.blishhud": ">=0.7.0"
   },

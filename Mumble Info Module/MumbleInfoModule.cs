@@ -9,12 +9,11 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.ComponentModel.Composition;
+using System.Configuration;
 using System.Diagnostics;
 using System.Management;
 using System.Threading.Tasks;
 using static Blish_HUD.GameService;
-using Color = Microsoft.Xna.Framework.Color;
-
 namespace Nekres.Mumble_Info_Module
 {
     [Export(typeof(Module))]
@@ -39,7 +38,7 @@ namespace Nekres.Mumble_Info_Module
 
         private SettingEntry<KeyBinding> _toggleInfoBinding;
         internal SettingEntry<bool>      CaptureMouseOnLCtrl { get; private set; }
-
+        private SettingEntry<bool>       _showCursorPosition;
         #endregion
 
         public Map            CurrentMap  { get; private set; }
@@ -53,12 +52,14 @@ namespace Nekres.Mumble_Info_Module
         private PerformanceCounter _ramCounter;
         private PerformanceCounter _cpuCounter;
         private DateTime           _timeOutPc;
+        private DateTime           _timeOutCursorPos;
 
         protected override void DefineSettings(SettingCollection settings) {
             _toggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.OemPlus),
-                "Toggle Mumble Data", "Toggles the display of mumble data.");
+                "Toggle display", "Toggles the display of data.");
             CaptureMouseOnLCtrl = settings.DefineSetting("ForceInterceptMouseOnCtrl", true, 
                 "Capture mouse on [Left Control]", "Whether the mouse should be intercepted forcibly while [Left Control] is pressed.");
+            _showCursorPosition = settings.DefineSetting("ShowCursorPosition", false,"Show cursor position","Whether the cursor's current interface-relative position should be displayed.\nUse [Right Click] to copy it.");
         }
 
         protected override void Initialize() {
@@ -73,18 +74,13 @@ namespace Nekres.Mumble_Info_Module
 
         protected override void Update(GameTime gameTime) {
             UpdateCounter();
-            if (_cursorPos != null)
-            {
-                _cursorPos.Text = PInvoke.IsLControlPressed() ? 
-                                  $"X: {Input.Mouse.Position.X - Graphics.SpriteScreen.Width / 2}, Y: {Math.Abs(Input.Mouse.Position.Y - Graphics.SpriteScreen.Height)}" :
-                                  $"X: {Input.Mouse.Position.X}, Y: {Input.Mouse.Position.Y}";
-                _cursorPos.Location = new Point(Input.Mouse.Position.X + 50, Input.Mouse.Position.Y);
-            }
+            UpdateCursorPos();
         }
 
         protected override void OnModuleLoaded(EventArgs e) {
             _toggleInfoBinding.Value.Enabled = true;
             _toggleInfoBinding.Value.Activated += OnToggleInfoBindingActivated;
+            _showCursorPosition.SettingChanged += OnShowCursorPositionSettingChanged;
             Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
             Gw2Mumble.PlayerCharacter.SpecializationChanged += OnSpecializationChanged;
             GameIntegration.Gw2Closed += OnGw2Closed;
@@ -143,6 +139,15 @@ namespace Nekres.Mumble_Info_Module
             CpuUsage = _cpuCounter.NextValue() / Environment.ProcessorCount;
         }
 
+        private void UpdateCursorPos()
+        {
+            if (!GameIntegration.Gw2IsRunning || _cursorPos == null || DateTime.Now < _timeOutCursorPos) return;
+            _cursorPos.Text = PInvoke.IsLControlPressed() ? 
+                $"X: {Input.Mouse.Position.X - Graphics.SpriteScreen.Width / 2}, Y: {Math.Abs(Input.Mouse.Position.Y - Graphics.SpriteScreen.Height)}" :
+                $"X: {Input.Mouse.Position.X}, Y: {Input.Mouse.Position.Y}";
+            _cursorPos.Location = new Point(Input.Mouse.Position.X + 50, Input.Mouse.Position.Y);
+        }
+
         private void OnToggleInfoBindingActivated(object o, EventArgs e) {
             if (!GameIntegration.Gw2IsRunning || Gw2Mumble.UI.IsTextInputFocused) return;
             if (_dataPanel != null) {
@@ -159,8 +164,17 @@ namespace Nekres.Mumble_Info_Module
             }
         }
 
+        private void OnShowCursorPositionSettingChanged(object o, ValueChangedEventArgs<bool> e)
+        {
+            if (!e.NewValue)
+                _cursorPos?.Dispose();
+            else if (_dataPanel != null)
+                BuildCursorPosTooltip();
+        }
+
         private void BuildCursorPosTooltip()
         {
+            if (!_showCursorPosition.Value) return;
             _cursorPos?.Dispose();
             _cursorPos = new Label()
             {
@@ -172,25 +186,36 @@ namespace Nekres.Mumble_Info_Module
                 VerticalAlignment = VerticalAlignment.Top,
                 ZIndex = -9999
             };
-            Input.Mouse.RightMouseButtonPressed += OnRightMouseButtonPressed;
+            Input.Mouse.RightMouseButtonPressed += OnMouseButtonPressed;
+            Input.Mouse.LeftMouseButtonPressed += OnMouseButtonPressed;
+            Input.Mouse.LeftMouseButtonReleased += OnLeftMouseButtonReleased;
             Input.Mouse.RightMouseButtonReleased += OnRightMouseButtonReleased;
             _cursorPos.Disposed += (o, e) =>
             {
-                Input.Mouse.RightMouseButtonPressed -= OnRightMouseButtonPressed;
+                Input.Mouse.RightMouseButtonPressed -= OnMouseButtonPressed;
+                Input.Mouse.LeftMouseButtonPressed -= OnMouseButtonPressed;
                 Input.Mouse.RightMouseButtonReleased -= OnRightMouseButtonReleased;
+                Input.Mouse.LeftMouseButtonReleased -= OnLeftMouseButtonReleased;
             };
         }
 
-        private void OnRightMouseButtonPressed(object o, MouseEventArgs e)
+        private void OnMouseButtonPressed(object o, MouseEventArgs e)
         {
             if (_cursorPos == null) return;
-            _cursorPos.TextColor = new Color(250, 250, 148);
+            _cursorPos.Hide();
+            _timeOutCursorPos = DateTime.Now.AddMilliseconds(250);
+        }
+
+        private void OnLeftMouseButtonReleased(object o, MouseEventArgs e)
+        {
+            if (_cursorPos == null || Input.Mouse.State.RightButton.Equals(1)) return;
+            _cursorPos.Show();
         }
 
         private void OnRightMouseButtonReleased(object o, MouseEventArgs e)
         {
-            if (_cursorPos == null) return;
-            _cursorPos.TextColor = Color.White;
+            if (_cursorPos == null || Input.Mouse.State.LeftButton.Equals(1)) return;
+            _cursorPos.Show();
             ClipboardUtil.WindowsClipboardService.SetTextAsync(_cursorPos.Text);
             ScreenNotification.ShowNotification("Copied!");
         }
