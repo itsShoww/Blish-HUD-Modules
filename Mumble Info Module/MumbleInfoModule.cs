@@ -14,6 +14,8 @@ using System.Diagnostics;
 using System.Management;
 using System.Threading.Tasks;
 using static Blish_HUD.GameService;
+using Color = Microsoft.Xna.Framework.Color;
+
 namespace Nekres.Mumble_Info_Module
 {
     [Export(typeof(Module))]
@@ -52,14 +54,13 @@ namespace Nekres.Mumble_Info_Module
         private PerformanceCounter _ramCounter;
         private PerformanceCounter _cpuCounter;
         private DateTime           _timeOutPc;
-        private DateTime           _timeOutCursorPos;
 
         protected override void DefineSettings(SettingCollection settings) {
             _toggleInfoBinding = settings.DefineSetting("ToggleInfoBinding", new KeyBinding(Keys.OemPlus),
                 "Toggle display", "Toggles the display of data.");
             CaptureMouseOnLCtrl = settings.DefineSetting("ForceInterceptMouseOnCtrl", true, 
                 "Capture mouse on [Left Control]", "Whether the mouse should be intercepted forcibly while [Left Control] is pressed.");
-            _showCursorPosition = settings.DefineSetting("ShowCursorPosition", false,"Show cursor position","Whether the cursor's current interface-relative position should be displayed.\nUse [Right Click] to copy it.");
+            _showCursorPosition = settings.DefineSetting("ShowCursorPosition", false,"Show cursor position","Whether the cursor's current interface-relative position should be displayed.\nUse [Left Alt] to copy it.");
         }
 
         protected override void Initialize() {
@@ -141,7 +142,8 @@ namespace Nekres.Mumble_Info_Module
 
         private void UpdateCursorPos()
         {
-            if (!GameIntegration.Gw2IsRunning || _cursorPos == null || DateTime.Now < _timeOutCursorPos) return;
+            if (!GameIntegration.Gw2IsRunning || _cursorPos == null) return;
+            _cursorPos.Visible = !Input.Mouse.CameraDragging;
             _cursorPos.Text = PInvoke.IsLControlPressed() ? 
                 $"X: {Input.Mouse.Position.X - Graphics.SpriteScreen.Width / 2}, Y: {Math.Abs(Input.Mouse.Position.Y - Graphics.SpriteScreen.Height)}" :
                 $"X: {Input.Mouse.Position.X}, Y: {Input.Mouse.Position.Y}";
@@ -186,36 +188,25 @@ namespace Nekres.Mumble_Info_Module
                 VerticalAlignment = VerticalAlignment.Top,
                 ZIndex = -9999
             };
-            Input.Mouse.RightMouseButtonPressed += OnMouseButtonPressed;
-            Input.Mouse.LeftMouseButtonPressed += OnMouseButtonPressed;
-            Input.Mouse.LeftMouseButtonReleased += OnLeftMouseButtonReleased;
-            Input.Mouse.RightMouseButtonReleased += OnRightMouseButtonReleased;
+            Input.Keyboard.KeyPressed += OnKeyPressed;
+            Input.Keyboard.KeyReleased += OnKeyReleased;
             _cursorPos.Disposed += (o, e) =>
             {
-                Input.Mouse.RightMouseButtonPressed -= OnMouseButtonPressed;
-                Input.Mouse.LeftMouseButtonPressed -= OnMouseButtonPressed;
-                Input.Mouse.RightMouseButtonReleased -= OnRightMouseButtonReleased;
-                Input.Mouse.LeftMouseButtonReleased -= OnLeftMouseButtonReleased;
+                Input.Keyboard.KeyPressed -= OnKeyPressed;
+                Input.Keyboard.KeyReleased -= OnKeyReleased;
             };
         }
 
-        private void OnMouseButtonPressed(object o, MouseEventArgs e)
+        private void OnKeyPressed(object o, KeyboardEventArgs e)
         {
-            if (_cursorPos == null) return;
-            _cursorPos.Hide();
-            _timeOutCursorPos = DateTime.Now.AddMilliseconds(250);
+            if (_cursorPos == null || Input.Mouse.CameraDragging || e.Key != Keys.LeftAlt) return;
+            _cursorPos.TextColor = new Color(252, 252, 84);
         }
 
-        private void OnLeftMouseButtonReleased(object o, MouseEventArgs e)
+        private void OnKeyReleased(object o, KeyboardEventArgs e)
         {
-            if (_cursorPos == null || Input.Mouse.State.RightButton.Equals(1)) return;
-            _cursorPos.Show();
-        }
-
-        private void OnRightMouseButtonReleased(object o, MouseEventArgs e)
-        {
-            if (_cursorPos == null || Input.Mouse.State.LeftButton.Equals(1)) return;
-            _cursorPos.Show();
+            if (_cursorPos == null || Input.Mouse.CameraDragging || e.Key != Keys.LeftAlt) return;
+            _cursorPos.TextColor = Color.White;
             ClipboardUtil.WindowsClipboardService.SetTextAsync(_cursorPos.Text);
             ScreenNotification.ShowNotification("Copied!");
         }
