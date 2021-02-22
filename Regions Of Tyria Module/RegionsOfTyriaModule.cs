@@ -2,14 +2,13 @@
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using Blish_HUD.Settings;
-using Gw2Sharp.Models;
 using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
 using Nekres.Regions_Of_Tyria.Controls;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
 using static Blish_HUD.GameService;
 namespace Nekres.Regions_Of_Tyria
@@ -41,6 +40,7 @@ namespace Nekres.Regions_Of_Tyria
 
         private bool _isDisposing;
 
+        private const int _notificationDelayMs = 2000;
         private Map _currentMap;
         private HashSet<ContinentFloorRegionMapSector> _currentSectors;
 
@@ -56,9 +56,9 @@ namespace Nekres.Regions_Of_Tyria
         }
 
         /*protected override void Initialize() {
-        }*/
+        }
 
-        /*protected override void Update(GameTime gameTime) {
+        protected override void Update(GameTime gameTime) {
         }*/
 
         protected override void OnModuleLoaded(EventArgs e) {
@@ -113,7 +113,7 @@ namespace Nekres.Regions_Of_Tyria
                     foreach (var floor in result.Floors) {
                         sectors.UnionWith(await RequestSectorsForFloor(result.ContinentId, floor, result.RegionId, result.Id));
                     }
-                    _currentSectors = sectors;
+                    _currentSectors = sectors.DistinctBy(x => x.Id).ToHashSet();
                     _currentMap = result;
                 });
         }
@@ -128,31 +128,42 @@ namespace Nekres.Regions_Of_Tyria
         }
 
         private void StartSectorTask() {
-            new Task(() => {
+            new Task(async () => {
                 // Check in which sector the player is.
-                ContinentFloorRegionMapSector currentSector = null;
+                ContinentFloorRegionMapSector prevSector = null;
                 while (!_isDisposing) {
                     if (!ToggleSectorNotificationSetting.Value || !GameIntegration.IsInGame || _currentMap == null || _currentMap.Id != Gw2Mumble.CurrentMap.Id) continue;
                     
                     //var currentFloor = Gw2Mumble.      Not enough data exposed to calculate floor.
                     //var sectors = _currentSectors[currentFloor]
+                    //Note: overlapCount can be removed once current sector is determinable by current floor.
 
                     // Check for sector change.
-                    ContinentFloorRegionMapSector tempSector = null;
+                    ContinentFloorRegionMapSector currentSector = null;
+                    var overlapCount = 0;
                     foreach (var sector in _currentSectors) {
-                        var overlapCount = 0;
                         var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, _currentMap.MapRect, _currentMap.ContinentRect).SwapYZ();
                         if (ConvexHullUtil.InBounds(playerLocation.ToPlane(), sector.Bounds)) {
                             overlapCount++;
                             if (overlapCount == 1)
-                                tempSector = sector;
+                                currentSector = sector;
                         }
                     }
-                    // Display the name of the area when player enters.
-                    if (tempSector != null && !tempSector.Equals(currentSector)) {
-                        currentSector = tempSector;
-                        MapNotification.ShowNotification(_currentMap.Name, currentSector.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
-                    }
+                    
+                    if (overlapCount > 2 || currentSector == null || currentSector.Equals(prevSector))
+                        continue;
+                    prevSector = currentSector;
+                    
+                    await Task.Delay(_notificationDelayMs).ContinueWith(o =>
+                    {
+                        // ReSharper disable once AccessToModifiedClosure
+                        if (currentSector == null || !currentSector.Equals(prevSector)) 
+                            return;
+                        // Display the name of the area when player enters.
+                        MapNotification.ShowNotification(_currentMap.Name, currentSector.Name, null, _showDuration,
+                            _fadeInDuration, _fadeOutDuration);
+                        prevSector = currentSector;
+                    });
                 }
             }).Start();
         }

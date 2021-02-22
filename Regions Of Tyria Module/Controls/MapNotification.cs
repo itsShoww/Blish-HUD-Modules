@@ -1,10 +1,8 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
-using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Blish_HUD.GameService;

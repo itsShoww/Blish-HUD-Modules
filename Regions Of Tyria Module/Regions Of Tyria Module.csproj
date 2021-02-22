@@ -69,6 +69,7 @@
     <Compile Include="Utils\ConvexHullUtil.cs" />
     <Compile Include="RegionsOfTyriaModule.cs" />
     <Compile Include="_Extensions\Coordinates3Extensions.cs" />
+    <Compile Include="_Extensions\IEnumerableExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Blish HUD">
