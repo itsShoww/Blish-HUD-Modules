@@ -1,0 +1,63 @@
+{
+    "raptor": [
+        {
+            "mapId": -1,
+            "dayTime": "none",
+            "uri": "https://youtu.be/RHpn-o9n-cs"
+        }
+    ],
+    "springer": [
+        {
+            "mapId": -1,
+            "dayTime": "none",
+            "uri": ""
+        }
+    ],
+    "skimmer": [        
+        {
+            "mapId": -1,
+            "dayTime": "none",
+            "uri": "https://www.youtube.com/watch?v=YSRbX9bztpk"
+        }
+    ],
+    "jackal": [
+        {
+            "mapId": -1,
+            "dayTime": "none",
+            "uri": ""
+        }
+    ],
+    "griffon": [
+        {
+            "mapId": -1,
+            "dayTime": "none",
+            "uri": "https://www.youtube.com/watch?v=VuMg1QCVEMQ"
+        }
+    ],
+    "rollerbeetle": [
+        {
+            "mapId": -1,
+            "dayTime": "none",
+            "uri": "https://www.youtube.com/watch?v=QStpxxmT3w0"
+        },
+        {
+            "mapId": -1,
+            "dayTime": "night",
+            "uri": "https://www.youtube.com/watch?v=AITy2BsJE_Q"
+        }
+    ],
+    "warclaw": [
+        {
+            "mapId": -1,
+            "dayTime": "none",
+            "uri": ""
+        }
+    ],
+    "skyscale": [
+        {
+            "mapId": -1,
+            "dayTime": "none",
+            "uri": "https://www.youtube.com/watch?v=xpICPVckkrg"
+        }
+    ]
+}
