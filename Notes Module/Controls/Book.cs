@@ -23,8 +23,8 @@ namespace Nekres.Notes_Module.Controls
         private Rectangle _rightButtonBounds;
         private Rectangle _titleBounds;
 
-        private bool MouseOverTurnPageLeft;
-        private bool MouseOverTurnPageRight;
+        private bool _mouseOverTurnPageLeft;
+        private bool _mouseOverTurnPageRight;
 
         private List<Page> Pages = new List<Page>();
 
@@ -85,9 +85,8 @@ namespace Nekres.Notes_Module.Controls
         }
         protected override void OnChildAdded(ChildChangedEventArgs e)
         {
-            if (e.ChangedChild is Page && !Pages.Any(x => x.Equals((Page)e.ChangedChild)))
+            if (e.ChangedChild is Page page && !Pages.Any(x => x.Equals((Page)e.ChangedChild)))
             {
-                Page page = (Page)e.ChangedChild;
                 page.Size = PointExtensions.ResizeKeepAspect(page.Size, ContentRegion.Width - RIGHT_PADDING, ContentRegion.Height - TOP_PADDING, true);
                 page.Location = new Point((ContentRegion.Width - page.Size.X) / 2, (ContentRegion.Height - page.Size.Y) / 2 + SHEET_OFFSET_Y);
                 page.PageNumber = Pages.Count + 1;
@@ -101,20 +100,20 @@ namespace Nekres.Notes_Module.Controls
         }
         protected override void OnMouseMoved(MouseEventArgs e)
         {
-            var relPos = this.RelativeMousePosition;
+            var relPos = RelativeMousePosition;
 
-            this.MouseOverTurnPageLeft = _leftButtonBounds.Contains(relPos);
-            this.MouseOverTurnPageRight = _rightButtonBounds.Contains(relPos);
+            _mouseOverTurnPageLeft = _leftButtonBounds.Contains(relPos);
+            _mouseOverTurnPageRight = _rightButtonBounds.Contains(relPos);
 
             base.OnMouseMoved(e);
         }
         protected override void OnLeftMouseButtonPressed(MouseEventArgs e)
         {
-            if (this.MouseOverTurnPageLeft)
+            if (_mouseOverTurnPageLeft)
             {
                 TurnPage(Pages.IndexOf(CurrentPage) - 1);
             }
-            else if (this.MouseOverTurnPageRight)
+            else if (_mouseOverTurnPageRight)
             {
                 TurnPage(Pages.IndexOf(CurrentPage) + 1);
             }
@@ -123,7 +122,7 @@ namespace Nekres.Notes_Module.Controls
         }
         private void TurnPage(int index)
         {
-            if (index < Pages.Count && index >= 0)
+            if (index >= 0 && index < Pages.Count)
             {
                 // TODO: Add gw2's book sounds: turn page
                 CurrentPage = Pages[index];
@@ -144,7 +143,7 @@ namespace Nekres.Notes_Module.Controls
             spriteBatch.DrawStringOnCtrl(this, _title, TitleFont, _titleBounds, Color.White, false, HorizontalAlignment.Left, VerticalAlignment.Top);
 
             // Draw turn page buttons
-            if (!MouseOverTurnPageLeft)
+            if (!_mouseOverTurnPageLeft)
             {
                 spriteBatch.DrawOnCtrl(this, TurnPageSprite, _leftButtonBounds, TurnPageSprite.Bounds, new Color(155, 155, 155, 155), 0, Vector2.Zero, SpriteEffects.FlipHorizontally);
             }
@@ -153,7 +152,7 @@ namespace Nekres.Notes_Module.Controls
                 spriteBatch.DrawOnCtrl(this, TurnPageSprite, _leftButtonBounds, TurnPageSprite.Bounds, Color.White, 0, Vector2.Zero, SpriteEffects.FlipHorizontally);
             }
 
-            if (!MouseOverTurnPageRight)
+            if (!_mouseOverTurnPageRight)
             {
                 spriteBatch.DrawOnCtrl(this, TurnPageSprite, _rightButtonBounds, TurnPageSprite.Bounds, new Color(155, 155, 155, 155));
             }
