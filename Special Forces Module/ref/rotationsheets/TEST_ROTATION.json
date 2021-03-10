@@ -1,0 +1,14 @@
+{
+  "title": "TEST_ROTATION",
+  "patch": "2020-02-25T00:00:00",
+  "template": "[&DQg1KTIlIjabAJsAgQCBAEABcwF1AXUBlQCVAAAAAAAAAAAAAAAAAAAAAAA=]",
+  "rotation": {
+    "opener": "F1 F2 F3 F4 F5 special",
+    "loop": "swap 1 2 3 4 5 6 7 8 9 0"
+  },
+  "utilitykeys": [
+    1,
+    2,
+    3
+  ]
+}
