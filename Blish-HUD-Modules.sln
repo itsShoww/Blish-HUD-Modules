@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music Mixer Module", "Music
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Regions Of Tyria Module", "Regions Of Tyria Module\Regions Of Tyria Module.csproj", "{6060ACE7-6392-4C1D-8398-2A9FFCD77982}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KillProof Module", "Kill Proof Module\KillProof Module.csproj", "{8F3A7927-2A57-469B-956C-778C2A8D575F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,12 @@ Global
 		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Release|Any CPU.ActiveCfg = Release|x64
 		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Release|x64.ActiveCfg = Release|x64
 		{6060ACE7-6392-4C1D-8398-2A9FFCD77982}.Release|x64.Build.0 = Release|x64
+		{8F3A7927-2A57-469B-956C-778C2A8D575F}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{8F3A7927-2A57-469B-956C-778C2A8D575F}.Debug|x64.ActiveCfg = Debug|x64
+		{8F3A7927-2A57-469B-956C-778C2A8D575F}.Debug|x64.Build.0 = Debug|x64
+		{8F3A7927-2A57-469B-956C-778C2A8D575F}.Release|Any CPU.ActiveCfg = Release|x64
+		{8F3A7927-2A57-469B-956C-778C2A8D575F}.Release|x64.ActiveCfg = Release|x64
+		{8F3A7927-2A57-469B-956C-778C2A8D575F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

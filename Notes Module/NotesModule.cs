@@ -47,6 +47,23 @@ namespace Nekres.Notes_Module
                 Icon = _icon64,
                 Priority = Name.GetHashCode()
             };
+            moduleCornerIcon.Click += (o, e) =>
+            {
+                var book = new Nekres.Notes_Module.Controls.Book(ContentsManager)
+                {
+                    Parent = GameService.Graphics.SpriteScreen,
+                    Title = "Test Book",
+                    Location = new Point(100, 100),
+                    Size = new Point(680, 800)
+                };
+                book.Show();
+                var page = new Nekres.Notes_Module.Controls.Page()
+                {
+                    Parent = book,
+                    Text = "hahahahah",
+                    PageNumber = 1
+                };
+            };
         }
 
         private void LoadTextures()

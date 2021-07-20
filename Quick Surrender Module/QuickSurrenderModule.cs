@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Runtime.InteropServices;
 using static Blish_HUD.GameService;
@@ -20,7 +21,7 @@ namespace Nekres.Quick_Surrender_Module
     [Export(typeof(Module))]
     public class QuickSurrenderModule : Module
     {
-        //private static readonly Logger Logger = Logger.GetLogger(typeof(QuickSurrenderModule));
+        private static readonly Logger Logger = Logger.GetLogger(typeof(QuickSurrenderModule));
 
         internal static QuickSurrenderModule ModuleInstance;
 
@@ -38,9 +39,12 @@ namespace Nekres.Quick_Surrender_Module
             SurrenderButtonEnabled = settings.DefineSetting("SurrenderButtonEnabled", true, "Show Surrender Skill",
                 "Shows a skill with a white flag to the right of\nyour skill bar while in an instance. Clicking it defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
 
-            //var keyBindingCol = settings.AddSubCollection("Hotkey", true, false);
-            SurrenderBinding = settings.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.OemPeriod),
-                "Surrender Hotkey", "Defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
+            SurrenderPing = settings.DefineSetting("SurrenderButtonPing", Ping.GG, "Chat Display",
+                "Determines how the surrender skill is displayed in chat using [Ctrl]/[Left Shift] + [Left Mouse].");
+
+            var keyBindingCol = settings.AddSubCollection("Hotkey", true, false);
+            SurrenderBinding = keyBindingCol.DefineSetting("SurrenderButtonKey", new KeyBinding(Keys.OemPeriod),
+                "Surrender", "Defeats you.\n(Sends \"/gg\" into chat when in supported modes.)");
         }
 
         #region PInvoke
@@ -75,21 +79,48 @@ namespace Nekres.Quick_Surrender_Module
 
         private SettingEntry<bool> SurrenderButtonEnabled;
         private SettingEntry<KeyBinding> SurrenderBinding;
+        private SettingEntry<Ping> SurrenderPing;
 
         #endregion
 
         private DateTime _lastSurrenderTime;
-        private int _cooldown; //in milliseconds
-        private int _skillId; //used when pinging the surrender skill with [Ctrl] + [LeftMouse].
+        private int _cooldownMs;
+
+        private enum Ping
+        {
+            GG,
+            FF,
+            QQ,
+            Resign,
+            Surrender,
+            Forfeit,
+            Concede,
+            Aufgeben,
+            Rendirse,
+            Capitular,
+        }
+
+        private Dictionary<Ping, string> _pingMap;
 
         protected override void Initialize() {
             LoadTextures();
 
-            _lastSurrenderTime = DateTime.Now;
-            _cooldown = 2000;
-            _skillId = 50347;
+            _pingMap = new Dictionary<Ping, string>
+            {
+                {Ping.GG, "[/gg]"},
+                {Ping.FF, "[/ff]"},
+                {Ping.QQ, "[/qq]"},
+                {Ping.Resign, "[/resign]"},
+                {Ping.Surrender, "[/surrender]"},
+                {Ping.Forfeit, "[/forfeit]"},
+                {Ping.Concede, "[/concede]"},
+                {Ping.Aufgeben, "[/aufgeben]"},
+                {Ping.Rendirse, "[/rendirse]"},
+                {Ping.Capitular, "[/capitular]"}
+            };
 
-            BuildSurrenderButton();
+            _lastSurrenderTime = DateTime.Now;
+            _cooldownMs = 2000;
         }
 
 
@@ -108,6 +139,8 @@ namespace Nekres.Quick_Surrender_Module
 
             Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
             GameIntegration.IsInGameChanged += OnIsInGameChanged;
+
+            BuildSurrenderButton();
 
             // Base handler must be called
             base.OnModuleLoaded(e);
@@ -136,7 +169,7 @@ namespace Nekres.Quick_Surrender_Module
 
         private void DoSurrender() {
             if (!IsUiAvailable() || Gw2Mumble.UI.IsTextInputFocused || Gw2Mumble.CurrentMap.Type != MapType.Instance) return;
-            if (DateTimeOffset.Now.Subtract(_lastSurrenderTime).TotalMilliseconds < _cooldown) {
+            if (DateTimeOffset.Now.Subtract(_lastSurrenderTime).TotalMilliseconds < _cooldownMs) {
                 ScreenNotification.ShowNotification("Skill recharging.", ScreenNotification.NotificationType.Error);
                 return;
             }
@@ -167,10 +200,10 @@ namespace Nekres.Quick_Surrender_Module
 
             if (!SurrenderButtonEnabled.Value || !IsUiAvailable() || Gw2Mumble.CurrentMap.Type != MapType.Instance) return;
 
-            var tooltip_size = new Point(_surrenderTooltip_texture.Width, _surrenderTooltip_texture.Height);
+            var tooltipSize = new Point(_surrenderTooltip_texture.Width, _surrenderTooltip_texture.Height);
             var surrenderButtonTooltip = new Tooltip
             {
-                Size = tooltip_size
+                Size = tooltipSize
             };
             var surrenderButtonTooltipImage = new Image(_surrenderTooltip_texture)
             {
@@ -203,22 +236,11 @@ namespace Nekres.Quick_Surrender_Module
                 _surrenderButton.Texture = _surrenderFlag;
             };
 
-            _surrenderButton.RightMouseButtonPressed += delegate (object o, MouseEventArgs e) {
-                _surrenderButton.Size = new Point(43, 43);
-                _surrenderButton.Texture = _surrenderFlag_pressed;
-            };
-
-            _surrenderButton.RightMouseButtonReleased += delegate
-            {
-                _surrenderButton.Size = new Point(45, 45);
-                _surrenderButton.Texture = _surrenderFlag;
-
-                GameIntegration.Chat.Send(" /gg");
-            };
-
             _surrenderButton.Click += delegate (object o, MouseEventArgs e) {
                 if (IsPressed(VK_LCONTROL))
-                    GameIntegration.Chat.Send(new SkillChatLink(){ SkillId = _skillId }.ToString());
+                    GameIntegration.Chat.Send(_pingMap[SurrenderPing.Value]);
+                else if (IsPressed(VK_LSHIFT))
+                    GameIntegration.Chat.Paste(_pingMap[SurrenderPing.Value]);
                 else
                     OnSurrenderBindingActivated(o, e);
             };

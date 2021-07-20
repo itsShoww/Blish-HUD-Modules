@@ -7,40 +7,26 @@ using MonoGame.Extended.BitmapFonts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Blish_HUD.Modules.Managers;
+using Nekres.Notes_Module.Effects;
 
 namespace Nekres.Notes_Module.Controls
 {
-    public class Book : Container
+public class Book : BasicWindow
     {
+        // TODO: Maybe add gw2's book sounds (opens, turn page)
+        // TODO: Title background texture from the original.
         private readonly BitmapFont TitleFont = GameService.Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size32, ContentService.FontStyle.Regular);
         private readonly Texture2D TurnPageSprite;
 
         private static int RIGHT_PADDING = 150;
-        private static int TOP_PADDING = 100;
-        private static int SHEET_OFFSET_Y = 20;
+        private static int TOP_PADDING = 120;
+        private static int SHEET_OFFSET = 20;
 
-        private Rectangle _leftButtonBounds;
-        private Rectangle _rightButtonBounds;
-        private Rectangle _titleBounds;
-
-        private bool _mouseOverTurnPageLeft;
-        private bool _mouseOverTurnPageRight;
+        private bool MouseOverTurnPageLeft;
+        private bool MouseOverTurnPageRight;
 
         private List<Page> Pages = new List<Page>();
-
-        private string _title = "No Title";
-        /// <summary>
-        /// Sets the title of this book.
-        /// </summary>
-        public string Title
-        {
-            get => _title;
-            set
-            {
-                if (value.Equals(_title)) return;
-                SetProperty(ref _title, value, true);
-            }
-        }
         /// <summary>
         /// The currently open page of this book.
         /// </summary>
@@ -48,47 +34,46 @@ namespace Nekres.Notes_Module.Controls
         /// <summary>
         /// Creates a panel that should act as Parent for Page controls to create a book UI.
         /// </summary>
-        public Book()
+        /// <param name="scale">Scale size to keep the sheet's aspect ratio.</param>
+        public Book(ContentsManager contentsManager, int scale = 1) : base(
+            contentsManager.GetTexture("1909321.png").Duplicate().GetRegion(0, 20, 680, 800),
+            new Vector2(30, 15),
+            new Rectangle(0, 25, 625, 800),
+            new Thickness(0, 0, 0, 26),
+            45,
+            true)
         {
+            Title = "";
             TurnPageSprite = TurnPageSprite ?? GameService.Content.GetTexture("1909317");
+            this.SpriteBatchParameters = new SpriteBatchParameters(SpriteSortMode.Immediate,
+                BlendState.Additive,
+                null,
+                null,
+                null,
+                AlphaMaskEffect.SharedInstance);
+            OnResized(null);
         }
         protected override void OnResized(ResizedEventArgs e)
         {
-            ContentRegion = new Rectangle(0, 0, e.CurrentSize.X, e.CurrentSize.Y);
+            ContentRegion = new Rectangle(0, 40, this.Width, this.Height - 40);
+            if (Pages == null || Pages.Count <= 0) return;
 
-            _leftButtonBounds = new Rectangle(25, (ContentRegion.Height - TurnPageSprite.Bounds.Height) / 2 + SHEET_OFFSET_Y, TurnPageSprite.Bounds.Width, TurnPageSprite.Bounds.Height);
-            _rightButtonBounds = new Rectangle(ContentRegion.Width - TurnPageSprite.Bounds.Width - 25, (ContentRegion.Height - TurnPageSprite.Bounds.Height) / 2 + SHEET_OFFSET_Y, TurnPageSprite.Bounds.Width, TurnPageSprite.Bounds.Height);
-
-            var titleSize = (Point)TitleFont.MeasureString(_title);
-            _titleBounds = new Rectangle((ContentRegion.Width - titleSize.X) / 2, ContentRegion.Top + (TOP_PADDING - titleSize.Y) / 2, titleSize.X, titleSize.Y);
-
-            if (Pages != null && Pages.Count > 0) {
-                foreach (Page page in this.Pages)
-                {
-                    if (page == null) continue;
-                    page.Size = PointExtensions.ResizeKeepAspect(page.Size, ContentRegion.Width - RIGHT_PADDING, ContentRegion.Height - TOP_PADDING, true);
-                    page.Location = new Point((ContentRegion.Width - page.Size.X) / 2, (ContentRegion.Height - page.Size.Y) / 2 + SHEET_OFFSET_Y);
-                }
+            foreach (Page page in this.Pages)
+            {
+                if (page == null) continue;
+                page.Size = PointExtensions.ResizeKeepAspect(page.Size, ContentRegion.Width - RIGHT_PADDING, ContentRegion.Height - TOP_PADDING, true);
+                page.Location = new Point((ContentRegion.Width - page.Size.X) / 2, (ContentRegion.Height - page.Size.Y) / 2 + SHEET_OFFSET);
             }
 
             base.OnResized(e);
         }
-        protected override void OnHidden(EventArgs e)
-        {
-            //TODO: Add gw2 book sound: close book.
-            base.OnHidden(e);
-        }
-        protected override void OnShown(EventArgs e)
-        {
-            //TODO: Add gw2 book sound: open book.
-            base.OnShown(e);
-        }
         protected override void OnChildAdded(ChildChangedEventArgs e)
         {
-            if (e.ChangedChild is Page page && !Pages.Any(x => x.Equals((Page)e.ChangedChild)))
+            if (e.ChangedChild is Page && !Pages.Any(x => x.Equals((Page)e.ChangedChild)))
             {
+                Page page = (Page)e.ChangedChild;
                 page.Size = PointExtensions.ResizeKeepAspect(page.Size, ContentRegion.Width - RIGHT_PADDING, ContentRegion.Height - TOP_PADDING, true);
-                page.Location = new Point((ContentRegion.Width - page.Size.X) / 2, (ContentRegion.Height - page.Size.Y) / 2 + SHEET_OFFSET_Y);
+                page.Location = new Point((ContentRegion.Width - page.Size.X) / 2 - 20, (ContentRegion.Height - page.Size.Y) / 2 + SHEET_OFFSET);
                 page.PageNumber = Pages.Count + 1;
                 Pages.Add(page);
 
@@ -100,20 +85,23 @@ namespace Nekres.Notes_Module.Controls
         }
         protected override void OnMouseMoved(MouseEventArgs e)
         {
-            var relPos = RelativeMousePosition;
+            var relPos = this.RelativeMousePosition;
 
-            _mouseOverTurnPageLeft = _leftButtonBounds.Contains(relPos);
-            _mouseOverTurnPageRight = _rightButtonBounds.Contains(relPos);
+            Rectangle leftButtonBounds = new Rectangle(20, ContentRegion.Height / 2 + SHEET_OFFSET + 20, TurnPageSprite.Bounds.Width, TurnPageSprite.Bounds.Height);
+            Rectangle rightButtonBounds = new Rectangle(ContentRegion.Width - TurnPageSprite.Bounds.Width - 70, ContentRegion.Height / 2 + SHEET_OFFSET + 20, TurnPageSprite.Bounds.Width, TurnPageSprite.Bounds.Height);
+
+            this.MouseOverTurnPageLeft = leftButtonBounds.Contains(relPos);
+            this.MouseOverTurnPageRight = rightButtonBounds.Contains(relPos);
 
             base.OnMouseMoved(e);
         }
         protected override void OnLeftMouseButtonPressed(MouseEventArgs e)
         {
-            if (_mouseOverTurnPageLeft)
+            if (this.MouseOverTurnPageLeft)
             {
                 TurnPage(Pages.IndexOf(CurrentPage) - 1);
             }
-            else if (_mouseOverTurnPageRight)
+            else if (this.MouseOverTurnPageRight)
             {
                 TurnPage(Pages.IndexOf(CurrentPage) + 1);
             }
@@ -122,9 +110,8 @@ namespace Nekres.Notes_Module.Controls
         }
         private void TurnPage(int index)
         {
-            if (index >= 0 && index < Pages.Count)
+            if (index < Pages.Count && index >= 0)
             {
-                // TODO: Add gw2's book sounds: turn page
                 CurrentPage = Pages[index];
 
                 foreach (Page other in Pages)
@@ -137,28 +124,29 @@ namespace Nekres.Notes_Module.Controls
         {
             base.PaintBeforeChildren(spriteBatch, bounds);
 
-            // TODO: Title background texture from the original.
+            Point titleSize = (Point)TitleFont.MeasureString(this.Title);
+            Rectangle titleDest = new Rectangle((ContentRegion.Width - titleSize.X) / 2 - 20, ContentRegion.Top + (TOP_PADDING - titleSize.Y) / 2, titleSize.X, titleSize.Y);
+            spriteBatch.DrawStringOnCtrl(this, Title, TitleFont, titleDest, Color.White, false, HorizontalAlignment.Left, VerticalAlignment.Top);
 
-            // Draw title
-            spriteBatch.DrawStringOnCtrl(this, _title, TitleFont, _titleBounds, Color.White, false, HorizontalAlignment.Left, VerticalAlignment.Top);
+            Rectangle leftButtonBounds = new Rectangle(20, ContentRegion.Height / 2 + SHEET_OFFSET + 20, TurnPageSprite.Bounds.Width, TurnPageSprite.Bounds.Height);
+            Rectangle rightButtonBounds = new Rectangle(ContentRegion.Width - TurnPageSprite.Bounds.Width - 70, ContentRegion.Height / 2 + SHEET_OFFSET + 20, TurnPageSprite.Bounds.Width, TurnPageSprite.Bounds.Height);
 
-            // Draw turn page buttons
-            if (!_mouseOverTurnPageLeft)
+            if (!MouseOverTurnPageLeft)
             {
-                spriteBatch.DrawOnCtrl(this, TurnPageSprite, _leftButtonBounds, TurnPageSprite.Bounds, new Color(155, 155, 155, 155), 0, Vector2.Zero, SpriteEffects.FlipHorizontally);
+                spriteBatch.DrawOnCtrl(this, TurnPageSprite, leftButtonBounds, TurnPageSprite.Bounds, new Color(155, 155, 155, 150), 0, Vector2.Zero, SpriteEffects.FlipHorizontally);
             }
             else
             {
-                spriteBatch.DrawOnCtrl(this, TurnPageSprite, _leftButtonBounds, TurnPageSprite.Bounds, Color.White, 0, Vector2.Zero, SpriteEffects.FlipHorizontally);
+                spriteBatch.DrawOnCtrl(this, TurnPageSprite, leftButtonBounds, TurnPageSprite.Bounds, Color.White, 0, Vector2.Zero, SpriteEffects.FlipHorizontally);
             }
 
-            if (!_mouseOverTurnPageRight)
+            if (!MouseOverTurnPageRight)
             {
-                spriteBatch.DrawOnCtrl(this, TurnPageSprite, _rightButtonBounds, TurnPageSprite.Bounds, new Color(155, 155, 155, 155));
+                spriteBatch.DrawOnCtrl(this, TurnPageSprite, rightButtonBounds, TurnPageSprite.Bounds, new Color(155, 155, 155, 155));
             }
             else
             {
-                spriteBatch.DrawOnCtrl(this, TurnPageSprite, _rightButtonBounds, TurnPageSprite.Bounds, Color.White);
+                spriteBatch.DrawOnCtrl(this, TurnPageSprite, rightButtonBounds, TurnPageSprite.Bounds, Color.White);
             }
         }
     }
