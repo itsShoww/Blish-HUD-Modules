@@ -1,14 +1,14 @@
-﻿using Blish_HUD;
-using Blish_HUD.ArcDps.Common;
-using Gw2Sharp.WebApi.V2.Models;
-using KillProofModule.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Blish_HUD;
+using Blish_HUD.ArcDps.Common;
+using Gw2Sharp.WebApi.V2.Models;
+using Nekres.Kill_Proof_Module.Models;
 using static Blish_HUD.GameService;
-using static KillProofModule.KillProofModule;
+using static Nekres.Kill_Proof_Module.KillProofModule;
 
-namespace KillProofModule.Manager
+namespace Nekres.Kill_Proof_Module.Manager
 {
     public class PartyManager
     {
@@ -18,6 +18,7 @@ namespace KillProofModule.Manager
 
         public event EventHandler<ValueEventArgs<PlayerProfile>> PlayerAdded;
         public event EventHandler<ValueEventArgs<PlayerProfile>> PlayerLeft;
+        public event EventHandler<ValueEventArgs<PlayerProfile>> SelfUpdated;
 
         public PartyManager()
         {
@@ -37,11 +38,16 @@ namespace KillProofModule.Manager
             {
                 await ModuleInstance.Gw2ApiManager.Gw2ApiClient.V2.Account.GetAsync().ContinueWith(async result =>
                 {
-                    if (!result.IsCompleted || result.IsFaulted)
+                    if (!result.IsCompleted || result.IsFaulted) return;
+                    Self.Identifier = result.Result.Name;
+                    await KillProofApi.GetKillProofContent(result.Result.Name).ContinueWith(res =>
                     {
-                        Self.Identifier = result.Result.Name;
-                        Self.KillProof = await ProfileManager.GetKillProofContent(result.Result.Name);
-                    }
+                        if (!res.IsCompleted || res.IsFaulted) return null;
+
+                        Self.KillProof = res.Result;
+                        SelfUpdated?.Invoke(this, new ValueEventArgs<PlayerProfile>(Self));
+                        return res.Result;
+                    });
                 });
             }
         }
@@ -51,6 +57,7 @@ namespace KillProofModule.Manager
             if (player.Self)
             {
                 Self.Player = player;
+                SelfUpdated?.Invoke(this, new ValueEventArgs<PlayerProfile>(Self));
                 return;
             }
             var profile = Players.FirstOrDefault(p => p.Player.AccountName.Equals(player.AccountName)) ?? new PlayerProfile();
@@ -60,6 +67,7 @@ namespace KillProofModule.Manager
 
         private void PlayerLeavesEvent(CommonFields.Player player)
         {
+            if (player.Self) return;
             if (!ModuleInstance.AutomaticClearEnabled.Value) return;
             var profile = Players.FirstOrDefault(p => p.Player.AccountName.Equals(player.AccountName));
             Players.Remove(profile);

@@ -1,18 +1,18 @@
-﻿using Blish_HUD;
-using Blish_HUD.Controls;
-using Blish_HUD.Graphics.UI;
-using Blish_HUD.Input;
-using KillProofModule.Persistance;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Blish_HUD;
+using Blish_HUD.Controls;
+using Blish_HUD.Graphics.UI;
+using Blish_HUD.Input;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Nekres.Kill_Proof_Module.Models;
 using static Blish_HUD.GameService;
-using static KillProofModule.KillProofModule;
+using static Nekres.Kill_Proof_Module.KillProofModule;
 
-namespace KillProofModule.Controls.Views
+namespace Nekres.Kill_Proof_Module.Controls.Views
 {
     public class ProfileView : IView
     {

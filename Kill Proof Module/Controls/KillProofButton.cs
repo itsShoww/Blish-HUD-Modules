@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
 
-namespace KillProofModule.Controls
+namespace Nekres.Kill_Proof_Module.Controls
 {
     public class KillProofButton : DetailsButton
     {

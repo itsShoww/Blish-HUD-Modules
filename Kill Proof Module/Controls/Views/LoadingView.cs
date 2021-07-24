@@ -1,10 +1,10 @@
-﻿using Blish_HUD.Controls;
+﻿using System;
+using System.Threading.Tasks;
+using Blish_HUD.Controls;
 using Blish_HUD.Graphics.UI;
 using Microsoft.Xna.Framework;
-using System;
-using System.Threading.Tasks;
 
-namespace KillProofModule.Controls.Views
+namespace Nekres.Kill_Proof_Module.Controls.Views
 {
     public class LoadingView : IView
     {

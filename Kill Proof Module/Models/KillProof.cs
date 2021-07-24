@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace KillProofModule.Persistance
+namespace Nekres.Kill_Proof_Module.Models
 {
     /// <summary>
     ///     JSON class for replies from https://killproof.me/api/kp/

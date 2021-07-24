@@ -25,7 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music Mixer Module", "Music
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Regions Of Tyria Module", "Regions Of Tyria Module\Regions Of Tyria Module.csproj", "{6060ACE7-6392-4C1D-8398-2A9FFCD77982}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KillProof Module", "Kill Proof Module\KillProof Module.csproj", "{8F3A7927-2A57-469B-956C-778C2A8D575F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kill Proof Module", "Kill Proof Module\Kill Proof Module.csproj", "{8F3A7927-2A57-469B-956C-778C2A8D575F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

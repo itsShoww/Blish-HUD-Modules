@@ -1,19 +1,19 @@
-﻿using Blish_HUD;
-using Blish_HUD.Controls;
-using Blish_HUD.Graphics.UI;
-using KillProofModule.Manager;
-using KillProofModule.Models;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Blish_HUD;
+using Blish_HUD.Controls;
+using Blish_HUD.Graphics.UI;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Nekres.Kill_Proof_Module.Manager;
+using Nekres.Kill_Proof_Module.Models;
 using static Blish_HUD.GameService;
-using static KillProofModule.KillProofModule;
+using static Nekres.Kill_Proof_Module.KillProofModule;
 
-namespace KillProofModule.Controls.Views
+namespace Nekres.Kill_Proof_Module.Controls.Views
 {
     public class MainView : IView
     {
@@ -102,7 +102,7 @@ namespace KillProofModule.Controls.Views
                 if (!string.IsNullOrEmpty(tbAccountName.Text) && Gw2AccountName.IsMatch(tbAccountName.Text))
                 {
                     Overlay.BlishHudWindow.Navigate(new LoadingView());
-                    ProfileManager.GetKillProofContent(tbAccountName.Text).ContinueWith(kpResult =>
+                    KillProofApi.GetKillProofContent(tbAccountName.Text).ContinueWith(kpResult =>
                     {
                         if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
                         var killproof = kpResult.Result;
@@ -168,7 +168,7 @@ namespace KillProofModule.Controls.Views
             var body = new Panel
             {
                 Parent = header.Parent,
-                Size = new Point(header.Size.X, header.Parent.Height - header.Height),
+                Size = new Point(header.Size.X, header.Parent.Height - header.Height - 100),
                 Location = new Point(0, header.Bottom),
                 ShowBorder = true,
                 CanScroll = true,
@@ -222,7 +222,7 @@ namespace KillProofModule.Controls.Views
             {
                 Parent = body.Parent,
                 Size = new Point(body.Parent.Width, 50),
-                Location = new Point(0, body.Height + 10),
+                Location = new Point(0, body.Bottom + BOTTOM_MARGIN),
                 CanScroll = false
             };
             var creditLabel = new Label
@@ -240,7 +240,7 @@ namespace KillProofModule.Controls.Views
         private async void PlayerAddedEvent(object o, ValueEventArgs<PlayerProfile> profile)
         {
             var playerBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Player.AccountName.Equals(profile.Value.Player.AccountName, StringComparison.InvariantCultureIgnoreCase));
-            if (playerBtn == null && await ProfileManager.ProfileAvailable(profile.Value.Player.AccountName))
+            if (playerBtn == null && await KillProofApi.ProfileAvailable(profile.Value.Player.AccountName))
             {
                 var playerButton = new PlayerButton(profile.Value)
                 {
@@ -252,7 +252,7 @@ namespace KillProofModule.Controls.Views
                 {
                     playerButton.IsNew = false;
                     Overlay.BlishHudWindow.Navigate(new LoadingView());
-                    ProfileManager.GetKillProofContent(playerButton.PlayerProfile.Identifier).ContinueWith(kpResult =>
+                    KillProofApi.GetKillProofContent(playerButton.PlayerProfile.Identifier).ContinueWith(kpResult =>
                     {
                         if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
                         var killproof = kpResult.Result;

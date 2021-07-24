@@ -1,13 +1,13 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Content;
 using Blish_HUD.Controls;
-using KillProofModule.Controls.Views;
-using KillProofModule.Manager;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Nekres.Kill_Proof_Module.Controls.Views;
+using Nekres.Kill_Proof_Module.Manager;
 using static Blish_HUD.GameService;
 
-namespace KillProofModule.Controls
+namespace Nekres.Kill_Proof_Module.Controls
 {
     public class PlayerNotification : Container
     {
@@ -17,6 +17,7 @@ namespace KillProofModule.Controls
         private const int ICON_SIZE = 64;
 
         private static int _visibleNotifications;
+        private Texture2D _notificationBackroundTexture;
 
         private readonly AsyncTexture2D _icon;
 
@@ -24,6 +25,7 @@ namespace KillProofModule.Controls
 
         private PlayerNotification(string title, AsyncTexture2D icon, string message)
         {
+            _notificationBackroundTexture = KillProofModule.ModuleInstance.ContentsManager.GetTexture("ns-button.png");
             _icon = icon;
 
             Opacity = 0f;
@@ -56,7 +58,7 @@ namespace KillProofModule.Controls
             {
                 Overlay.BlishHudWindow.Show();
                 Overlay.BlishHudWindow.Navigate(new LoadingView());
-                ProfileManager.GetKillProofContent(title).ContinueWith(kpResult =>
+                KillProofApi.GetKillProofContent(title).ContinueWith(kpResult =>
                 {
                     if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
                     var killproof = kpResult.Result;
@@ -92,7 +94,7 @@ namespace KillProofModule.Controls
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds)
         {
             spriteBatch.DrawOnCtrl(this,
-                KillProofModule.ModuleInstance._notificationBackroundTexture,
+                _notificationBackroundTexture,
                 bounds,
                 Color.White * 0.85f);
 

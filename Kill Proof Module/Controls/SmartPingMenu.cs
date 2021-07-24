@@ -1,26 +1,26 @@
-﻿using Blish_HUD;
-using Blish_HUD.Controls;
-using Gw2Sharp.ChatLinks;
-using KillProofModule.Persistance;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Blish_HUD;
+using Blish_HUD.Controls;
+using Gw2Sharp.ChatLinks;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Nekres.Kill_Proof_Module.Models;
 using static Blish_HUD.GameService;
-using static KillProofModule.KillProofModule;
+using static Nekres.Kill_Proof_Module.KillProofModule;
 
-namespace KillProofModule.Controls.Views
+namespace Nekres.Kill_Proof_Module.Controls
 {
     public class SmartPingMenu : IDisposable
     {
         private DateTimeOffset _smartPingCooldownSend = DateTimeOffset.Now;
         private DateTimeOffset _smartPingHotButtonTimeSend = DateTimeOffset.Now;
         private int _smartPingRepetitions;
-        private int _smartPingCurrentReduction = 0;
-        private int _smartPingCurrentValue = 0;
-        private int _smartPingCurrentRepetitions = 0;
+        private int _smartPingCurrentReduction;
+        private int _smartPingCurrentValue;
+        private int _smartPingCurrentRepetitions;
 
         private Panel _smartPingMenu;
 
@@ -29,6 +29,7 @@ namespace KillProofModule.Controls.Views
         private void OnIsInGameChanged(object o, ValueEventArgs<bool> e) => ToggleSmartPingMenu(e.Value, 0.1f);
         private void OnSmartPingMenuEnabledSettingChanged(object o, ValueChangedEventArgs<bool> e) => ToggleSmartPingMenu(e.NewValue, 0.1f);
         private void OnSPM_RepetitionsChanged(object o, ValueChangedEventArgs<int> e) => _smartPingRepetitions = MathHelper.Clamp(e.NewValue, 10, 100) / 10;
+        private void OnSelfUpdated(object o, ValueEventArgs<PlayerProfile> e) => BuildSmartPingMenu();
 
         public SmartPingMenu()
         {
@@ -39,6 +40,8 @@ namespace KillProofModule.Controls.Views
 
             GameIntegration.IsInGameChanged += OnIsInGameChanged;
             Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
+
+            ModuleInstance.PartyManager.SelfUpdated += OnSelfUpdated;
         }
 
         private void ToggleSmartPingMenu(bool enabled, float tDuration)
@@ -86,13 +89,10 @@ namespace KillProofModule.Controls.Views
                     _smartPingCurrentReduction++;
                     _smartPingCurrentRepetitions = 0;
                 }
-
                 chatLink.Quantity = Convert.ToByte(tempAmount);
-
             }
             else
             {
-
                 chatLink.Quantity = Convert.ToByte(rest);
 
                 if (_smartPingCurrentRepetitions < _smartPingRepetitions)

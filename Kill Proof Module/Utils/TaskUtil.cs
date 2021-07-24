@@ -1,10 +1,10 @@
-﻿using Flurl.Http;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
-using static KillProofModule.KillProofModule;
-namespace KillProofModule
+using Flurl.Http;
+using Newtonsoft.Json;
+using static Nekres.Kill_Proof_Module.KillProofModule;
+namespace Nekres.Kill_Proof_Module.Utils
 {
     internal static class TaskUtil
     {

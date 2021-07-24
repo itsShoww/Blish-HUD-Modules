@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace KillProofModule.Properties {
+namespace Nekres.Kill_Proof_Module.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace KillProofModule.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("KillProofModule.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Nekres.Kill_Proof_Module.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -160,7 +160,7 @@ namespace KillProofModule.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Please, share www.killproof.me with this player and help expand our database..
+        ///   Looks up a localized string similar to Please, share www.killproof.me with this playerProfile and help expand our database..
         /// </summary>
         internal static string Please__share_www_killproof_me_with_this_player_and_help_expand_our_database_ {
             get {

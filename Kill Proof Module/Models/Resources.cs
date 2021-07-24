@@ -6,12 +6,12 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace KillProofModule.Persistance
+namespace Nekres.Kill_Proof_Module.Models
 {
     /// <summary>
     ///     JSON class for replies from https://killproof.me/api/resources
     /// </summary>
-    internal enum RaidWingEventType
+    public enum RaidWingEventType
     {
         [EnumMember(Value = "Unknown")]
         Unknown,
@@ -20,7 +20,7 @@ namespace KillProofModule.Persistance
         [EnumMember(Value = "Checkpoint")]
         Checkpoint
     }
-    internal class Resources
+    public class Resources
     {
         [JsonProperty("general_tokens")] public IList<Token> GeneralTokens { get; set; }
         [JsonProperty("fractals")] public IReadOnlyList<Token> Fractals { get; set; }
@@ -95,13 +95,13 @@ namespace KillProofModule.Persistance
         }
     }
 
-    internal class Raid
+    public class Raid
     {
         [JsonProperty("id")] public string Id { get; set; }
         [JsonProperty("wings")] public IReadOnlyList<Wing> Wings { get; set; }
     }
 
-    internal class Wing
+    public class Wing
     {
         [JsonProperty("id")] public string Id { get; set; }
         [JsonProperty("map_id")] public int MapId { get; set; }
@@ -113,7 +113,7 @@ namespace KillProofModule.Persistance
         }
     }
 
-    internal class Event
+    public class Event
     {
         [JsonProperty("id")] public string Id { get; set; }
         [JsonProperty("name")] public string Name { get; set; }
@@ -122,7 +122,7 @@ namespace KillProofModule.Persistance
         [JsonConverter(typeof(StringEnumConverter)), JsonProperty("type")] public RaidWingEventType Type { get; set; }
     }
 
-    internal class Miniature
+    public class Miniature
     {
         [JsonProperty("id")] public int Id { get; set; }
         [JsonProperty("icon")] public string Icon { get; set; }

@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{8F3A7927-2A57-469B-956C-778C2A8D575F}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>KillProofModule</RootNamespace>
-    <AssemblyName>KillProof Module</AssemblyName>
+    <RootNamespace>Nekres.Kill_Proof_Module</RootNamespace>
+    <AssemblyName>Kill Proof Module</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -70,7 +70,7 @@
     <Compile Include="Controls\Views\ProfileView.cs" />
     <Compile Include="Controls\SmartPingMenu.cs" />
     <Compile Include="Manager\PartyManager.cs" />
-    <Compile Include="Manager\ProfileManager.cs" />
+    <Compile Include="Manager\KillProofApi.cs" />
     <Compile Include="Models\PlayerProfile.cs" />
     <Compile Include="Models\Resources.cs" />
     <Compile Include="Controls\KillProofButton.cs" />

@@ -1,7 +1,6 @@
 ﻿using Blish_HUD.ArcDps.Common;
-using KillProofModule.Persistance;
 
-namespace KillProofModule.Models
+namespace Nekres.Kill_Proof_Module.Models
 {
     public class PlayerProfile
     {

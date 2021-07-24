@@ -5,9 +5,8 @@ using Blish_HUD.Controls;
 using Blish_HUD.Graphics.UI;
 using Microsoft.Xna.Framework;
 using static Blish_HUD.GameService;
-using static KillProofModule.KillProofModule;
 
-namespace KillProofModule.Controls.Views
+namespace Nekres.Kill_Proof_Module.Controls.Views
 {
     public class NotFoundView : IView
     {

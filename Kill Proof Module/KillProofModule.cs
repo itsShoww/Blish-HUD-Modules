@@ -1,33 +1,26 @@
-﻿using Blish_HUD;
-using Blish_HUD.ArcDps.Common;
-using Blish_HUD.Content;
-using Blish_HUD.Controls;
-using Blish_HUD.Input;
-using Blish_HUD.Modules;
-using Blish_HUD.Modules.Managers;
-using Blish_HUD.Settings;
-using Gw2Sharp.ChatLinks;
-using Gw2Sharp.Models;
-using Gw2Sharp.WebApi.V2.Models;
-using KillProofModule.Controls;
-using KillProofModule.Persistance;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using KillProofModule.Controls.Views;
-using KillProofModule.Manager;
+using Blish_HUD;
+using Blish_HUD.ArcDps.Common;
+using Blish_HUD.Content;
+using Blish_HUD.Controls;
+using Blish_HUD.Modules;
+using Blish_HUD.Modules.Managers;
+using Blish_HUD.Settings;
+using Gw2Sharp.Models;
+using Gw2Sharp.WebApi.V2.Models;
+using Microsoft.Xna.Framework.Graphics;
+using Nekres.Kill_Proof_Module.Controls;
+using Nekres.Kill_Proof_Module.Controls.Views;
+using Nekres.Kill_Proof_Module.Manager;
+using Nekres.Kill_Proof_Module.Models;
 using static Blish_HUD.GameService;
-using Color = Microsoft.Xna.Framework.Color;
 
-namespace KillProofModule
+namespace Nekres.Kill_Proof_Module
 {
     [Export(typeof(Module))]
     public class KillProofModule : Module
@@ -38,6 +31,15 @@ namespace KillProofModule
 
         [ImportingConstructor]
         public KillProofModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
+
+        #region Service Managers
+
+        internal SettingsManager SettingsManager => ModuleParameters.SettingsManager;
+        internal ContentsManager ContentsManager => ModuleParameters.ContentsManager;
+        internal DirectoriesManager DirectoriesManager => ModuleParameters.DirectoriesManager;
+        internal Gw2ApiManager Gw2ApiManager => ModuleParameters.Gw2ApiManager;
+
+        #endregion
 
         protected override void DefineSettings(SettingCollection settings)
         {
@@ -57,9 +59,6 @@ namespace KillProofModule
         private Dictionary<int, AsyncTexture2D> EliteRenderRepository;
         private Dictionary<int, AsyncTexture2D> TokenRenderRepository;
 
-
-        private WindowTab _killProofTab;
-
         #region Settings
 
         internal SettingEntry<bool> SmartPingMenuEnabled;
@@ -70,46 +69,38 @@ namespace KillProofModule
 
         #endregion
 
-        internal Texture2D _killProofIconTexture;
-        internal Texture2D _notificationBackroundTexture;
+        private Texture2D _killProofIconTexture;
 
         internal string KillProofTabName = "KillProof";
 
         internal Resources Resources;
-        internal PartyManager PartyManager;
 
-        private SmartPingMenu _smartPingMenu;
+        internal PartyManager PartyManager;
+        internal SmartPingMenu SmartPingMenu;
 
         private WindowTab _moduleTab;
 
         protected override void Initialize()
         {
-            _smartPingMenu = new SmartPingMenu();
-            PartyManager = new PartyManager();
             TokenRenderRepository = new Dictionary<int, AsyncTexture2D>();
             EliteRenderRepository = new Dictionary<int, AsyncTexture2D>();
             ProfessionRenderRepository = new Dictionary<int, AsyncTexture2D>();
 
-            LoadTextures();
-        }
-
-        private void LoadTextures()
-        {
             _killProofIconTexture = ContentsManager.GetTexture("killproof_icon.png");
-
-            _notificationBackroundTexture = ContentsManager.GetTexture("ns-button.png");
         }
-
 
         protected override async Task LoadAsync()
         {
-            await LoadResources();
+            Resources = await KillProofApi.LoadResources();
             await LoadProfessionIcons();
             await LoadEliteIcons();
         }
 
         protected override void OnModuleLoaded(EventArgs e)
         {
+            PartyManager = new PartyManager();
+            SmartPingMenu = new SmartPingMenu();
+            
             _moduleTab = Overlay.BlishHudWindow.AddTab(KillProofTabName, _killProofIconTexture, () => new MainView());
             
             // Base handler must be called
@@ -120,20 +111,10 @@ namespace KillProofModule
         protected override void Unload()
         {
             Overlay.BlishHudWindow.RemoveTab(_moduleTab);
-            _smartPingMenu?.Dispose();
-            Overlay.BlishHudWindow.RemoveTab(_killProofTab);
+            SmartPingMenu?.Dispose();
             // All static members must be manually unset
             ModuleInstance = null;
         }
-
-        #region Service Managers
-
-        internal SettingsManager SettingsManager => ModuleParameters.SettingsManager;
-        internal ContentsManager ContentsManager => ModuleParameters.ContentsManager;
-        internal DirectoriesManager DirectoriesManager => ModuleParameters.DirectoriesManager;
-        internal Gw2ApiManager Gw2ApiManager => ModuleParameters.Gw2ApiManager;
-
-        #endregion
 
         #region Render Getters
 
@@ -242,30 +223,5 @@ namespace KillProofModule
         }
 
         #endregion
-
-        private async Task LoadResources()
-        {
-            await TaskUtil.GetJsonResponse<Resources>(KILLPROOF_API_URL + "resources?lang=" + Overlay.UserLocale.Value)
-                .ContinueWith(async result =>
-                {
-                    if (!result.IsCompleted || !result.Result.Item1)
-                    {
-                        using (var fs = ContentsManager.GetFileStream("resources.json"))
-                        {
-                            fs.Position = 0;
-                            using (var jsonReader = new JsonTextReader(new StreamReader(fs)))
-                            {
-                                var serializer = new JsonSerializer();
-                                Resources = serializer.Deserialize<Resources>(jsonReader);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Resources = result.Result.Item2;
-                    }
-                    await LoadTokenIcons();
-                });
-        }
     }
 }

@@ -1,11 +1,11 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
-using KillProofModule.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
+using Nekres.Kill_Proof_Module.Models;
 
-namespace KillProofModule.Controls
+namespace Nekres.Kill_Proof_Module.Controls
 {
     public class PlayerButton : DetailsButton
     {
