@@ -25,7 +25,7 @@ namespace KillProofModule.Controls
 
         public KillProofButton()
         {
-            ICON_TITLE = ICON_TITLE ?? KillProofModule.ModuleInstance._sortByTitleTexture;
+            ICON_TITLE = ICON_TITLE ?? KillProofModule.ModuleInstance.ContentsManager.GetTexture("icon_title.png");
             BORDER_SPRITE = BORDER_SPRITE ?? Content.GetTexture(@"controls/detailsbutton/605003");
             SEPARATOR = SEPARATOR ?? Content.GetTexture("157218");
             PIXEL = PIXEL ?? ContentService.Textures.Pixel;

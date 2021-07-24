@@ -165,7 +165,7 @@ Loads on map change.</value>
     <value>Visit www.killproof.me and allow us to record your KillProofs for you.</value>
   </data>
   <data name="Please, share www.killproof.me with this player and help expand our database." xml:space="preserve">
-    <value>Please, share www.killproof.me with this player and help expand our database.</value>
+    <value>Please, share www.killproof.me with this playerProfile and help expand our database.</value>
   </data>
   <data name="Profile" xml:space="preserve">
     <value>Profile</value>

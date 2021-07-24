@@ -1,9 +1,11 @@
 ﻿using Blish_HUD;
-using Blish_HUD.ArcDps.Common;
 using Blish_HUD.Content;
 using Blish_HUD.Controls;
+using KillProofModule.Controls.Views;
+using KillProofModule.Manager;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using static Blish_HUD.GameService;
 
 namespace KillProofModule.Controls
 {
@@ -52,10 +54,21 @@ namespace KillProofModule.Controls
 
             RightMouseButtonReleased += delegate
             {
-                GameService.Overlay.BlishHudWindow.Show();
-                GameService.Overlay.BlishHudWindow.Navigate(
-                    KillProofModule.ModuleInstance.BuildKillProofPanel(GameService.Overlay.BlishHudWindow,
-                        new CommonFields.Player(null, title, 0, 0, false)));
+                Overlay.BlishHudWindow.Show();
+                Overlay.BlishHudWindow.Navigate(new LoadingView());
+                ProfileManager.GetKillProofContent(title).ContinueWith(kpResult =>
+                {
+                    if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
+                    var killproof = kpResult.Result;
+                    if (string.IsNullOrEmpty(killproof.Error))
+                    {
+                        Overlay.BlishHudWindow.Navigate(new ProfileView(killproof));
+                    }
+                    else
+                    {
+                        Overlay.BlishHudWindow.Navigate(new NotFoundView(title));
+                    }
+                });
                 Dispose();
             };
         }

@@ -64,11 +64,19 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Persistance\Resources.cs" />
+    <Compile Include="Controls\Views\LoadingView.cs" />
+    <Compile Include="Controls\Views\MainView.cs" />
+    <Compile Include="Controls\Views\NotFoundView.cs" />
+    <Compile Include="Controls\Views\ProfileView.cs" />
+    <Compile Include="Controls\SmartPingMenu.cs" />
+    <Compile Include="Manager\PartyManager.cs" />
+    <Compile Include="Manager\ProfileManager.cs" />
+    <Compile Include="Models\PlayerProfile.cs" />
+    <Compile Include="Models\Resources.cs" />
     <Compile Include="Controls\KillProofButton.cs" />
     <Compile Include="Controls\PlayerButton.cs" />
     <Compile Include="Controls\PlayerNotification.cs" />
-    <Compile Include="Persistance\KillProof.cs" />
+    <Compile Include="Models\KillProof.cs" />
     <Compile Include="KillProofModule.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -89,6 +97,12 @@
     <Reference Include="CSCore, Version=1.2.1.2, Culture=neutral, PublicKeyToken=5a08f2b6f4415dea, processorArchitecture=MSIL">
       <HintPath>packages\CSCore.1.2.1.2\lib\net35-client\CSCore.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="Flurl, Version=3.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Flurl.3.0.2\lib\net472\Flurl.dll</HintPath>
+    </Reference>
+    <Reference Include="Flurl.Http, Version=3.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Flurl.Http.3.2.0\lib\net472\Flurl.Http.dll</HintPath>
     </Reference>
     <Reference Include="Gw2Sharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Gw2Sharp.1.0.0\lib\netstandard2.0\Gw2Sharp.dll</HintPath>
@@ -214,6 +228,7 @@
   <ItemGroup>
     <Content Include="Blish HUD.DebugHelper.exe" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>powershell.exe -ExecutionPolicy Bypass -NoProfile -NonInteractive -File "$(ProjectDir)BuildScripts\CopyRef.ps1" -Project "$(ProjectDir)\" -Output "$(OutDir)\"</PreBuildEvent>

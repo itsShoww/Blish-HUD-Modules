@@ -13,7 +13,6 @@ namespace KillProofModule
             try
             {
                 var rawJson = await request.AllowHttpStatus(HttpStatusCode.NotFound).GetStringAsync();
-
                 return (true, JsonConvert.DeserializeObject<T>(rawJson));
             }
             catch (FlurlHttpTimeoutException ex)
@@ -26,13 +25,12 @@ namespace KillProofModule
             }
             catch (JsonReaderException ex)
             {
-                Logger.Warn(ex, $"Failed to read JSON response returned by request '{request}' which returned ''");
+                Logger.Warn(ex, $"Failed to read JSON response returned by request '{request}'.");
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, $"Unexpected error while requesting '{request}'.");
             }
-
             return (false, default);
         }
     }

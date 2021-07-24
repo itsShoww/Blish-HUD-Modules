@@ -10,7 +10,7 @@ namespace KillProofModule.Persistance
     /// <summary>
     ///     JSON class for replies from https://killproof.me/api/kp/
     /// </summary>
-    internal enum Mode
+    public enum Mode
     {
         [EnumMember(Value = "none")]
         None,
@@ -19,14 +19,15 @@ namespace KillProofModule.Persistance
         [EnumMember(Value = "raid")]
         Raid
     }
-    internal class Title
+    public class Title
     {
         [JsonConverter(typeof(StringEnumConverter)), JsonProperty("mode")] public Mode Mode { get; set; }
         [JsonProperty("id")] public int Id { get; set; }
         [JsonProperty("name")] public string Name { get; set; }
     }
-    internal class KillProof
+    public class KillProof
     {
+        [JsonProperty("valid_api_key")] public bool ValidApiKey { get; set; }
         [JsonProperty("titles")] public IList<Title> Titles { get; set; }
         [JsonProperty("proof_url")] public string ProofUrl { get; set; }
         [JsonProperty("tokens")] public IList<Token> Tokens { get; set; }

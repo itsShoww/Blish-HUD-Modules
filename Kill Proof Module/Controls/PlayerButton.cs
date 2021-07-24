@@ -1,7 +1,6 @@
 ﻿using Blish_HUD;
-using Blish_HUD.ArcDps.Common;
 using Blish_HUD.Controls;
-using Blish_HUD.Input;
+using KillProofModule.Models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
@@ -18,8 +17,9 @@ namespace KillProofModule.Controls
         private readonly Texture2D PIXEL;
         private readonly Texture2D SEPARATOR;
 
-        public PlayerButton()
+        public PlayerButton(PlayerProfile playerProfile)
         {
+            PlayerProfile = playerProfile;
             BORDER_SPRITE = BORDER_SPRITE ?? Content.GetTexture(@"controls/detailsbutton/605003");
             SEPARATOR = SEPARATOR ?? Content.GetTexture("157218");
             PIXEL = PIXEL ?? ContentService.Textures.Pixel;
@@ -39,13 +39,13 @@ namespace KillProofModule.Controls
             }
         }
 
-        private CommonFields.Player _player;
-        public CommonFields.Player Player
+        private PlayerProfile _playerProfile;
+        public PlayerProfile PlayerProfile
         {
-            get => _player;
-            set
+            get => _playerProfile;
+            private set
             {
-                _player = value;
+                _playerProfile = value;
                 OnPropertyChanged();
             }
         }
@@ -75,7 +75,7 @@ namespace KillProofModule.Controls
                 : DEFAULT_HEIGHT - DEFAULT_BOTTOMSECTION_HEIGHT;
 
             // Draw bottom text
-            spriteBatch.DrawStringOnCtrl(this, Player.AccountName, Content.DefaultFont14,
+            spriteBatch.DrawStringOnCtrl(this, PlayerProfile.Player.AccountName, Content.DefaultFont14,
                 new Rectangle(iconSize + 20, iconSize - DEFAULT_BOTTOMSECTION_HEIGHT, DEFAULT_WIDTH - 40,
                     DEFAULT_BOTTOMSECTION_HEIGHT), Color.White, false, true, 2);
 
@@ -96,9 +96,9 @@ namespace KillProofModule.Controls
                 Color.White);
 
             // Wrap text
-            if (Player.CharacterName != null && Font != null)
+            if (PlayerProfile.Player.CharacterName != null && Font != null)
             {
-                var wrappedText = DrawUtil.WrapText(Font, Player.CharacterName, DEFAULT_WIDTH - 40 - iconSize - 20);
+                var wrappedText = DrawUtil.WrapText(Font, PlayerProfile.Player.CharacterName, DEFAULT_WIDTH - 40 - iconSize - 20);
 
                 // Draw name
                 spriteBatch.DrawStringOnCtrl(this, wrappedText, Font,
