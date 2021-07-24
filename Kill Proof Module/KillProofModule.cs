@@ -41,6 +41,16 @@ namespace Nekres.Kill_Proof_Module
 
         #endregion
 
+        #region Settings
+
+        internal SettingEntry<bool> SmartPingMenuEnabled;
+        internal SettingEntry<bool> AutomaticClearEnabled;
+        internal SettingEntry<string> SPM_DropdownSelection;
+        internal SettingEntry<string> SPM_WingSelection;
+        internal SettingEntry<int> SPM_Repetitions;
+
+        #endregion
+
         protected override void DefineSettings(SettingCollection settings)
         {
             SPM_Repetitions = settings.DefineSetting("SmartPingRepetitions", 10, "Smart Ping Repetitions", "Indicates how often a value should be repeated before proceeding to the next reduction.");
@@ -53,21 +63,9 @@ namespace Nekres.Kill_Proof_Module
             SPM_WingSelection = selfManagedSettings.DefineSetting("SmartPingMenuWingSelection", "W1");
         }
 
-        private const string KILLPROOF_API_URL = "https://killproof.me/api/";
-
-        private Dictionary<int, AsyncTexture2D> ProfessionRenderRepository;
-        private Dictionary<int, AsyncTexture2D> EliteRenderRepository;
-        private Dictionary<int, AsyncTexture2D> TokenRenderRepository;
-
-        #region Settings
-
-        internal SettingEntry<bool> SmartPingMenuEnabled;
-        internal SettingEntry<bool> AutomaticClearEnabled;
-        internal SettingEntry<string> SPM_DropdownSelection;
-        internal SettingEntry<string> SPM_WingSelection;
-        internal SettingEntry<int> SPM_Repetitions;
-
-        #endregion
+        private Dictionary<int, AsyncTexture2D> _professionRenderRepository;
+        private Dictionary<int, AsyncTexture2D> _eliteRenderRepository;
+        private Dictionary<int, AsyncTexture2D> _tokenRenderRepository;
 
         private Texture2D _killProofIconTexture;
 
@@ -82,9 +80,9 @@ namespace Nekres.Kill_Proof_Module
 
         protected override void Initialize()
         {
-            TokenRenderRepository = new Dictionary<int, AsyncTexture2D>();
-            EliteRenderRepository = new Dictionary<int, AsyncTexture2D>();
-            ProfessionRenderRepository = new Dictionary<int, AsyncTexture2D>();
+            _tokenRenderRepository = new Dictionary<int, AsyncTexture2D>();
+            _eliteRenderRepository = new Dictionary<int, AsyncTexture2D>();
+            _professionRenderRepository = new Dictionary<int, AsyncTexture2D>();
 
             _killProofIconTexture = ContentsManager.GetTexture("killproof_icon.png");
         }
@@ -92,6 +90,7 @@ namespace Nekres.Kill_Proof_Module
         protected override async Task LoadAsync()
         {
             Resources = await KillProofApi.LoadResources();
+            await LoadTokenIcons();
             await LoadProfessionIcons();
             await LoadEliteIcons();
         }
@@ -123,7 +122,7 @@ namespace Nekres.Kill_Proof_Module
             var tokenRenderUrlRepository = Resources.GetAllTokens();
             foreach (var token in tokenRenderUrlRepository)
             {
-                TokenRenderRepository.Add(token.Id, new AsyncTexture2D());
+                _tokenRenderRepository.Add(token.Id, new AsyncTexture2D());
 
                 var renderUri = token.Icon;
                 await Gw2ApiManager.Gw2ApiClient.Render.DownloadToByteArrayAsync(renderUri)
@@ -138,7 +137,7 @@ namespace Nekres.Kill_Proof_Module
                             var loadedTexture =
                                 Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
 
-                            TokenRenderRepository[token.Id].SwapTexture(loadedTexture);
+                            _tokenRenderRepository[token.Id].SwapTexture(loadedTexture);
                         }
                     });
             }
@@ -159,7 +158,7 @@ namespace Nekres.Kill_Proof_Module
                 var id = (int) Enum.GetValues(typeof(ProfessionType)).Cast<ProfessionType>().ToList()
                     .Find(x => x.ToString().Equals(profession.Id, StringComparison.InvariantCultureIgnoreCase));
 
-                ProfessionRenderRepository.Add(id, new AsyncTexture2D());
+                _professionRenderRepository.Add(id, new AsyncTexture2D());
 
                 var renderUri = (string) profession.IconBig;
                 await Gw2ApiManager.Gw2ApiClient.Render.DownloadToByteArrayAsync(renderUri)
@@ -174,7 +173,7 @@ namespace Nekres.Kill_Proof_Module
                             var loadedTexture =
                                 Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
 
-                            ProfessionRenderRepository[id].SwapTexture(loadedTexture);
+                            _professionRenderRepository[id].SwapTexture(loadedTexture);
                         }
                     });
             }
@@ -189,7 +188,7 @@ namespace Nekres.Kill_Proof_Module
             {
                 if (!specialization.Elite) continue;
 
-                EliteRenderRepository.Add(specialization.Id, new AsyncTexture2D());
+                _eliteRenderRepository.Add(specialization.Id, new AsyncTexture2D());
 
                 var renderUri = (string) specialization.ProfessionIconBig;
                 await Gw2ApiManager.Gw2ApiClient.Render.DownloadToByteArrayAsync(renderUri)
@@ -204,7 +203,7 @@ namespace Nekres.Kill_Proof_Module
                             var loadedTexture =
                                 Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
 
-                            EliteRenderRepository[specialization.Id].SwapTexture(loadedTexture);
+                            _eliteRenderRepository[specialization.Id].SwapTexture(loadedTexture);
                         }
                     });
             }
@@ -213,15 +212,18 @@ namespace Nekres.Kill_Proof_Module
         public AsyncTexture2D GetProfessionRender(CommonFields.Player player)
         {
             if (player.Elite == 0) 
-                return ProfessionRenderRepository[(int)player.Profession];
-            return EliteRenderRepository[(int)player.Elite];
+                return _professionRenderRepository[(int)player.Profession];
+            return _eliteRenderRepository[(int)player.Elite];
         }
 
         public AsyncTexture2D GetTokenRender(int key)
         {
-            return TokenRenderRepository[key];
+            if (!_tokenRenderRepository.ContainsKey(key))
+                return Content.GetTexture("deleted_item");
+            return _tokenRenderRepository[key];
         }
 
         #endregion
+
     }
 }

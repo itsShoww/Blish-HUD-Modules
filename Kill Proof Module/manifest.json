@@ -6,7 +6,7 @@
   "manifest_version": 1,
   "description": "Check someone's kills for raiding. Uses ArcDPS Bridge service if available.\n\nPowered by www.killproof.me",
   "dependencies": {
-    "bh.blishhud": ">=0.7.0"
+    "bh.blishhud": ">=0.8.0"
   },
   "url": "https://killproof.me/",
   "contributors": [

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Blish_HUD;
 using Blish_HUD.Controls;
 using Blish_HUD.Graphics.UI;
+using Blish_HUD.Input;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Nekres.Kill_Proof_Module.Manager;
@@ -26,9 +27,11 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
 
         #endregion
 
+        private Logger Logger = Logger.GetLogger<MainView>();
+
         private readonly Point LABEL_SMALL = new Point(400, 30);
 
-        private readonly Regex Gw2AccountName = new Regex(@".{3,32}", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex Gw2AccountName = new Regex(@".{3,32}", RegexOptions.Singleline | RegexOptions.Compiled);
 
         private Texture2D _killProofMeLogoTexture;
 
@@ -54,6 +57,10 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
 
             _squadPanel = BuildBody(BuildHeader(buildPanel));
             BuildFooter(_squadPanel);
+            foreach (var profile in ModuleInstance.PartyManager.Players)
+            {
+                AddPlayerButton(profile);
+            }
         }
 
         public void DoUnload()
@@ -99,23 +106,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
             };
             tbAccountName.EnterPressed += delegate
             {
-                if (!string.IsNullOrEmpty(tbAccountName.Text) && Gw2AccountName.IsMatch(tbAccountName.Text))
-                {
-                    Overlay.BlishHudWindow.Navigate(new LoadingView());
-                    KillProofApi.GetKillProofContent(tbAccountName.Text).ContinueWith(kpResult =>
-                    {
-                        if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
-                        var killproof = kpResult.Result;
-                        if (string.IsNullOrEmpty(killproof.Error))
-                        {
-                            Overlay.BlishHudWindow.Navigate(new ProfileView(killproof));
-                        }
-                        else
-                        {
-                            Overlay.BlishHudWindow.Navigate(new NotFoundView(tbAccountName.Text));
-                        }
-                    });
-                }
+                LoadProfileView(tbAccountName.Text);
                 tbAccountName.Focused = false;
             };
             var labSquadPanel = new Label
@@ -176,13 +167,13 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
             };
 
             // Features only available when ArcDps is installed.
-            if (ArcDps.Loaded)
+            if (ArcDps.RenderPresent)
             {
                 var clearButton = new StandardButton()
                 {
                     Parent = header.Parent,
                     Size = new Point(100, 30),
-                    Location = new Point(body.Location.X + body.Width - 100 - RIGHT_MARGIN, body.Location.Y + body.Height + BOTTOM_MARGIN),
+                    Location = new Point(body.Right - 100 - RIGHT_MARGIN, body.Bottom + BOTTOM_MARGIN),
                     Text = Properties.Resources.Clear,
                     BasicTooltipText = Properties.Resources.Removes_profiles_of_players_which_are_not_in_squad_
                 };
@@ -191,7 +182,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                 {
                     Parent = header.Parent,
                     Size = new Point(20, 30),
-                    Location = new Point(clearButton.Location.X - 20 - RIGHT_MARGIN, clearButton.Location.Y),
+                    Location = new Point(clearButton.Left - 20 - RIGHT_MARGIN, clearButton.Location.Y),
                     Text = "",
                     BasicTooltipText = Properties.Resources.Remove_leavers_automatically_,
                     Checked = ModuleInstance.AutomaticClearEnabled.Value
@@ -205,7 +196,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                     {
                         if (c == null)
                             _displayedPlayers.Remove(null);
-                        else if (!ArcDps.Common.PlayersInSquad.Any(p => p.Value.AccountName.Equals(c.PlayerProfile.Player.AccountName)))
+                        else if (!ArcDps.Common.PlayersInSquad.Any(p => p.Value.AccountName.Equals(c.PlayerProfile.Identifier)))
                         {
                             _displayedPlayers.Remove(c);
                             c.Dispose();
@@ -218,66 +209,71 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
 
         private void BuildFooter(Panel body)
         {
-            var footer = new Panel
-            {
-                Parent = body.Parent,
-                Size = new Point(body.Parent.Width, 50),
-                Location = new Point(0, body.Bottom + BOTTOM_MARGIN),
-                CanScroll = false
-            };
             var creditLabel = new Label
             {
-                Parent = footer,
+                Parent = body.Parent,
                 Size = LABEL_SMALL,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Location = new Point(footer.Width / 2 - LABEL_SMALL.X / 2, footer.Height / 2 - LABEL_SMALL.Y / 2),
+                Location = new Point(body.Width / 2 - LABEL_SMALL.X / 2, body.Bottom + BOTTOM_MARGIN),
                 StrokeText = true,
                 ShowShadow = true,
                 Text = Properties.Resources.Powered_by_www_killproof_me
             };
         }
 
-        private async void PlayerAddedEvent(object o, ValueEventArgs<PlayerProfile> profile)
+        private void PlayerAddedEvent(object o, ValueEventArgs<PlayerProfile> profile)
         {
-            var playerBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Player.AccountName.Equals(profile.Value.Player.AccountName, StringComparison.InvariantCultureIgnoreCase));
-            if (playerBtn == null && await KillProofApi.ProfileAvailable(profile.Value.Player.AccountName))
+            var playerBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Identifier.Equals(profile.Value.Identifier, StringComparison.InvariantCultureIgnoreCase));
+            if (playerBtn == null)
             {
-                var playerButton = new PlayerButton(profile.Value)
-                {
-                    Parent = _squadPanel,
-                    Icon = ModuleInstance.GetProfessionRender(profile.Value.Player),
-                    Font = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size16, ContentService.FontStyle.Regular)
-                };
-                playerButton.Click += delegate
-                {
-                    playerButton.IsNew = false;
-                    Overlay.BlishHudWindow.Navigate(new LoadingView());
-                    KillProofApi.GetKillProofContent(playerButton.PlayerProfile.Identifier).ContinueWith(kpResult =>
-                    {
-                        if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
-                        var killproof = kpResult.Result;
-                        if (string.IsNullOrEmpty(killproof.Error))
-                        {
-                            Overlay.BlishHudWindow.Navigate(new ProfileView(killproof));
-                        }
-                        else
-                        {
-                            Overlay.BlishHudWindow.Navigate(new NotFoundView(playerButton.PlayerProfile.Player.AccountName));
-                        }
-                    });
-                };
-                _displayedPlayers.Add(playerButton);
+                AddPlayerButton(profile.Value);
+                //PlayerNotification.ShowNotification(profile.Value.Identifier, ModuleInstance.GetProfessionRender(profile.Value.Player), Properties.Resources.profile_available, 10);
             }
 
-            PlayerNotification.ShowNotification(profile.Value.Player.AccountName, ModuleInstance.GetProfessionRender(profile.Value.Player), Properties.Resources.profile_available, 10);
-
             RepositionPlayers();
+        }
+
+        private async void AddPlayerButton(PlayerProfile profile)
+        {
+            if (!await KillProofApi.ProfileAvailable(profile.Identifier)) return;
+            var playerButton = new PlayerButton(profile)
+            {
+                Parent = _squadPanel,
+                Icon = ModuleInstance.GetProfessionRender(profile.Player),
+                Font = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size16, ContentService.FontStyle.Regular)
+            };
+            playerButton.Click += (o, e) =>
+            {
+                playerButton.IsNew = false;
+                LoadProfileView(playerButton.PlayerProfile.Identifier);
+            };
+            RepositionPlayers();
+            _displayedPlayers.Add(playerButton);
+        }
+
+        public static void LoadProfileView(string searchTerm)
+        {
+            if (string.IsNullOrEmpty(searchTerm) || !Gw2AccountName.IsMatch(searchTerm)) return;
+            Overlay.BlishHudWindow.Navigate(new LoadingView());
+            KillProofApi.GetKillProofContent(searchTerm).ContinueWith(kpResult =>
+            {
+                if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
+                var killproof = kpResult.Result;
+                if (killproof != null && string.IsNullOrEmpty(killproof.Error))
+                {
+                    Overlay.BlishHudWindow.Navigate(new ProfileView(killproof));
+                }
+                else
+                {
+                    Overlay.BlishHudWindow.Navigate(new NotFoundView(searchTerm));
+                }
+            });
         }
 
         private void PlayerLeavesEvent(object o, ValueEventArgs<PlayerProfile> profile)
         {
             if (!ModuleInstance.AutomaticClearEnabled.Value) return;
-            var profileBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Player.AccountName.Equals(profile.Value.Player.AccountName));
+            var profileBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Identifier.Equals(profile.Value.Identifier));
             _displayedPlayers.Remove(profileBtn);
             profileBtn?.Dispose();
         }

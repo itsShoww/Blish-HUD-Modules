@@ -57,20 +57,7 @@ namespace Nekres.Kill_Proof_Module.Controls
             RightMouseButtonReleased += delegate
             {
                 Overlay.BlishHudWindow.Show();
-                Overlay.BlishHudWindow.Navigate(new LoadingView());
-                KillProofApi.GetKillProofContent(title).ContinueWith(kpResult =>
-                {
-                    if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
-                    var killproof = kpResult.Result;
-                    if (string.IsNullOrEmpty(killproof.Error))
-                    {
-                        Overlay.BlishHudWindow.Navigate(new ProfileView(killproof));
-                    }
-                    else
-                    {
-                        Overlay.BlishHudWindow.Navigate(new NotFoundView(title));
-                    }
-                });
+                MainView.LoadProfileView(title);
                 Dispose();
             };
         }

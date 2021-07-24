@@ -17,12 +17,6 @@ namespace Nekres.Kill_Proof_Module.Controls
         private readonly Texture2D PIXEL;
         private readonly Texture2D SEPARATOR;
 
-        private string _bottomText = "z";
-
-        private BitmapFont _font;
-
-        private bool _isTitleDisplay;
-
         public KillProofButton()
         {
             ICON_TITLE = ICON_TITLE ?? KillProofModule.ModuleInstance.ContentsManager.GetTexture("icon_title.png");
@@ -33,18 +27,19 @@ namespace Nekres.Kill_Proof_Module.Controls
             Size = new Point(DEFAULT_WIDTH, DEFAULT_HEIGHT);
         }
 
+        private BitmapFont _font;
         public BitmapFont Font
         {
             get => _font;
             set
             {
                 if (_font == value) return;
-
                 _font = value;
                 OnPropertyChanged();
             }
         }
 
+        private string _bottomText = "z";
         public string BottomText
         {
             get => _bottomText;
@@ -52,9 +47,11 @@ namespace Nekres.Kill_Proof_Module.Controls
             {
                 if (_bottomText == value) return;
                 _bottomText = value;
+                OnPropertyChanged();
             }
         }
 
+        private bool _isTitleDisplay;
         public bool IsTitleDisplay
         {
             get => _isTitleDisplay;
@@ -62,6 +59,7 @@ namespace Nekres.Kill_Proof_Module.Controls
             {
                 if (value == _isTitleDisplay) return;
                 _isTitleDisplay = value;
+                OnPropertyChanged();
             }
         }
 

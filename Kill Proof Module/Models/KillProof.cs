@@ -27,9 +27,11 @@ namespace Nekres.Kill_Proof_Module.Models
     }
     public class KillProof
     {
+        [JsonProperty("linked")] public IList<KillProof> Linked { get; set; }
         [JsonProperty("valid_api_key")] public bool ValidApiKey { get; set; }
         [JsonProperty("titles")] public IList<Title> Titles { get; set; }
         [JsonProperty("proof_url")] public string ProofUrl { get; set; }
+        [JsonProperty("coffers")] public IList<Token> Coffers { get; set; }
         [JsonProperty("tokens")] public IList<Token> Tokens { get; set; }
         [JsonProperty("killproofs")] public IList<Token> Killproofs { get; set; }
         [JsonProperty("kpid")] public string KpId { get; set; }

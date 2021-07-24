@@ -255,7 +255,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
             var contentPanel = new Panel
             {
                 Parent = header.Parent,
-                Size = new Point(header.Size.X, header.Parent.Height - header.Height),
+                Size = new Point(header.Size.X, header.Parent.Height - header.Height - 100),
                 Location = new Point(0, header.Bottom),
                 ShowBorder = true,
                 CanScroll = true,
@@ -356,25 +356,18 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
 
         private void BuildFooter(Panel body)
         {
-            var footer = new Panel
-            {
-                Parent = body.Parent,
-                Size = new Point(body.Parent.Width, 50),
-                Location = new Point(0, body.Height + 10),
-                CanScroll = false
-            };
             var currentAccountKpId = new Label
             {
-                Parent = footer,
+                Parent = body.Parent,
                 Size = LABEL_SMALL,
                 HorizontalAlignment = HorizontalAlignment.Left,
-                Location = new Point(LEFT_MARGIN, footer.Height / 2 - LABEL_SMALL.Y / 2),
+                Location = new Point(LEFT_MARGIN, body.Bottom + BOTTOM_MARGIN),
                 Font = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size11, ContentService.FontStyle.Regular),
                 Text = Properties.Resources.ID_ + ' ' + _profile.KpId
             };
             var currentAccountProofUrl = new Label
             {
-                Parent = footer,
+                Parent = body.Parent,
                 Size = LABEL_SMALL,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Location = new Point(LEFT_MARGIN, currentAccountKpId.Location.Y + BOTTOM_MARGIN + 2),
@@ -384,10 +377,10 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
 
             var creditLabel = new Label
             {
-                Parent = footer,
+                Parent = body.Parent,
                 Size = LABEL_SMALL,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Location = new Point(footer.Width / 2 - LABEL_SMALL.X / 2, footer.Height / 2 - LABEL_SMALL.Y / 2),
+                Location = new Point(body.Width / 2 - LABEL_SMALL.X / 2, body.Bottom + BOTTOM_MARGIN),
                 StrokeText = true,
                 ShowShadow = true,
                 Text = Properties.Resources.Powered_by_www_killproof_me

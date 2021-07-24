@@ -75,7 +75,7 @@ namespace Nekres.Kill_Proof_Module.Controls
                 : DEFAULT_HEIGHT - DEFAULT_BOTTOMSECTION_HEIGHT;
 
             // Draw bottom text
-            spriteBatch.DrawStringOnCtrl(this, PlayerProfile.Player.AccountName, Content.DefaultFont14,
+            spriteBatch.DrawStringOnCtrl(this, PlayerProfile.Identifier, Content.DefaultFont14,
                 new Rectangle(iconSize + 20, iconSize - DEFAULT_BOTTOMSECTION_HEIGHT, DEFAULT_WIDTH - 40,
                     DEFAULT_BOTTOMSECTION_HEIGHT), Color.White, false, true, 2);
 

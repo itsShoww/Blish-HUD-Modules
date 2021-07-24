@@ -51,22 +51,23 @@ namespace Nekres.Kill_Proof_Module.Manager
             var (responseSuccess, optionalKillProof) =
                 await TaskUtil.GetJsonResponse<KillProof>(KILLPROOF_API_URL + $"kp/{account}?lang=" + Overlay.UserLocale.Value);
 
-            return responseSuccess && optionalKillProof?.Error == null;
+            return responseSuccess && optionalKillProof != null && string.IsNullOrEmpty(optionalKillProof.Error);
         }
 
         public static async Task<KillProof> GetKillProofContent(string account)
         {
-            if (_cachedKillProofs.Any(x => x.AccountName.Equals(account, StringComparison.InvariantCultureIgnoreCase)))
-                return _cachedKillProofs.FirstOrDefault(x =>
-                    x.AccountName.Equals(account, StringComparison.InvariantCultureIgnoreCase));
+            var killproof = _cachedKillProofs.FirstOrDefault(kp => kp.AccountName.Equals(account, StringComparison.InvariantCultureIgnoreCase) || kp.KpId.Equals(account, StringComparison.InvariantCulture));
 
-            var (responseSuccess, killProof) = await TaskUtil.GetJsonResponse<KillProof>(KILLPROOF_API_URL + $"kp/{account}?lang=" + Overlay.UserLocale.Value)
+            if (killproof != null && string.IsNullOrEmpty(killproof.Error)) 
+                return killproof;
+
+            var (responseSuccess, newKillproof) = await TaskUtil.GetJsonResponse<KillProof>(KILLPROOF_API_URL + $"kp/{account}?lang=" + Overlay.UserLocale.Value)
                 .ConfigureAwait(false);
 
-            if (responseSuccess && killProof?.Error == null)
+            if (responseSuccess && newKillproof?.Error == null)
             {
-                _cachedKillProofs.Add(killProof);
-                return killProof;
+                _cachedKillProofs.Add(newKillproof);
+                return newKillproof;
             }
             return null;
         }

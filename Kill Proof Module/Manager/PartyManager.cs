@@ -60,7 +60,7 @@ namespace Nekres.Kill_Proof_Module.Manager
                 SelfUpdated?.Invoke(this, new ValueEventArgs<PlayerProfile>(Self));
                 return;
             }
-            var profile = Players.FirstOrDefault(p => p.Player.AccountName.Equals(player.AccountName)) ?? new PlayerProfile();
+            var profile = Players.FirstOrDefault(p => p.Identifier.Equals(player.AccountName)) ?? new PlayerProfile();
             profile.Player = player;
             PlayerAdded?.Invoke(this, new ValueEventArgs<PlayerProfile>(profile));
         }
@@ -68,8 +68,7 @@ namespace Nekres.Kill_Proof_Module.Manager
         private void PlayerLeavesEvent(CommonFields.Player player)
         {
             if (player.Self) return;
-            if (!ModuleInstance.AutomaticClearEnabled.Value) return;
-            var profile = Players.FirstOrDefault(p => p.Player.AccountName.Equals(player.AccountName));
+            var profile = Players.FirstOrDefault(p => p.Identifier.Equals(player.AccountName));
             Players.Remove(profile);
             PlayerLeft?.Invoke(this, new ValueEventArgs<PlayerProfile>(profile));
         }
