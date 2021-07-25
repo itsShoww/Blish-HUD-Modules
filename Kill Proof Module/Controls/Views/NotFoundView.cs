@@ -5,12 +5,13 @@ using Blish_HUD.Controls;
 using Blish_HUD.Graphics.UI;
 using Microsoft.Xna.Framework;
 using static Blish_HUD.GameService;
+using static Nekres.Kill_Proof_Module.KillProofModule;
 
 namespace Nekres.Kill_Proof_Module.Controls.Views
 {
     public class NotFoundView : IView
     {
-        private string _searchTerm;
+        private readonly string _searchTerm;
 
         public NotFoundView(string searchTerm)
         {
@@ -40,7 +41,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                 ShowShadow = true,
                 StrokeText = true,
                 Font = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size36, ContentService.FontStyle.Regular),
-                Text = Properties.Resources.Not_yet_registered___,
+                Text = Properties.Resources.No_profile_for___0___found___.Replace("{0}", _searchTerm),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Middle
             };
@@ -52,17 +53,18 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                 ShowShadow = true,
                 StrokeText = true,
                 Font = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size24, ContentService.FontStyle.Regular),
-                Text = "\n\n" + Properties.Resources.Visit_www_killproof_me_and_allow_us_to_record_your_KillProofs_for_you_,
+                Text = "\n\n" + Properties.Resources.Please__share_www_killproof_me_with_this_player_and_help_expand_our_database_,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Middle
             };
-            labNothingHere.Text = Properties.Resources.No_profile_for___0___found___.Replace("{0}", _searchTerm);
-            labVisitUs.Text = "\n\n" + Properties.Resources.Please__share_www_killproof_me_with_this_player_and_help_expand_our_database_;
+            if (ModuleInstance.PartyManager.Self.IsOwner(_searchTerm)) {
+                labNothingHere.Text = Properties.Resources.Not_yet_registered___;
+                labVisitUs.Text = "\n\n" + Properties.Resources.Visit_www_killproof_me_and_allow_us_to_record_your_KillProofs_for_you_;
+            }
         }
 
         public void DoUnload()
         {
-            
         }
 
         public event EventHandler<EventArgs> Loaded;

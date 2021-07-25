@@ -134,8 +134,7 @@ namespace Nekres.Kill_Proof_Module
                         }
                         using (var textureStream = new MemoryStream(textureDataResponse.Result))
                         {
-                            var loadedTexture =
-                                Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
+                            var loadedTexture = Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
 
                             _tokenRenderRepository[token.Id].SwapTexture(loadedTexture);
                         }
@@ -170,8 +169,7 @@ namespace Nekres.Kill_Proof_Module
                         }
                         using (var textureStream = new MemoryStream(textureDataResponse.Result))
                         {
-                            var loadedTexture =
-                                Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
+                            var loadedTexture = Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
 
                             _professionRenderRepository[id].SwapTexture(loadedTexture);
                         }
@@ -200,8 +198,7 @@ namespace Nekres.Kill_Proof_Module
                         }
                         using (var textureStream = new MemoryStream(textureDataResponse.Result))
                         {
-                            var loadedTexture =
-                                Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
+                            var loadedTexture = Texture2D.FromStream(Graphics.GraphicsDevice, textureStream);
 
                             _eliteRenderRepository[specialization.Id].SwapTexture(loadedTexture);
                         }
@@ -211,16 +208,17 @@ namespace Nekres.Kill_Proof_Module
 
         public AsyncTexture2D GetProfessionRender(CommonFields.Player player)
         {
-            if (player.Elite == 0) 
+            if (player.Elite != 0) return _eliteRenderRepository[(int)player.Elite];
+            if (player.Profession > 0)
                 return _professionRenderRepository[(int)player.Profession];
-            return _eliteRenderRepository[(int)player.Elite];
+            return Content.GetTexture("common/733268");
         }
 
         public AsyncTexture2D GetTokenRender(int key)
         {
-            if (!_tokenRenderRepository.ContainsKey(key))
-                return Content.GetTexture("deleted_item");
-            return _tokenRenderRepository[key];
+            if (_tokenRenderRepository.ContainsKey(key))
+                return _tokenRenderRepository[key];
+            return Content.GetTexture("deleted_item");
         }
 
         #endregion

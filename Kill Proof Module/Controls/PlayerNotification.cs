@@ -4,7 +4,6 @@ using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Nekres.Kill_Proof_Module.Controls.Views;
-using Nekres.Kill_Proof_Module.Manager;
 using static Blish_HUD.GameService;
 
 namespace Nekres.Kill_Proof_Module.Controls

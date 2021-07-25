@@ -32,15 +32,14 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
 
         private string _currentSortMethod;
 
-        private Texture2D _deletedItemTexture;
         private Texture2D _sortByWorldBossesTexture;
         private Texture2D _sortByTokenTexture;
         private Texture2D _sortByTitleTexture;
         private Texture2D _sortByRaidTexture;
         private Texture2D _sortByFractalTexture;
 
-        private List<KillProofButton> _displayedKillProofs;
-        private KillProof _profile;
+        private readonly List<KillProofButton> _displayedKillProofs;
+        private readonly KillProof _profile;
 
         public ProfileView(KillProof profile)
         {
@@ -49,29 +48,30 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
             _currentSortMethod = Properties.Resources.Everything;
         }
 
-        public Task<bool> DoLoad(IProgress<string> progress)
+        public async Task<bool> DoLoad(IProgress<string> progress)
         {
-            return Task.Run(() =>
-            {
-
-                _deletedItemTexture = ModuleInstance.ContentsManager.GetTexture("deleted_item.png");
-                _sortByWorldBossesTexture = ModuleInstance.ContentsManager.GetTexture("world-bosses.png");
-                _sortByTokenTexture = ModuleInstance.ContentsManager.GetTexture("icon_token.png");
-                _sortByTitleTexture = ModuleInstance.ContentsManager.GetTexture("icon_title.png");
-                _sortByRaidTexture = ModuleInstance.ContentsManager.GetTexture("icon_raid.png");
-                _sortByFractalTexture = ModuleInstance.ContentsManager.GetTexture("icon_fractal.png");
-                return true;
-            });
+            _sortByWorldBossesTexture = ModuleInstance.ContentsManager.GetTexture("world-bosses.png");
+            _sortByTokenTexture = ModuleInstance.ContentsManager.GetTexture("icon_token.png");
+            _sortByTitleTexture = ModuleInstance.ContentsManager.GetTexture("icon_title.png");
+            _sortByRaidTexture = ModuleInstance.ContentsManager.GetTexture("icon_raid.png");
+            _sortByFractalTexture = ModuleInstance.ContentsManager.GetTexture("icon_fractal.png");
+            return true;
         }
 
         public void DoBuild(Panel buildPanel)
         {
             BuildFooter(BuildBody(BuildHeader(buildPanel)));
+            var backButton = new BackButton(Overlay.BlishHudWindow)
+            {
+                Text = ModuleInstance.KillProofTabName,
+                NavTitle = Properties.Resources.Profile,
+                Parent = buildPanel,
+                Location = new Point(20, 20)
+            };
         }
 
         public void DoUnload()
         {
-            foreach (var c in _displayedKillProofs) c?.Dispose();
         }
 
         public event EventHandler<EventArgs> Loaded;
@@ -297,7 +297,6 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                         Text = token.Name,
                         BottomText = token.Amount.ToString()
                     };
-
                     _displayedKillProofs.Add(killProofButton);
                 }
             }
@@ -318,7 +317,6 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                         BottomText = title.Mode.ToString(),
                         IsTitleDisplay = true
                     };
-
                     switch (title.Mode)
                     {
                         case Mode.Raid:
@@ -328,7 +326,6 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                             titleButton.Icon = _sortByFractalTexture;
                             break;
                     }
-
                     _displayedKillProofs.Add(titleButton);
                 }
             } 
@@ -337,20 +334,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                 // TODO: Show text indicating that titles were explicitly hidden
                 Logger.Info($"PlayerProfile '{_profile.AccountName}' has titles and achievements explicitly hidden.");
             }
-
             RepositionKillProofs();
-
-            var backButton = new BackButton(Overlay.BlishHudWindow)
-            {
-                Text = ModuleInstance.KillProofTabName,
-                NavTitle = Properties.Resources.Profile,
-                Parent = contentPanel.Parent,
-                Location = new Point(20, 20)
-            };
-            backButton.LeftMouseButtonReleased += delegate
-            {
-                Overlay.BlishHudWindow.NavigateBack();
-            };
             return contentPanel;
         }
 

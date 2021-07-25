@@ -64,7 +64,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controls\Views\LoadingView.cs" />
     <Compile Include="Controls\Views\MainView.cs" />
     <Compile Include="Controls\Views\NotFoundView.cs" />
     <Compile Include="Controls\Views\ProfileView.cs" />

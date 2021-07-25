@@ -121,15 +121,18 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                 Text = Properties.Resources.Recent_profiles_
             };
 
-            if (!string.IsNullOrEmpty(ModuleInstance.PartyManager.Self.Identifier)) {
+            void OnSelfKillProofAvailable (object o, ValueEventArgs<KillProof> e)
+            {
+                if (!ModuleInstance.PartyManager.Self.HasKillProof()) return;
+                ModuleInstance.PartyManager.Self.KillProofChanged -= OnSelfKillProofAvailable;
+
                 var selfButtonPanel = new Panel
                 {
                     Parent = header,
                     Size = new Point(335, 114),
                     ShowBorder = true,
                     ShowTint = true,
-                    Location =
-                        new Point(header.Right - 335 - RIGHT_MARGIN, TOP_MARGIN + 15)
+                    Location = new Point(header.Right - 335 - RIGHT_MARGIN, TOP_MARGIN + 15)
                 };
 
                 var smartPingCheckBox = new Checkbox
@@ -138,20 +141,25 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                     Location = new Point(selfButtonPanel.Location.X + LEFT_MARGIN, selfButtonPanel.Bottom),
                     Size = new Point(selfButtonPanel.Width, 30),
                     Text = Properties.Resources.Show_Smart_Ping_Menu,
-                    BasicTooltipText = Properties.Resources.Shows_a_menu_on_the_top_left_corner_of_your_screen_which_allows_you_to_quickly_access_and_ping_your_killproofs_,
+                    BasicTooltipText = Properties.Resources
+                        .Shows_a_menu_on_the_top_left_corner_of_your_screen_which_allows_you_to_quickly_access_and_ping_your_killproofs_,
                     Checked = ModuleInstance.SmartPingMenuEnabled.Value
                 };
-                smartPingCheckBox.CheckedChanged += (_,e) => ModuleInstance.SmartPingMenuEnabled.Value = e.Checked;
+                smartPingCheckBox.CheckedChanged += (_, ev) => ModuleInstance.SmartPingMenuEnabled.Value = ev.Checked;
 
-                var localPlayerButton = new DetailsButton
+                var localPlayerButton = new PlayerButton(ModuleInstance.PartyManager.Self)
                 {
                     Parent = selfButtonPanel,
-                    Icon = Content.GetTexture("common/733268"),
-                    Text = ModuleInstance.PartyManager.Self.Identifier,
-                    Title = ModuleInstance.PartyManager.Self.Identifier,
+                    IsNew = false,
                     Location = new Point(0, 0)
                 };
             }
+
+            if (!ModuleInstance.PartyManager.Self.HasKillProof())
+                ModuleInstance.PartyManager.Self.KillProofChanged += OnSelfKillProofAvailable;
+            else
+                OnSelfKillProofAvailable(null, null);
+
             return header;
         }
 
@@ -197,7 +205,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                     {
                         if (c == null)
                             _displayedPlayers.Remove(null);
-                        else if (!ArcDps.Common.PlayersInSquad.Any(p => p.Value.AccountName.Equals(c.PlayerProfile.Identifier)))
+                        else if (!ArcDps.Common.PlayersInSquad.Any(p => c.PlayerProfile.IsOwner(p.Value.AccountName)))
                         {
                             _displayedPlayers.Remove(c);
                             c.Dispose();
@@ -224,38 +232,30 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
 
         private void PlayerAddedEvent(object o, ValueEventArgs<PlayerProfile> profile)
         {
-            var playerBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Identifier.Equals(profile.Value.Identifier, StringComparison.InvariantCultureIgnoreCase));
+            var playerBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Equals(profile.Value));
             if (playerBtn == null)
             {
-                AddPlayerButton(profile.Value);
+                AddPlayerButton(profile.Value, true);
                 //PlayerNotification.ShowNotification(profile.Value.Identifier, ModuleInstance.GetProfessionRender(profile.Value.Player), Properties.Resources.profile_available, 10);
             }
 
             RepositionPlayers();
         }
 
-        private async void AddPlayerButton(PlayerProfile profile)
+        private async void AddPlayerButton(PlayerProfile profile, bool isNew = false)
         {
-            if (!await KillProofApi.ProfileAvailable(profile.Identifier)) return;
-            var playerButton = new PlayerButton(profile)
+            if (!await KillProofApi.ProfileAvailable(profile.AccountName)) return;
+            _displayedPlayers.Add(new PlayerButton(profile)
             {
                 Parent = _squadPanel,
-                Icon = ModuleInstance.GetProfessionRender(profile.Player),
-                Font = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size16, ContentService.FontStyle.Regular)
-            };
-            playerButton.Click += (o, e) =>
-            {
-                playerButton.IsNew = false;
-                LoadProfileView(playerButton.PlayerProfile.Identifier);
-            };
+                IsNew = isNew
+            });
             RepositionPlayers();
-            _displayedPlayers.Add(playerButton);
         }
 
         public static void LoadProfileView(string searchTerm)
         {
             if (string.IsNullOrEmpty(searchTerm) || !Gw2AccountName.IsMatch(searchTerm)) return;
-            Overlay.BlishHudWindow.Navigate(new LoadingView());
             KillProofApi.GetKillProofContent(searchTerm).ContinueWith(kpResult =>
             {
                 if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
@@ -274,7 +274,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
         private void PlayerLeavesEvent(object o, ValueEventArgs<PlayerProfile> profile)
         {
             if (!ModuleInstance.AutomaticClearEnabled.Value) return;
-            var profileBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Identifier.Equals(profile.Value.Identifier));
+            var profileBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Equals(profile.Value));
             _displayedPlayers.Remove(profileBtn);
             profileBtn?.Dispose();
         }

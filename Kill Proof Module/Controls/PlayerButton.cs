@@ -1,9 +1,13 @@
 ﻿using Blish_HUD;
+using Blish_HUD.ArcDps.Common;
 using Blish_HUD.Controls;
+using Blish_HUD.Input;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
+using Nekres.Kill_Proof_Module.Controls.Views;
 using Nekres.Kill_Proof_Module.Models;
+using static Nekres.Kill_Proof_Module.KillProofModule;
 
 namespace Nekres.Kill_Proof_Module.Controls
 {
@@ -16,16 +20,6 @@ namespace Nekres.Kill_Proof_Module.Controls
 
         private readonly Texture2D PIXEL;
         private readonly Texture2D SEPARATOR;
-
-        public PlayerButton(PlayerProfile playerProfile)
-        {
-            PlayerProfile = playerProfile;
-            BORDER_SPRITE = BORDER_SPRITE ?? Content.GetTexture(@"controls/detailsbutton/605003");
-            SEPARATOR = SEPARATOR ?? Content.GetTexture("157218");
-            PIXEL = PIXEL ?? ContentService.Textures.Pixel;
-
-            Size = new Point(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-        }
 
         private BitmapFont _font;
         public BitmapFont Font
@@ -50,7 +44,7 @@ namespace Nekres.Kill_Proof_Module.Controls
             }
         }
 
-        private bool _isNew = true;
+        private bool _isNew;
         public bool IsNew
         {
             get => _isNew;
@@ -60,6 +54,33 @@ namespace Nekres.Kill_Proof_Module.Controls
                 _isNew = value;
                 OnPropertyChanged();
             }
+        }
+
+        public PlayerButton(PlayerProfile playerProfile)
+        {
+            PlayerProfile = playerProfile;
+            BORDER_SPRITE = BORDER_SPRITE ?? Content.GetTexture(@"controls/detailsbutton/605003");
+            SEPARATOR = SEPARATOR ?? Content.GetTexture("157218");
+            PIXEL = PIXEL ?? ContentService.Textures.Pixel;
+
+            Size = new Point(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
+            Icon = ModuleInstance.GetProfessionRender(playerProfile.Player);
+            Font = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size16, ContentService.FontStyle.Regular);
+
+            playerProfile.PlayerChanged += OnPlayerChanged;
+            Click += OnClick;
+        }
+
+        private void OnClick(object o, MouseEventArgs e)
+        {
+            IsNew = false;
+            MainView.LoadProfileView(PlayerProfile.AccountName);
+        }
+
+        private void OnPlayerChanged(object o, ValueEventArgs<CommonFields.Player> e)
+        {
+            Icon = ModuleInstance.GetProfessionRender(e.Value);
         }
 
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds)
@@ -75,7 +96,7 @@ namespace Nekres.Kill_Proof_Module.Controls
                 : DEFAULT_HEIGHT - DEFAULT_BOTTOMSECTION_HEIGHT;
 
             // Draw bottom text
-            spriteBatch.DrawStringOnCtrl(this, PlayerProfile.Identifier, Content.DefaultFont14,
+            spriteBatch.DrawStringOnCtrl(this, PlayerProfile.AccountName, Content.DefaultFont14,
                 new Rectangle(iconSize + 20, iconSize - DEFAULT_BOTTOMSECTION_HEIGHT, DEFAULT_WIDTH - 40,
                     DEFAULT_BOTTOMSECTION_HEIGHT), Color.White, false, true, 2);
 
@@ -96,9 +117,9 @@ namespace Nekres.Kill_Proof_Module.Controls
                 Color.White);
 
             // Wrap text
-            if (PlayerProfile.Player.CharacterName != null && Font != null)
+            if (PlayerProfile.CharacterName != null && Font != null)
             {
-                var wrappedText = DrawUtil.WrapText(Font, PlayerProfile.Player.CharacterName, DEFAULT_WIDTH - 40 - iconSize - 20);
+                var wrappedText = DrawUtil.WrapText(Font, PlayerProfile.CharacterName, DEFAULT_WIDTH - 40 - iconSize - 20);
 
                 // Draw name
                 spriteBatch.DrawStringOnCtrl(this, wrappedText, Font,

@@ -21,11 +21,10 @@ namespace Nekres.Kill_Proof_Module.Manager
 
         public event EventHandler<ValueEventArgs<PlayerProfile>> PlayerAdded;
         public event EventHandler<ValueEventArgs<PlayerProfile>> PlayerLeft;
-        public event EventHandler<ValueEventArgs<PlayerProfile>> SelfUpdated;
 
         public PartyManager()
         {
-            Self = new PlayerProfile();
+            Self = new PlayerProfile(true);
             Players = new List<PlayerProfile>();
 
             RequestSelf();
@@ -42,13 +41,10 @@ namespace Nekres.Kill_Proof_Module.Manager
                 await ModuleInstance.Gw2ApiManager.Gw2ApiClient.V2.Account.GetAsync().ContinueWith(async result =>
                 {
                     if (!result.IsCompleted || result.IsFaulted) return;
-                    Self.Identifier = result.Result.Name;
                     await KillProofApi.GetKillProofContent(result.Result.Name).ContinueWith(res =>
                     {
                         if (!res.IsCompleted || res.IsFaulted) return null;
-
                         Self.KillProof = res.Result;
-                        SelfUpdated?.Invoke(this, new ValueEventArgs<PlayerProfile>(Self));
                         return res.Result;
                     });
                 });
@@ -60,28 +56,26 @@ namespace Nekres.Kill_Proof_Module.Manager
             if (player.Self)
             {
                 Self.Player = player;
-                SelfUpdated?.Invoke(this, new ValueEventArgs<PlayerProfile>(Self));
                 return;
             }
 
-            var profile = Players.FirstOrDefault(p => p.Identifier.Equals(player.AccountName));
-            if (profile == null)
+            var profile = Players.FirstOrDefault(p => p.IsOwner(player.AccountName));
+            if (profile == null) 
             {
                 profile = new PlayerProfile { Player = player };
                 Players.Add(profile);
-            }
+                PlayerAdded?.Invoke(this, new ValueEventArgs<PlayerProfile>(profile));
+            } 
             else
             {
                 profile.Player = player;
             }
-
-            PlayerAdded?.Invoke(this, new ValueEventArgs<PlayerProfile>(profile));
         }
 
         private void PlayerLeavesEvent(CommonFields.Player player)
         {
             if (player.Self || !ModuleInstance.AutomaticClearEnabled.Value) return;
-            var profile = Players.FirstOrDefault(p => p.Identifier.Equals(player.AccountName));
+            var profile = Players.FirstOrDefault(p => p.IsOwner(player.AccountName));
             Players.Remove(profile);
             PlayerLeft?.Invoke(this, new ValueEventArgs<PlayerProfile>(profile));
         }

@@ -29,7 +29,7 @@ namespace Nekres.Kill_Proof_Module.Controls
         private void OnIsInGameChanged(object o, ValueEventArgs<bool> e) => ToggleSmartPingMenu(e.Value, 0.1f);
         private void OnSmartPingMenuEnabledSettingChanged(object o, ValueChangedEventArgs<bool> e) => ToggleSmartPingMenu(e.NewValue, 0.1f);
         private void OnSPM_RepetitionsChanged(object o, ValueChangedEventArgs<int> e) => _smartPingRepetitions = MathHelper.Clamp(e.NewValue, 10, 100) / 10;
-        private void OnSelfUpdated(object o, ValueEventArgs<PlayerProfile> e) => BuildSmartPingMenu();
+        private void OnSelfKillProofChanged(object o, ValueEventArgs<KillProof> e) => BuildSmartPingMenu();
 
         public SmartPingMenu()
         {
@@ -41,7 +41,7 @@ namespace Nekres.Kill_Proof_Module.Controls
             GameIntegration.IsInGameChanged += OnIsInGameChanged;
             Gw2Mumble.UI.IsMapOpenChanged += OnIsMapOpenChanged;
 
-            ModuleInstance.PartyManager.SelfUpdated += OnSelfUpdated;
+            ModuleInstance.PartyManager.Self.KillProofChanged += OnSelfKillProofChanged;
         }
 
         private void ToggleSmartPingMenu(bool enabled, float tDuration)
@@ -369,7 +369,7 @@ namespace Nekres.Kill_Proof_Module.Controls
                     }
 
                     chatLink.Quantity = Convert.ToByte(1);
-                    GameIntegration.Chat.Send(Properties.Resources.Total___0__of__1___killproof_me__2__.Replace("{0}", token.Amount.ToString()).Replace("{1}", chatLink.ToString()).Replace("{2}", ModuleInstance.PartyManager.Self.KillProof.KpId));
+                    GameIntegration.Chat.Send(Properties.Resources.Total___0__of__1___killproof_me__2__.Replace("{0}", token.Amount.ToString()).Replace("{1}", chatLink.ToString()).Replace("{2}", ModuleInstance.PartyManager.Self.KpId));
                 }
             };
             _smartPingMenu.Disposed += delegate { Animation.Tweener.Tween(_smartPingMenu, new { Opacity = 0.0f }, 0.2f); };
@@ -386,6 +386,7 @@ namespace Nekres.Kill_Proof_Module.Controls
             ModuleInstance.SPM_Repetitions.SettingChanged -= OnSPM_RepetitionsChanged;
             Gw2Mumble.UI.IsMapOpenChanged -= OnIsMapOpenChanged;
             GameIntegration.IsInGameChanged -= OnIsInGameChanged;
+            ModuleInstance.PartyManager.Self.KillProofChanged -= OnSelfKillProofChanged;
         }
     }
 }
