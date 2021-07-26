@@ -4,7 +4,9 @@ using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Nekres.Kill_Proof_Module.Controls.Views;
+using Nekres.Kill_Proof_Module.Models;
 using static Blish_HUD.GameService;
+using static Nekres.Kill_Proof_Module.KillProofModule;
 
 namespace Nekres.Kill_Proof_Module.Controls
 {
@@ -13,26 +15,24 @@ namespace Nekres.Kill_Proof_Module.Controls
         private const int NOTIFICATION_WIDTH = 264;
         private const int NOTIFICATION_HEIGHT = 64;
 
-        private const int ICON_SIZE = 64;
-
         private static int _visibleNotifications;
         private Texture2D _notificationBackroundTexture;
 
-        private readonly AsyncTexture2D _icon;
+        private AsyncTexture2D _icon;
 
         private Rectangle _layoutIconBounds;
 
-        private PlayerNotification(string title, AsyncTexture2D icon, string message)
+        private PlayerNotification(PlayerProfile profile, string message)
         {
-            _notificationBackroundTexture = KillProofModule.ModuleInstance.ContentsManager.GetTexture("ns-button.png");
-            _icon = icon;
+            _notificationBackroundTexture = ModuleInstance.ContentsManager.GetTexture("ns-button.png");
+            _icon = ModuleInstance.GetProfessionRender(profile.Player);
 
             Opacity = 0f;
             Size = new Point(NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT);
             Location = new Point(60, 60 + (NOTIFICATION_HEIGHT + 15) * _visibleNotifications);
-            BasicTooltipText = "Right click to view profile";
+            BasicTooltipText = "Click to view profile";
 
-            var wrappedTitle = DrawUtil.WrapText(Content.DefaultFont14, title, Width - NOTIFICATION_HEIGHT - 20 - 32);
+            var wrappedTitle = DrawUtil.WrapText(Content.DefaultFont14, profile.AccountName, Width - NOTIFICATION_HEIGHT - 20 - 32);
             var titleLbl = new Label
             {
                 Parent = this,
@@ -53,11 +53,16 @@ namespace Nekres.Kill_Proof_Module.Controls
 
             _visibleNotifications++;
 
-            RightMouseButtonReleased += delegate
+            Click += delegate
             {
                 Overlay.BlishHudWindow.Show();
-                MainView.LoadProfileView(title);
+                MainView.LoadProfileView(profile.AccountName);
                 Dispose();
+            };
+
+            profile.PlayerChanged += (_, e) =>
+            {
+                _icon = ModuleInstance.GetProfessionRender(e.Value);
             };
         }
 
@@ -72,9 +77,7 @@ namespace Nekres.Kill_Proof_Module.Controls
             var icoSize = 52;
 
             _layoutIconBounds = new Rectangle(NOTIFICATION_HEIGHT / 2 - icoSize / 2,
-                NOTIFICATION_HEIGHT / 2 - icoSize / 2,
-                icoSize,
-                icoSize);
+                NOTIFICATION_HEIGHT / 2 - icoSize / 2, icoSize, icoSize);
         }
 
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds)
@@ -101,9 +104,9 @@ namespace Nekres.Kill_Proof_Module.Controls
                 .OnComplete(Dispose);
         }
 
-        public static void ShowNotification(string title, AsyncTexture2D icon, string message, float duration)
+        public static void ShowNotification(PlayerProfile profile, string message, float duration)
         {
-            var notif = new PlayerNotification(title, icon, message)
+            var notif = new PlayerNotification(profile, message)
             {
                 Parent = Graphics.SpriteScreen
             };

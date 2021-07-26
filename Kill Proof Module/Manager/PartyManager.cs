@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.ArcDps.Common;
 using Gw2Sharp.WebApi.V2.Models;
+using Nekres.Kill_Proof_Module.Controls;
 using Nekres.Kill_Proof_Module.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using static Blish_HUD.GameService;
 using static Nekres.Kill_Proof_Module.KillProofModule;
 
@@ -41,21 +42,17 @@ namespace Nekres.Kill_Proof_Module.Manager
                 await ModuleInstance.Gw2ApiManager.Gw2ApiClient.V2.Account.GetAsync().ContinueWith(async result =>
                 {
                     if (!result.IsCompleted || result.IsFaulted) return;
-                    await KillProofApi.GetKillProofContent(result.Result.Name).ContinueWith(res =>
-                    {
-                        if (!res.IsCompleted || res.IsFaulted) return null;
-                        Self.KillProof = res.Result;
-                        return res.Result;
-                    });
+                    Self.KillProof = await KillProofApi.GetKillProofContent(result.Result.Name);
                 });
             }
         }
 
-        private void PlayerAddedEvent(CommonFields.Player player)
+        private async void PlayerAddedEvent(CommonFields.Player player)
         {
             if (player.Self)
             {
                 Self.Player = player;
+                Self.KillProof = await KillProofApi.GetKillProofContent(player.AccountName);
                 return;
             }
 
@@ -65,6 +62,12 @@ namespace Nekres.Kill_Proof_Module.Manager
                 profile = new PlayerProfile { Player = player };
                 Players.Add(profile);
                 PlayerAdded?.Invoke(this, new ValueEventArgs<PlayerProfile>(profile));
+                await KillProofApi.ProfileAvailable(player.AccountName).ContinueWith(response =>
+                {
+                    if (!response.IsCompleted || response.IsFaulted) return;
+                    if (response.Result)
+                        PlayerNotification.ShowNotification(profile, Properties.Resources.profile_available, 10);
+                });
             } 
             else
             {

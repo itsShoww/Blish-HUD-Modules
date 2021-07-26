@@ -116,7 +116,7 @@ namespace Nekres.Kill_Proof_Module.Controls
         {
             _smartPingMenu?.Dispose();
 
-            if (!ModuleInstance.SmartPingMenuEnabled.Value || !IsUiAvailable() || ModuleInstance.PartyManager.Self.KillProof == null) return;
+            if (!ModuleInstance.SmartPingMenuEnabled.Value || !IsUiAvailable() || !ModuleInstance.PartyManager.Self.HasKillProof()) return;
 
             _smartPingMenu = new Panel
             {

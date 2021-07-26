@@ -64,7 +64,7 @@ namespace Nekres.Kill_Proof_Module.Manager
             var (responseSuccess, newKillproof) = await TaskUtil.GetJsonResponse<KillProof>(KILLPROOF_API_URL + $"kp/{account}?lang=" + Overlay.UserLocale.Value)
                 .ConfigureAwait(false);
 
-            if (responseSuccess && newKillproof?.Error == null)
+            if (responseSuccess && string.IsNullOrEmpty(newKillproof?.Error))
             {
                 _cachedKillProofs.Add(newKillproof);
                 return newKillproof;

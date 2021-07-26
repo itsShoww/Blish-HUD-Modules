@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Blish_HUD.Graphics.UI;
-using Blish_HUD.Input;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Nekres.Kill_Proof_Module.Manager;
 using Nekres.Kill_Proof_Module.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using static Blish_HUD.GameService;
 using static Nekres.Kill_Proof_Module.KillProofModule;
 
@@ -141,8 +139,7 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                     Location = new Point(selfButtonPanel.Location.X + LEFT_MARGIN, selfButtonPanel.Bottom),
                     Size = new Point(selfButtonPanel.Width, 30),
                     Text = Properties.Resources.Show_Smart_Ping_Menu,
-                    BasicTooltipText = Properties.Resources
-                        .Shows_a_menu_on_the_top_left_corner_of_your_screen_which_allows_you_to_quickly_access_and_ping_your_killproofs_,
+                    BasicTooltipText = Properties.Resources.Shows_a_menu_on_the_top_left_corner_of_your_screen_which_allows_you_to_quickly_access_and_ping_your_killproofs_,
                     Checked = ModuleInstance.SmartPingMenuEnabled.Value
                 };
                 smartPingCheckBox.CheckedChanged += (_, ev) => ModuleInstance.SmartPingMenuEnabled.Value = ev.Checked;
@@ -233,12 +230,8 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
         private void PlayerAddedEvent(object o, ValueEventArgs<PlayerProfile> profile)
         {
             var playerBtn = _displayedPlayers.FirstOrDefault(x => x.PlayerProfile.Equals(profile.Value));
-            if (playerBtn == null)
-            {
+            if (playerBtn == null) 
                 AddPlayerButton(profile.Value, true);
-                //PlayerNotification.ShowNotification(profile.Value.Identifier, ModuleInstance.GetProfessionRender(profile.Value.Player), Properties.Resources.profile_available, 10);
-            }
-
             RepositionPlayers();
         }
 
@@ -261,13 +254,9 @@ namespace Nekres.Kill_Proof_Module.Controls.Views
                 if (!kpResult.IsCompleted || kpResult.IsFaulted) return;
                 var killproof = kpResult.Result;
                 if (killproof != null && string.IsNullOrEmpty(killproof.Error))
-                {
                     Overlay.BlishHudWindow.Navigate(new ProfileView(killproof));
-                }
                 else
-                {
                     Overlay.BlishHudWindow.Navigate(new NotFoundView(searchTerm));
-                }
             });
         }
 

@@ -1,6 +1,6 @@
-﻿using System;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.ArcDps.Common;
+using System;
 
 namespace Nekres.Kill_Proof_Module.Models
 {
@@ -26,7 +26,7 @@ namespace Nekres.Kill_Proof_Module.Models
             set
             {
                 if (_player.Equals(value)) return;
-                _player = value; 
+                _player = value;
                 PlayerChanged?.Invoke(this, new ValueEventArgs<CommonFields.Player>(value));
             }
         }
