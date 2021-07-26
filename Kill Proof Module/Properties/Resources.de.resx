@@ -131,8 +131,7 @@
   </data>
   <data name="Shows a menu on the top left corner of your screen which allows you to quickly access and ping your killproofs." xml:space="preserve">
     <value>Zeigt ein Menü in der oberen linken Ecke deines Bildschirms an welches
-dir erlaubt schnell auf deine KillProofs zuzugreifen und sie anderen mitzuteilen.
-Wird erst nach einem Kartenwechsel geladen.</value>
+dir erlaubt schnell auf deine KillProofs zuzugreifen und sie anderen mitzuteilen.</value>
     <comment>Smart Ping Menu: Checkbox description.</comment>
   </data>
   <data name="You started Blish HUD while Guild Wars 2 was already running." xml:space="preserve">
@@ -177,7 +176,7 @@ Wird erst nach einem Kartenwechsel geladen.</value>
   </data>
   <data name="Total: {0} of {1} (killproof.me/{2})" xml:space="preserve">
     <value>Gesamt: {0} von {1} (killproof.me/{2})</value>
-    <comment>Smart Ping Menu: Chat message on right click send. Ex. &quot;Total 250 of Legendary Insight (profile link)&quot;</comment>
+    <comment>Smart Ping Menu: Chat message on right click send. Ex. "Total 250 of Legendary Insight (profile link)"</comment>
   </data>
   <data name="Everything" xml:space="preserve">
     <value>Alles</value>
@@ -203,10 +202,10 @@ Wird erst nach einem Kartenwechsel geladen.</value>
     <value>Profil verfügbar</value>
   </data>
   <data name="No profile for &quot;{0}&quot; found :(" xml:space="preserve">
-    <value>Kein Profil für &quot;{0}&quot; gefunden :(</value>
+    <value>Kein Profil für "{0}" gefunden :(</value>
     <comment>{0} will be swapped with account name.</comment>
   </data>
-  <data name="Send To Chat\nLeft-Click: Only send code up to a stack&apos;s worth (250x). \nRight-Click: Send killproof.me total amount." xml:space="preserve">
+  <data name="Send To Chat\nLeft-Click: Only send code up to a stack's worth (250x). \nRight-Click: Send killproof.me total amount." xml:space="preserve">
     <value>An Chat senden
 Linksklick: Sende den Code nur bis zum Wert eines Stapels (250x).
 Rechtsklick: Sende den Gesamtbetrag von killproof.me.</value>

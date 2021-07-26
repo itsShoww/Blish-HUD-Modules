@@ -293,8 +293,7 @@ namespace Nekres.Kill_Proof_Module.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to Shows a menu on the top left corner of your screen which
-        ///allows you to quickly access and ping your killproofs.
-        ///Loads on map change..
+        ///allows you to quickly access and ping your killproofs..
         /// </summary>
         internal static string Shows_a_menu_on_the_top_left_corner_of_your_screen_which_allows_you_to_quickly_access_and_ping_your_killproofs_ {
             get {
