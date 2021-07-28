@@ -225,12 +225,12 @@ namespace Nekres.Kill_Proof_Module.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Random token from selected wing when pressing Send To Chat.
         ///Left-Click: Toggle
-        ///Right-Click: Iterate wings.
+        ///Left-Ctrl + Left-Click: Iterate wings.
         /// </summary>
-        internal static string Random_token_from_selected_wing_when_pressing_Send_To_Chat__nLeft_Click__Toggle_nRight_Click__Iterate_wings {
+        internal static string Random_token_from_selected_wing_when_pressing_Send_To_Chat__nLeft_Click__Toggle_nLeft_Ctrl___Left_Click__Iterate_wings {
             get {
                 return ResourceManager.GetString("Random token from selected wing when pressing Send To Chat.\\nLeft-Click: Toggle\\n" +
-                        "Right-Click: Iterate wings", resourceCulture);
+                        "Left-Ctrl + Left-Click: Iterate wings", resourceCulture);
             }
         }
         
@@ -273,12 +273,12 @@ namespace Nekres.Kill_Proof_Module.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Send To Chat
         ///Left-Click: Only send code up to a stack&apos;s worth (250x).
-        ///Right-Click: Send killproof.me total amount..
+        ///Left-Ctrl + Left-Click: Send killproof.me total amount..
         /// </summary>
-        internal static string Send_To_Chat_nLeft_Click__Only_send_code_up_to_a_stack_s_worth__250x____nRight_Click__Send_killproof_me_total_amount_ {
+        internal static string Send_To_Chat_nLeft_Click__Only_send_code_up_to_a_stack_s_worth__250x___nLeft_Ctrl___Left_Click__Send_killproof_me_total_amount_ {
             get {
-                return ResourceManager.GetString("Send To Chat\\nLeft-Click: Only send code up to a stack\'s worth (250x). \\nRight-Cl" +
-                        "ick: Send killproof.me total amount.", resourceCulture);
+                return ResourceManager.GetString("Send To Chat\\nLeft-Click: Only send code up to a stack\'s worth (250x).\\nLeft-Ctrl" +
+                        " + Left-Click: Send killproof.me total amount.", resourceCulture);
             }
         }
         

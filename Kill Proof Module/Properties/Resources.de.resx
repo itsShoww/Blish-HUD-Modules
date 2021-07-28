@@ -205,16 +205,16 @@ dir erlaubt schnell auf deine KillProofs zuzugreifen und sie anderen mitzuteilen
     <value>Kein Profil für "{0}" gefunden :(</value>
     <comment>{0} will be swapped with account name.</comment>
   </data>
-  <data name="Send To Chat\nLeft-Click: Only send code up to a stack's worth (250x). \nRight-Click: Send killproof.me total amount." xml:space="preserve">
+  <data name="Send To Chat\nLeft-Click: Only send code up to a stack's worth (250x).\nLeft-Ctrl + Left-Click: Send killproof.me total amount." xml:space="preserve">
     <value>An Chat senden
 Linksklick: Sende den Code nur bis zum Wert eines Stapels (250x).
-Rechtsklick: Sende den Gesamtbetrag von killproof.me.</value>
+Strg links + Linksklick: Sende den Gesamtbetrag von killproof.me.</value>
     <comment>Smart Ping Menu: Send Button tooltip.</comment>
   </data>
-  <data name="Random token from selected wing when pressing Send To Chat.\nLeft-Click: Toggle\nRight-Click: Iterate wings" xml:space="preserve">
+  <data name="Random token from selected wing when pressing Send To Chat.\nLeft-Click: Toggle\nLeft-Ctrl + Left-Click: Iterate wings" xml:space="preserve">
     <value>Zufällige Marke vom ausgewählten Flügel beim Drücken von An Chat senden.
 Linksklick: Umschalten
-Rechtsklick: Flügel iterieren</value>
+Strg links + Linksklick: Flügel iterieren</value>
     <comment>Smart Ping Menu: Randomize Button tooltip.</comment>
   </data>
   <data name="Clear" xml:space="preserve">

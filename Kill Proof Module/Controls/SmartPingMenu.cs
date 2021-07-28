@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Gw2Sharp.ChatLinks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Nekres.Kill_Proof_Module.Models;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.InteropServices;
 using static Blish_HUD.GameService;
 using static Nekres.Kill_Proof_Module.KillProofModule;
 
@@ -30,6 +31,20 @@ namespace Nekres.Kill_Proof_Module.Controls
         private void OnSmartPingMenuEnabledSettingChanged(object o, ValueChangedEventArgs<bool> e) => ToggleSmartPingMenu(e.NewValue, 0.1f);
         private void OnSPM_RepetitionsChanged(object o, ValueChangedEventArgs<int> e) => _smartPingRepetitions = MathHelper.Clamp(e.NewValue, 10, 100) / 10;
         private void OnSelfKillProofChanged(object o, ValueEventArgs<KillProof> e) => BuildSmartPingMenu();
+
+        #region PInvoke
+
+        [DllImport("USER32.dll")]
+        private static extern short GetKeyState(uint vk);
+        private bool IsPressed(uint key)
+        {
+            return Convert.ToBoolean(GetKeyState(key) & KEY_PRESSED);
+        }
+        private const uint KEY_PRESSED = 0x8000;
+        private const uint VK_LCONTROL = 0xA2;
+        private const uint VK_LSHIFT = 0xA0;
+
+        #endregion
 
         public SmartPingMenu()
         {
@@ -141,12 +156,14 @@ namespace Nekres.Kill_Proof_Module.Controls
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top
             };
+
             var quantity = new Label
             {
                 Parent = _smartPingMenu,
                 Size = new Point(30, 30),
                 Location = new Point(10, -2)
             };
+
             var dropdown = new Dropdown
             {
                 Parent = _smartPingMenu,
@@ -154,11 +171,13 @@ namespace Nekres.Kill_Proof_Module.Controls
                 Location = new Point(quantity.Right + 2, 3),
                 SelectedItem = Properties.Resources.Loading___
             };
+
             _smartPingMenu.MouseLeft += delegate
             {
                 //TODO: Check for when dropdown IsExpanded
                 Animation.Tweener.Tween(_smartPingMenu, new { Opacity = 0.4f }, 0.45f);
             };
+
             var rightBracket = new Label
             {
                 Parent = _smartPingMenu,
@@ -169,6 +188,12 @@ namespace Nekres.Kill_Proof_Module.Controls
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top
             };
+
+            /* TODO:
+             * 1. Use Resources to generate an itemId<->wing/boss lookup table, load it once on startup.
+             *    e.g  [ ...., "w7e1": 0, "w7e2": 91246, "w7e3": 91270, "w7e4": 91175 ]
+             * 2. Replace the following nested loops over Resources with single lookup in table.
+             */
             var tokenStringSorted = new List<string>();
             foreach (var token in ModuleInstance.PartyManager.Self.KillProof.GetAllTokens())
             {
@@ -178,6 +203,7 @@ namespace Nekres.Kill_Proof_Module.Controls
                 else
                     tokenStringSorted.Add(token.Name);
             }
+
             tokenStringSorted.Sort((e1, e2) => string.Compare(e1, e2, StringComparison.InvariantCultureIgnoreCase));
             foreach (var tokenString in tokenStringSorted)
             {
@@ -200,7 +226,7 @@ namespace Nekres.Kill_Proof_Module.Controls
                 Location = new Point(rightBracket.Right + 1, 0),
                 Texture = Content.GetTexture("784268"),
                 SpriteEffects = SpriteEffects.FlipHorizontally,
-                BasicTooltipText = Properties.Resources.Send_To_Chat_nLeft_Click__Only_send_code_up_to_a_stack_s_worth__250x____nRight_Click__Send_killproof_me_total_amount_
+                BasicTooltipText = Properties.Resources.Send_To_Chat_nLeft_Click__Only_send_code_up_to_a_stack_s_worth__250x___nLeft_Ctrl___Left_Click__Send_killproof_me_total_amount_
             };
             var randomizeButton = new StandardButton
             {
@@ -209,7 +235,7 @@ namespace Nekres.Kill_Proof_Module.Controls
                 Location = new Point(sendButton.Right + 7, 0),
                 Text = ModuleInstance.SPM_WingSelection.Value,
                 BackgroundColor = Color.Gray,
-                BasicTooltipText = Properties.Resources.Random_token_from_selected_wing_when_pressing_Send_To_Chat__nLeft_Click__Toggle_nRight_Click__Iterate_wings
+                BasicTooltipText = Properties.Resources.Random_token_from_selected_wing_when_pressing_Send_To_Chat__nLeft_Click__Toggle_nLeft_Ctrl___Left_Click__Iterate_wings
             };
 
             randomizeButton.PropertyChanged += delegate (object o, PropertyChangedEventArgs e) {
@@ -227,24 +253,30 @@ namespace Nekres.Kill_Proof_Module.Controls
             {
                 randomizeButton.Size = new Point(29, 24);
                 randomizeButton.Location = new Point(sendButton.Right + 7, 0);
-                randomizeButton.BackgroundColor =
-                    randomizeButton.BackgroundColor == Color.Gray ? Color.LightGreen : Color.Gray;
             };
-            randomizeButton.RightMouseButtonPressed += delegate
-            {
-                randomizeButton.Size = new Point(27, 22);
-                randomizeButton.Location = new Point(sendButton.Right + 5, 2);
-            };
-            randomizeButton.RightMouseButtonReleased += delegate
+
+            randomizeButton.MouseLeft += delegate
             {
                 randomizeButton.Size = new Point(29, 24);
                 randomizeButton.Location = new Point(sendButton.Right + 7, 0);
-                var allWings = ModuleInstance.Resources.GetAllWings().ToList();
-                var current = ModuleInstance.Resources.GetWing(randomizeButton.Text);
-                var wingIndex = allWings.IndexOf(current) + 1;
-                var next = wingIndex + 1 <= allWings.Count() ? wingIndex + 1 : 1;
-                randomizeButton.Text = $"W{next}";
             };
+
+            randomizeButton.Click += delegate
+            {
+                if (IsPressed(VK_LCONTROL))
+                {
+                    var allWings = ModuleInstance.Resources.GetAllWings().ToList();
+                    var current = ModuleInstance.Resources.GetWing(randomizeButton.Text);
+                    var wingIndex = allWings.IndexOf(current) + 1;
+                    var next = wingIndex + 1 <= allWings.Count() ? wingIndex + 1 : 1;
+                    randomizeButton.Text = $"W{next}";
+                }
+                else
+                {
+                    randomizeButton.BackgroundColor = randomizeButton.BackgroundColor == Color.Gray ? Color.LightGreen : Color.Gray;
+                }
+            };
+
             sendButton.LeftMouseButtonPressed += delegate
             {
                 sendButton.Size = new Point(22, 22);
@@ -255,123 +287,124 @@ namespace Nekres.Kill_Proof_Module.Controls
             {
                 sendButton.Size = new Point(24, 24);
                 sendButton.Location = new Point(rightBracket.Right + 1, 0);
-
-                if (Gw2Mumble.UI.IsTextInputFocused) return;
-
-                var cooldown = DateTimeOffset.Now.Subtract(_smartPingCooldownSend);
-                if (cooldown.TotalSeconds < 1)
-                {
-                    ScreenNotification.ShowNotification("Your total has been reached. Cooling down.", ScreenNotification.NotificationType.Error);
-                    return;
-                }
-
-                if (randomizeButton.BackgroundColor == Color.LightGreen)
-                {
-                    var wing = ModuleInstance.Resources.GetWing(randomizeButton.Text);
-                    var wingTokens = wing.GetTokens();
-                    var tokenSelection = ModuleInstance.PartyManager.Self.KillProof.GetAllTokens().Where(x => wingTokens.Any(y => y.Id.Equals(x.Id))).ToList();
-                    if (tokenSelection.Count == 0) return;
-
-                    DoSmartPing(tokenSelection.ElementAt(RandomUtil.GetRandom(0, tokenSelection.Count - 1)));
-
-                }
-                else
-                {
-
-                    var token = ModuleInstance.PartyManager.Self.KillProof.GetToken(dropdown.SelectedItem);
-                    if (token == null) return;
-                    DoSmartPing(token);
-                }
             };
 
-            sendButton.RightMouseButtonPressed += delegate
+            sendButton.MouseLeft += delegate
             {
-                sendButton.Size = new Point(22, 22);
-                sendButton.Location = new Point(rightBracket.Right + 3, 2);
+                sendButton.Size = new Point(24, 24);
+                sendButton.Location = new Point(rightBracket.Right + 1, 0);
             };
 
             var timeOutRightSend = new Dictionary<int, DateTimeOffset>();
 
-            sendButton.RightMouseButtonReleased += delegate
+            sendButton.Click += delegate
             {
-                sendButton.Size = new Point(24, 24);
-                sendButton.Location = new Point(rightBracket.Right + 1, 0);
-
-                if (ModuleInstance.PartyManager.Self.KillProof == null) return;
-
-                var chatLink = new ItemChatLink();
-
-                if (randomizeButton.BackgroundColor == Color.LightGreen)
+                if (IsPressed(VK_LCONTROL))
                 {
-                    var wing = ModuleInstance.Resources.GetWing(randomizeButton.Text);
-                    var wingTokens = wing.GetTokens();
-                    var tokenSelection = ModuleInstance.PartyManager.Self.KillProof.GetAllTokens().Where(x => wingTokens.Any(y => y.Id.Equals(x.Id))).ToList();
-                    if (tokenSelection.Count == 0) return;
-                    var singleRandomToken = tokenSelection.ElementAt(RandomUtil.GetRandom(0, tokenSelection.Count - 1));
-                    chatLink.ItemId = singleRandomToken.Id;
-                    if (timeOutRightSend.Any(x => x.Key == chatLink.ItemId))
+                    var chatLink = new ItemChatLink();
+
+                    if (randomizeButton.BackgroundColor == Color.LightGreen)
                     {
-                        var cooldown = DateTimeOffset.Now.Subtract(timeOutRightSend[chatLink.ItemId]);
-                        if (cooldown.TotalMinutes < 2)
+                        var wing = ModuleInstance.Resources.GetWing(randomizeButton.Text);
+                        var wingTokens = wing.GetTokens();
+                        var tokenSelection = ModuleInstance.PartyManager.Self.KillProof.GetAllTokens().Where(x => wingTokens.Any(y => y.Id.Equals(x.Id))).ToList();
+                        if (tokenSelection.Count == 0) return;
+                        var singleRandomToken = tokenSelection.ElementAt(RandomUtil.GetRandom(0, tokenSelection.Count - 1));
+                        chatLink.ItemId = singleRandomToken.Id;
+                        if (timeOutRightSend.Any(x => x.Key == chatLink.ItemId))
                         {
-                            var timeLeft = TimeSpan.FromMinutes(2 - cooldown.TotalMinutes);
-                            var minuteWord = timeLeft.TotalSeconds > 119 ? $" {timeLeft:%m} minutes and" :
-                                timeLeft.TotalSeconds > 59 ? $" {timeLeft:%m} minute and" : "";
-                            var secondWord = timeLeft.Seconds > 9 ? $"{timeLeft:ss} seconds" :
-                                timeLeft.Seconds > 1 ? $"{timeLeft:%s} seconds" : $"{timeLeft:%s} second";
-                            ScreenNotification.ShowNotification(
-                                $"You can't send your {singleRandomToken.Name} total\nwithin the next{minuteWord} {secondWord} again.",
-                                ScreenNotification.NotificationType.Error);
-                            return;
+                            var cooldown = DateTimeOffset.Now.Subtract(timeOutRightSend[chatLink.ItemId]);
+                            if (cooldown.TotalMinutes < 2)
+                            {
+                                var timeLeft = TimeSpan.FromMinutes(2 - cooldown.TotalMinutes);
+                                var minuteWord = timeLeft.TotalSeconds > 119 ? $" {timeLeft:%m} minutes and" :
+                                    timeLeft.TotalSeconds > 59 ? $" {timeLeft:%m} minute and" : "";
+                                var secondWord = timeLeft.Seconds > 9 ? $"{timeLeft:ss} seconds" :
+                                    timeLeft.Seconds > 1 ? $"{timeLeft:%s} seconds" : $"{timeLeft:%s} second";
+                                ScreenNotification.ShowNotification(
+                                    $"You can't send your {singleRandomToken.Name} total\nwithin the next{minuteWord} {secondWord} again.",
+                                    ScreenNotification.NotificationType.Error);
+                                return;
+                            }
+
+                            timeOutRightSend[chatLink.ItemId] = DateTimeOffset.Now;
+                        }
+                        else
+                        {
+                            timeOutRightSend.Add(chatLink.ItemId, DateTimeOffset.Now);
                         }
 
-                        timeOutRightSend[chatLink.ItemId] = DateTimeOffset.Now;
+                        chatLink.Quantity = Convert.ToByte(1);
+                        GameIntegration.Chat.Send($"Total: {ModuleInstance.PartyManager.Self.KillProof.GetToken(singleRandomToken.Id)?.Amount ?? 0} of {chatLink} (killproof.me/{ModuleInstance.PartyManager.Self.KillProof.KpId})");
+
                     }
                     else
                     {
-                        timeOutRightSend.Add(chatLink.ItemId, DateTimeOffset.Now);
+
+                        var token = ModuleInstance.PartyManager.Self.KillProof.GetToken(dropdown.SelectedItem);
+                        if (token == null) return;
+                        chatLink.ItemId = token.Id;
+                        if (timeOutRightSend.Any(x => x.Key == chatLink.ItemId))
+                        {
+                            var cooldown = DateTimeOffset.Now.Subtract(timeOutRightSend[chatLink.ItemId]);
+                            if (cooldown.TotalMinutes < 2)
+                            {
+                                var timeLeft = TimeSpan.FromMinutes(2 - cooldown.TotalMinutes);
+                                var minuteWord = timeLeft.TotalSeconds > 119 ? $" {timeLeft:%m} minutes and" :
+                                    timeLeft.TotalSeconds > 59 ? $" {timeLeft:%m} minute and" : "";
+                                var secondWord = timeLeft.Seconds > 9 ? $"{timeLeft:ss} seconds" :
+                                    timeLeft.Seconds > 1 ? $"{timeLeft:%s} seconds" : $"{timeLeft:%s} second";
+                                ScreenNotification.ShowNotification(
+                                    $"You can't send your {token.Name} total\nwithin the next{minuteWord} {secondWord} again.",
+                                    ScreenNotification.NotificationType.Error);
+                                return;
+                            }
+
+                            timeOutRightSend[chatLink.ItemId] = DateTimeOffset.Now;
+
+                        }
+                        else
+                        {
+
+                            timeOutRightSend.Add(chatLink.ItemId, DateTimeOffset.Now);
+
+                        }
+
+                        chatLink.Quantity = Convert.ToByte(1);
+                        GameIntegration.Chat.Send(Properties.Resources.Total___0__of__1___killproof_me__2__.Replace("{0}", token.Amount.ToString()).Replace("{1}", chatLink.ToString()).Replace("{2}", ModuleInstance.PartyManager.Self.KpId));
                     }
-
-                    chatLink.Quantity = Convert.ToByte(1);
-                    GameIntegration.Chat.Send($"Total: {ModuleInstance.PartyManager.Self.KillProof.GetToken(singleRandomToken.Id)?.Amount ?? 0} of {chatLink} (killproof.me/{ModuleInstance.PartyManager.Self.KillProof.KpId})");
-
                 }
                 else
                 {
+                    if (Gw2Mumble.UI.IsTextInputFocused) return;
 
-                    var token = ModuleInstance.PartyManager.Self.KillProof.GetToken(dropdown.SelectedItem);
-                    if (token == null) return;
-                    chatLink.ItemId = token.Id;
-                    if (timeOutRightSend.Any(x => x.Key == chatLink.ItemId))
+                    var cooldown = DateTimeOffset.Now.Subtract(_smartPingCooldownSend);
+                    if (cooldown.TotalSeconds < 1)
                     {
-                        var cooldown = DateTimeOffset.Now.Subtract(timeOutRightSend[chatLink.ItemId]);
-                        if (cooldown.TotalMinutes < 2)
-                        {
-                            var timeLeft = TimeSpan.FromMinutes(2 - cooldown.TotalMinutes);
-                            var minuteWord = timeLeft.TotalSeconds > 119 ? $" {timeLeft:%m} minutes and" :
-                                timeLeft.TotalSeconds > 59 ? $" {timeLeft:%m} minute and" : "";
-                            var secondWord = timeLeft.Seconds > 9 ? $"{timeLeft:ss} seconds" :
-                                timeLeft.Seconds > 1 ? $"{timeLeft:%s} seconds" : $"{timeLeft:%s} second";
-                            ScreenNotification.ShowNotification(
-                                $"You can't send your {token.Name} total\nwithin the next{minuteWord} {secondWord} again.",
-                                ScreenNotification.NotificationType.Error);
-                            return;
-                        }
+                        ScreenNotification.ShowNotification("Your total has been reached. Cooling down.",
+                            ScreenNotification.NotificationType.Error);
+                        return;
+                    }
 
-                        timeOutRightSend[chatLink.ItemId] = DateTimeOffset.Now;
+                    if (randomizeButton.BackgroundColor == Color.LightGreen)
+                    {
+                        var wing = ModuleInstance.Resources.GetWing(randomizeButton.Text);
+                        var wingTokens = wing.GetTokens();
+                        var tokenSelection = ModuleInstance.PartyManager.Self.KillProof.GetAllTokens()
+                            .Where(x => wingTokens.Any(y => y.Id.Equals(x.Id))).ToList();
+                        if (tokenSelection.Count == 0) return;
 
+                        DoSmartPing(tokenSelection.ElementAt(RandomUtil.GetRandom(0, tokenSelection.Count - 1)));
                     }
                     else
                     {
-
-                        timeOutRightSend.Add(chatLink.ItemId, DateTimeOffset.Now);
-
+                        var token = ModuleInstance.PartyManager.Self.KillProof.GetToken(dropdown.SelectedItem);
+                        if (token == null) return;
+                        DoSmartPing(token);
                     }
-
-                    chatLink.Quantity = Convert.ToByte(1);
-                    GameIntegration.Chat.Send(Properties.Resources.Total___0__of__1___killproof_me__2__.Replace("{0}", token.Amount.ToString()).Replace("{1}", chatLink.ToString()).Replace("{2}", ModuleInstance.PartyManager.Self.KpId));
                 }
             };
+
             _smartPingMenu.Disposed += delegate { Animation.Tweener.Tween(_smartPingMenu, new { Opacity = 0.0f }, 0.2f); };
             quantity.Text = ModuleInstance.PartyManager.Self.KillProof.GetToken(dropdown.SelectedItem)?.Amount.ToString() ?? "0";
 

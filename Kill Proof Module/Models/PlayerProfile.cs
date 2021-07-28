@@ -1,6 +1,8 @@
 ﻿using Blish_HUD;
 using Blish_HUD.ArcDps.Common;
 using System;
+using static Blish_HUD.GameService;
+using static Nekres.Kill_Proof_Module.KillProofModule;
 
 namespace Nekres.Kill_Proof_Module.Models
 {
@@ -10,7 +12,7 @@ namespace Nekres.Kill_Proof_Module.Models
         public event EventHandler<ValueEventArgs<KillProof>> KillProofChanged;
 
         public string AccountName => KillProof?.AccountName ?? Player.AccountName ?? "";
-        public string CharacterName => Player.CharacterName ?? (IsSelf ? GameService.Gw2Mumble.PlayerCharacter.Name : Nickname());
+        public string CharacterName => Player.CharacterName ?? (IsSelf ? Gw2Mumble.PlayerCharacter.Name : Nickname());
         public string KpId => KillProof?.KpId ?? "";
 
         public readonly bool IsSelf;
@@ -18,6 +20,9 @@ namespace Nekres.Kill_Proof_Module.Models
         public PlayerProfile(bool isSelf = false)
         {
             IsSelf = isSelf;
+
+            if (isSelf)
+                Overlay.UserLocaleChanged += OnUserLocaleChanged;
         }
 
         private CommonFields.Player _player;
@@ -42,6 +47,8 @@ namespace Nekres.Kill_Proof_Module.Models
                 KillProofChanged?.Invoke(this, new ValueEventArgs<KillProof>(value));
             }
         }
+
+        private void OnUserLocaleChanged(object o, ValueEventArgs<System.Globalization.CultureInfo> e) => ModuleInstance.PartyManager.RequestSelf();
 
         public bool IsOwner(string accountNameOrKpId)
         {

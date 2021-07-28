@@ -15,6 +15,11 @@ namespace Nekres.Kill_Proof_Module.Manager
     {
         private const string KILLPROOF_API_URL = "https://killproof.me/api/";
 
+        private const int RefreshProofSec = 3600;
+        private const int RefreshClearSec = 300;
+
+        private static Gw2Sharp.WebApi.Locale LastLocale;
+
         private static List<KillProof> _cachedKillProofs;
 
         static KillProofApi()
@@ -56,10 +61,21 @@ namespace Nekres.Kill_Proof_Module.Manager
 
         public static async Task<KillProof> GetKillProofContent(string account)
         {
-            var killproof = _cachedKillProofs.FirstOrDefault(kp => kp.AccountName.Equals(account, StringComparison.InvariantCultureIgnoreCase) || kp.KpId.Equals(account, StringComparison.InvariantCulture));
+            var killproof = _cachedKillProofs.FirstOrDefault(kp => kp.AccountName.Equals(account+ Overlay.UserLocale.Value, StringComparison.InvariantCultureIgnoreCase) || kp.KpId.Equals(account, StringComparison.InvariantCulture));
 
-            if (killproof != null && string.IsNullOrEmpty(killproof.Error)) 
-                return killproof;
+            if (killproof != null && string.IsNullOrEmpty(killproof.Error))
+            {
+                if (LastLocale == Overlay.UserLocale.Value)
+                {
+                    if (DateTime.Now.Subtract(killproof.LastRefresh).TotalSeconds < RefreshProofSec)
+                        return killproof;
+                }
+                else
+                {
+                    _cachedKillProofs.Remove(killproof);
+                    LastLocale = Overlay.UserLocale.Value;
+                }
+            }
 
             var (responseSuccess, newKillproof) = await TaskUtil.GetJsonResponse<KillProof>(KILLPROOF_API_URL + $"kp/{account}?lang=" + Overlay.UserLocale.Value)
                 .ConfigureAwait(false);

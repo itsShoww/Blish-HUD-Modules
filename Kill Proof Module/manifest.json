@@ -1,6 +1,6 @@
 {
   "name": "Kill Proof Module",
-  "version": "1.7.5",
+  "version": "1.7.6",
   "namespace": "Nekres.Kill_Proof_Module",
   "package": "Kill Proof Module.dll",
   "manifest_version": 1,

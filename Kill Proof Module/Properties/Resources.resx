@@ -205,16 +205,16 @@ allows you to quickly access and ping your killproofs.</value>
     <value>No profile for "{0}" found :(</value>
     <comment>{0} will be swapped with account name.</comment>
   </data>
-  <data name="Send To Chat\nLeft-Click: Only send code up to a stack's worth (250x). \nRight-Click: Send killproof.me total amount." xml:space="preserve">
+  <data name="Send To Chat\nLeft-Click: Only send code up to a stack's worth (250x).\nLeft-Ctrl + Left-Click: Send killproof.me total amount." xml:space="preserve">
     <value>Send To Chat
 Left-Click: Only send code up to a stack's worth (250x).
-Right-Click: Send killproof.me total amount.</value>
+Left-Ctrl + Left-Click: Send killproof.me total amount.</value>
     <comment>Smart Ping Menu: Send Button tooltip.</comment>
   </data>
-  <data name="Random token from selected wing when pressing Send To Chat.\nLeft-Click: Toggle\nRight-Click: Iterate wings" xml:space="preserve">
+  <data name="Random token from selected wing when pressing Send To Chat.\nLeft-Click: Toggle\nLeft-Ctrl + Left-Click: Iterate wings" xml:space="preserve">
     <value>Random token from selected wing when pressing Send To Chat.
 Left-Click: Toggle
-Right-Click: Iterate wings</value>
+Left-Ctrl + Left-Click: Iterate wings</value>
     <comment>Smart Ping Menu: Randomize Button tooltip.</comment>
   </data>
   <data name="Clear" xml:space="preserve">

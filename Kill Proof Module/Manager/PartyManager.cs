@@ -6,7 +6,6 @@ using Nekres.Kill_Proof_Module.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using static Blish_HUD.GameService;
 using static Nekres.Kill_Proof_Module.KillProofModule;
 
@@ -37,7 +36,11 @@ namespace Nekres.Kill_Proof_Module.Manager
 
         public async void RequestSelf()
         {
-            if (ModuleInstance.Gw2ApiManager.HavePermission(TokenPermission.Account))
+            if (!string.IsNullOrEmpty(Self.AccountName))
+            {
+                Self.KillProof = await KillProofApi.GetKillProofContent(Self.AccountName);
+            } 
+            else if (ModuleInstance.Gw2ApiManager.HavePermission(TokenPermission.Account))
             {
                 await ModuleInstance.Gw2ApiManager.Gw2ApiClient.V2.Account.GetAsync().ContinueWith(async result =>
                 {
@@ -52,7 +55,7 @@ namespace Nekres.Kill_Proof_Module.Manager
             if (player.Self)
             {
                 Self.Player = player;
-                Self.KillProof = await KillProofApi.GetKillProofContent(player.AccountName);
+                RequestSelf();
                 return;
             }
 
