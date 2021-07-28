@@ -5,6 +5,7 @@ using Blish_HUD.Settings;
 using Gw2Sharp.WebApi.V2.Models;
 using Microsoft.Xna.Framework;
 using Nekres.Regions_Of_Tyria.Controls;
+using Nekres.Regions_Of_Tyria.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -38,11 +39,10 @@ namespace Nekres.Regions_Of_Tyria
         private float _fadeInDuration;
         private float _fadeOutDuration;
 
-        private bool _isDisposing;
-
-        private const int _notificationDelayMs = 2000;
-        private Map _currentMap;
-        private HashSet<ContinentFloorRegionMapSector> _currentSectors;
+        private AsyncCache<int, Map> _mapRepository;
+        private AsyncCache<int, HashSet<ContinentFloorRegionMapSector>> _sectorRepository;
+        private int _prevSectorId;
+        private int _prevMapId;
 
         [ImportingConstructor]
         public RegionsOfTyriaModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
@@ -55,13 +55,48 @@ namespace Nekres.Regions_Of_Tyria
             ToggleSectorNotificationSetting = settings.DefineSetting("EnableSectorChangedNotification", true, "Notify sector change", "Whether a sector's name should be shown when entering a sector.");
         }
 
-        /*protected override void Initialize() {
+        protected override void Initialize()
+        {
+            _mapRepository = new AsyncCache<int, Map>(id => Gw2ApiManager.Gw2ApiClient.V2.Maps.GetAsync(id));
+            _sectorRepository = new AsyncCache<int, HashSet<ContinentFloorRegionMapSector>>(RequestSectors);
         }
 
-        protected override void Update(GameTime gameTime) {
-        }*/
+        protected override async void Update(GameTime gameTime) {
+            
+            if (!ToggleSectorNotificationSetting.Value || !Gw2Mumble.IsAvailable || !GameIntegration.IsInGame) 
+                return;
 
-        protected override void OnModuleLoaded(EventArgs e) {
+            //Check in which sector the player is.
+            //var currentFloor = Gw2Mumble.      Not enough data exposed to calculate floor.
+            //var sectors = _currentSectors[currentFloor]
+            //Note: overlapCount can be removed once current sector is determinable by current floor.
+
+            var currentMap = await _mapRepository.GetItem(Gw2Mumble.CurrentMap.Id);
+
+            // Check for sector change.
+            ContinentFloorRegionMapSector currentSector = null;
+            var overlapCount = 0;
+            foreach (var sector in await _sectorRepository.GetItem(Gw2Mumble.CurrentMap.Id))
+            {
+                var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, currentMap.MapRect, currentMap.ContinentRect).SwapYZ();
+                if (ConvexHullUtil.InBounds(playerLocation.ToPlane(), sector.Bounds))
+                {
+                    overlapCount++;
+                    if (overlapCount == 1)
+                        currentSector = sector;
+                }
+            }
+
+            if (overlapCount > 2 || currentSector == null || currentSector.Id == _prevSectorId)
+                return;
+            _prevSectorId = currentSector.Id;
+
+            // Display the name of the area when player enters.
+            MapNotification.ShowNotification(currentMap.Name, currentSector.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
+        }
+
+        protected override void OnModuleLoaded(EventArgs e)
+        {
             Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
 
             OnShowDurationSettingChanged(ShowDurationSetting, new ValueChangedEventArgs<float>(0,ShowDurationSetting.Value));
@@ -71,9 +106,6 @@ namespace Nekres.Regions_Of_Tyria
             ShowDurationSetting.SettingChanged += OnShowDurationSettingChanged;
             FadeInDurationSetting.SettingChanged += OnFadeInDurationSettingChanged;
             FadeOutDurationSetting.SettingChanged += OnFadeOutDurationSettingChanged;
-
-            RequestMap(Gw2Mumble.CurrentMap.Id);
-            StartSectorTask();
 
             // Base handler must be called
             base.OnModuleLoaded(e);
@@ -85,7 +117,6 @@ namespace Nekres.Regions_Of_Tyria
 
         /// <inheritdoc />
         protected override void Unload() {
-            _isDisposing = true;
             ShowDurationSetting.SettingChanged -= OnShowDurationSettingChanged;
             FadeInDurationSetting.SettingChanged -= OnFadeInDurationSettingChanged;
             FadeOutDurationSetting.SettingChanged -= OnFadeOutDurationSettingChanged;
@@ -95,77 +126,44 @@ namespace Nekres.Regions_Of_Tyria
             ModuleInstance = null;
         }
 
-        private void OnMapChanged(object o, ValueEventArgs<int> e) {
-            RequestMap(e.Value);
+        private async void OnMapChanged(object o, ValueEventArgs<int> e)
+        {
+            if (!ToggleMapNotificationSetting.Value) 
+                return;
+
+            var currentMap = await _mapRepository.GetItem(e.Value);
+
+            if (currentMap == null || currentMap.Id == _prevMapId)
+                return;
+
+            _prevMapId = currentMap.Id;
+
+            MapNotification.ShowNotification(currentMap.RegionName, currentMap.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
         }
 
-        private async void RequestMap(int id) {
-            await Gw2ApiManager.Gw2ApiClient.V2.Maps.GetAsync(id)
-                .ContinueWith(async response => {
-                    if (response.Exception != null || response.IsFaulted || response.IsCanceled) return;
-                    var result = response.Result;
-
-                    if (ToggleMapNotificationSetting.Value)
-                        MapNotification.ShowNotification(result.RegionName, result.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
-
-                    _currentSectors = null;
-                    var sectors = new HashSet<ContinentFloorRegionMapSector>();
-                    foreach (var floor in result.Floors) {
-                        sectors.UnionWith(await RequestSectorsForFloor(result.ContinentId, floor, result.RegionId, result.Id));
-                    }
-                    _currentSectors = sectors.DistinctBy(x => x.Id).ToHashSet();
-                    _currentMap = result;
-                });
+        private async Task<HashSet<ContinentFloorRegionMapSector>> RequestSectors(int mapId)
+        {
+            return await await _mapRepository.GetItem(mapId).ContinueWith(async result =>
+            {
+                if (!result.IsCompleted || result.IsFaulted) 
+                    return null;
+                var map = result.Result;
+                var sectors = new HashSet<ContinentFloorRegionMapSector>();
+                foreach (var floor in map.Floors)
+                {
+                    sectors.UnionWith(await RequestSectorsForFloor(map.ContinentId, floor, map.RegionId, map.Id));
+                }
+                return sectors.DistinctBy(x => x.Id).ToHashSet();
+            });
         }
 
         private async Task<IEnumerable<ContinentFloorRegionMapSector>> RequestSectorsForFloor(int continentId, int floor, int regionId, int mapId) {
             try {
                 return await Gw2ApiManager.Gw2ApiClient.V2.Continents[continentId].Floors[floor].Regions[regionId].Maps[mapId].Sectors.AllAsync();
             } catch (Gw2Sharp.WebApi.Exceptions.BadRequestException e) {
-                Logger.Info("{0} | The map id {1} does not exist on floor {2}.", e.GetType().FullName, mapId, floor);
+                Logger.Debug("{0} | The map id {1} does not exist on floor {2}.", e.GetType().FullName, mapId, floor);
                 return new HashSet<ContinentFloorRegionMapSector>();
             }
-        }
-
-        private void StartSectorTask() {
-            new Task(async () => {
-                // Check in which sector the player is.
-                ContinentFloorRegionMapSector prevSector = null;
-                while (!_isDisposing) {
-                    if (!ToggleSectorNotificationSetting.Value || !GameIntegration.IsInGame || _currentMap == null || _currentMap.Id != Gw2Mumble.CurrentMap.Id) continue;
-                    
-                    //var currentFloor = Gw2Mumble.      Not enough data exposed to calculate floor.
-                    //var sectors = _currentSectors[currentFloor]
-                    //Note: overlapCount can be removed once current sector is determinable by current floor.
-
-                    // Check for sector change.
-                    ContinentFloorRegionMapSector currentSector = null;
-                    var overlapCount = 0;
-                    foreach (var sector in _currentSectors) {
-                        var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, _currentMap.MapRect, _currentMap.ContinentRect).SwapYZ();
-                        if (ConvexHullUtil.InBounds(playerLocation.ToPlane(), sector.Bounds)) {
-                            overlapCount++;
-                            if (overlapCount == 1)
-                                currentSector = sector;
-                        }
-                    }
-                    
-                    if (overlapCount > 2 || currentSector == null || currentSector.Equals(prevSector))
-                        continue;
-                    prevSector = currentSector;
-                    
-                    await Task.Delay(_notificationDelayMs).ContinueWith(o =>
-                    {
-                        // ReSharper disable once AccessToModifiedClosure
-                        if (currentSector == null || !currentSector.Equals(prevSector)) 
-                            return;
-                        // Display the name of the area when player enters.
-                        MapNotification.ShowNotification(_currentMap.Name, currentSector.Name, null, _showDuration,
-                            _fadeInDuration, _fadeOutDuration);
-                        prevSector = currentSector;
-                    });
-                }
-            }).Start();
         }
     }
 }

@@ -3,6 +3,7 @@ using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.BitmapFonts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Blish_HUD.GameService;
@@ -20,9 +21,15 @@ namespace Nekres.Regions_Of_Tyria.Controls
         private const int _underlineSize = 1;
         private static Color _brightGold;
 
+        private const int _notificationCooldownMs = 2000;
+        private static DateTime _lastNotificationTime;
+        
+
         private static readonly SynchronizedCollection<MapNotification> _activeMapNotifications;
 
-        static MapNotification() {
+        static MapNotification()
+        {
+            _lastNotificationTime = DateTime.Now;
             _activeMapNotifications = new SynchronizedCollection<MapNotification>();
 
             _smallFont = Content.GetFont(ContentService.FontFace.Menomonia, ContentService.FontSize.Size24, ContentService.FontStyle.Regular);
@@ -66,7 +73,7 @@ namespace Nekres.Regions_Of_Tyria.Controls
         #endregion
 
         private Glide.Tween _animFadeLifecycle;
-        private int _targetTop = 0;
+        private int _targetTop;
 
         private MapNotification(string header, string footer, Texture2D icon = null, float showDuration = 4, float fadeInDuration = 2, float fadeOutDuration = 2) {
             _header = header;
@@ -75,19 +82,23 @@ namespace Nekres.Regions_Of_Tyria.Controls
             _fadeInDuration = fadeInDuration;
             _fadeOutDuration = fadeOutDuration;
 
-            this.Opacity = 0f;
-            this.Size = new Point(500, 500);
-            this.ZIndex = Screen.TOOLTIP_BASEZINDEX;
-            this.Location = new Point(Graphics.SpriteScreen.Width / 2 - this.Size.X / 2, Graphics.SpriteScreen.Height / 4 - this.Size.Y / 4);
+            Opacity = 0f;
+            Size = new Point(500, 500);
+            ZIndex = Screen.MENUUI_BASEINDEX;
+            Location = new Point(Graphics.SpriteScreen.Width / 2 - Size.X / 2, Graphics.SpriteScreen.Height / 4 - Size.Y / 4);
 
-            _targetTop = this.Top;
+            _targetTop = Top;
 
-            this.Resized += UpdateLocation;
+            Resized += UpdateLocation;
         }
 
-        public void UpdateLocation(object o, ResizedEventArgs e) => this.Location = new Point(Graphics.SpriteScreen.Width / 2 - this.Size.X / 2, Graphics.SpriteScreen.Height / 4 - this.Size.Y / 2);
+        public void UpdateLocation(object o, ResizedEventArgs e) => Location = new Point(Graphics.SpriteScreen.Width / 2 - Size.X / 2, Graphics.SpriteScreen.Height / 4 - Size.Y / 2);
 
-        protected override CaptureType CapturesInput() => CaptureType.ForceNone;
+        /// <inheritdoc />
+        protected override CaptureType CapturesInput()
+        {
+            return CaptureType.ForceNone;
+        }
 
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds) {
             if (!GameIntegration.Gw2IsRunning || Header == null || Footer == null) return;
@@ -120,30 +131,33 @@ namespace Nekres.Regions_Of_Tyria.Controls
 
         /// <inheritdoc />
         public override void Show() {
+            /*_animFadeLifecycle = Animation.Tweener
+                                          .Tween(this, new { Opacity = 1f }, FadeInDuration)
+                                          .Repeat(1)
+                                          .RepeatDelay(ShowDuration)
+                                          .Reflect()
+                                          .OnComplete(Dispose);*/
+            //Nesting instead so we are able to set a different duration per fade direction.
             _animFadeLifecycle = Animation.Tweener
-                                          .Tween(this, new { Opacity = 1f }, this.FadeInDuration)
-                                          .OnComplete(() => {
-                                            _animFadeLifecycle = Animation.Tweener.Tween(this, new { Opacity = 1f }, this.ShowDuration)
-                                                                                  .OnComplete(() => {
-                                                                                    _animFadeLifecycle = Animation.Tweener.Tween(this, new { Opacity = 0f }, this.FadeOutDuration)
-                                                                                                                          .OnComplete(Dispose);
-                                                                                  });
-                                          });
-
-
-
+                .Tween(this, new { Opacity = 1f }, FadeInDuration)
+                    .OnComplete(() => { _animFadeLifecycle = Animation.Tweener.Tween(this, new { Opacity = 1f }, ShowDuration)
+                        .OnComplete(() => { _animFadeLifecycle = Animation.Tweener.Tween(this, new { Opacity = 0f }, FadeOutDuration)
+                            .OnComplete(Dispose);
+                        });
+                });
+             
             base.Show();
         }
 
         private void SlideDown(int distance) {
             _targetTop += distance;
 
-            Animation.Tweener.Tween(this, new {Top = _targetTop}, this.FadeOutDuration);
+            Animation.Tweener.Tween(this, new {Top = _targetTop}, FadeOutDuration);
 
             if (_opacity < 1f) return;
 
             _animFadeLifecycle = Animation.Tweener
-                                          .Tween(this, new {Opacity = 0f}, this.FadeOutDuration)
+                                          .Tween(this, new {Opacity = 0f}, FadeOutDuration)
                                           .OnComplete(Dispose);
         }
 
@@ -155,6 +169,11 @@ namespace Nekres.Regions_Of_Tyria.Controls
         }
 
         public static void ShowNotification(string header, string footer, Texture2D icon = null, float showDuration = 4, float fadeInDuration = 2, float fadeOutDuration = 2) {
+            if (DateTime.Now.Subtract(_lastNotificationTime).TotalMilliseconds < _notificationCooldownMs)
+                return;
+
+            _lastNotificationTime = DateTime.Now;
+
             var nNot = new MapNotification(header, footer, icon, showDuration, fadeInDuration, fadeOutDuration) {
                 Parent = Graphics.SpriteScreen
             };

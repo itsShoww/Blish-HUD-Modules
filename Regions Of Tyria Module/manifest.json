@@ -1,13 +1,13 @@
 {
   "name": "Regions of Tyria",
-  "version": "0.2.1",
+  "version": "0.3.2",
   "namespace": "Nekres.Regions_Of_Tyria",
   "package": "RegionsOfTyriaModule.dll",
   "manifest_version": 1,
 
-  "description": "Shows the name of the place you are entering.",
+  "description": "Fades in the names of places you enter.",
   "dependencies": {
-    "bh.blishhud": ">=0.7.0"
+    "bh.blishhud": ">=0.8.0"
   },
   "url": "https://github.com/blish-hud/",
   "contributors": [
