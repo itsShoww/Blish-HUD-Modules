@@ -34,6 +34,8 @@ namespace Nekres.Regions_Of_Tyria
         private SettingEntry<float> FadeOutDurationSetting;
         private SettingEntry<bool> ToggleMapNotificationSetting;
         private SettingEntry<bool> ToggleSectorNotificationSetting;
+        private SettingEntry<bool> IncludeRegionInMapNotification;
+        private SettingEntry<bool> IncludeMapInSectorNotification;
 
         private float _showDuration;
         private float _fadeInDuration;
@@ -48,11 +50,17 @@ namespace Nekres.Regions_Of_Tyria
         public RegionsOfTyriaModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters) { ModuleInstance = this; }
 
         protected override void DefineSettings(SettingCollection settings) {
-            ShowDurationSetting = settings.DefineSetting("ShowDuration", 40.0f, "Show duration", "The duration in which to stay in full opacity.");
-            FadeInDurationSetting = settings.DefineSetting("FadeInDuration", 20.0f, "Fade-In duration", "The duration of the fade-in.");
-            FadeOutDurationSetting = settings.DefineSetting("FadeOutDuration", 20.0f, "Fade-Out duration", "The duration of the fade-out.");
-            ToggleMapNotificationSetting = settings.DefineSetting("EnableMapChangedNotification", true, "Notify map change", "Whether a map's name should be shown when entering a map.");
-            ToggleSectorNotificationSetting = settings.DefineSetting("EnableSectorChangedNotification", true, "Notify sector change", "Whether a sector's name should be shown when entering a sector.");
+            ShowDurationSetting = settings.DefineSetting("ShowDuration", 40.0f, "Show Duration", "The duration in which to stay in full opacity.");
+            FadeInDurationSetting = settings.DefineSetting("FadeInDuration", 20.0f, "Fade-In Duration", "The duration of the fade-in.");
+            FadeOutDurationSetting = settings.DefineSetting("FadeOutDuration", 20.0f, "Fade-Out Duration", "The duration of the fade-out.");
+            ToggleMapNotificationSetting = settings.DefineSetting("EnableMapChangedNotification", true, "Notify Map Change", "Whether a map's name should be shown when entering a map.");
+            IncludeRegionInMapNotification = settings.DefineSetting("IncludeRegionInMapNotification", true,
+                "Include Region Name in Map Notification",
+                "Whether the corresponding region name of a map should be shown above a map's name.");
+            ToggleSectorNotificationSetting = settings.DefineSetting("EnableSectorChangedNotification", true, "Notify Sector Change", "Whether a sector's name should be shown when entering a sector.");
+            IncludeMapInSectorNotification = settings.DefineSetting("IncludeMapInSectorNotification", true,
+                "Include Map Name in Sector Notification",
+                "Whether the corresponding map name of a sector should be shown above a sector's name.");
         }
 
         protected override void Initialize()
@@ -92,12 +100,13 @@ namespace Nekres.Regions_Of_Tyria
             _prevSectorId = currentSector.Id;
 
             // Display the name of the area when player enters.
-            MapNotification.ShowNotification(currentMap.Name, currentSector.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
+            MapNotification.ShowNotification(IncludeMapInSectorNotification.Value ? currentMap.Name : null, currentSector.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
         }
 
         protected override void OnModuleLoaded(EventArgs e)
         {
             Gw2Mumble.CurrentMap.MapChanged += OnMapChanged;
+            Overlay.UserLocaleChanged += OnUserLocaleChanged;
 
             OnShowDurationSettingChanged(ShowDurationSetting, new ValueChangedEventArgs<float>(0,ShowDurationSetting.Value));
             OnFadeInDurationSettingChanged(FadeInDurationSetting, new ValueChangedEventArgs<float>(0,FadeInDurationSetting.Value));
@@ -121,9 +130,16 @@ namespace Nekres.Regions_Of_Tyria
             FadeInDurationSetting.SettingChanged -= OnFadeInDurationSettingChanged;
             FadeOutDurationSetting.SettingChanged -= OnFadeOutDurationSettingChanged;
             Gw2Mumble.CurrentMap.MapChanged -= OnMapChanged;
+            Overlay.UserLocaleChanged -= OnUserLocaleChanged;
 
             // All static members must be manually unset
             ModuleInstance = null;
+        }
+
+        private void OnUserLocaleChanged(object o, ValueEventArgs<System.Globalization.CultureInfo> e)
+        {
+            _mapRepository = new AsyncCache<int, Map>(id => Gw2ApiManager.Gw2ApiClient.V2.Maps.GetAsync(id));
+            _sectorRepository = new AsyncCache<int, HashSet<ContinentFloorRegionMapSector>>(RequestSectors);
         }
 
         private async void OnMapChanged(object o, ValueEventArgs<int> e)
@@ -138,7 +154,7 @@ namespace Nekres.Regions_Of_Tyria
 
             _prevMapId = currentMap.Id;
 
-            MapNotification.ShowNotification(currentMap.RegionName, currentMap.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
+            MapNotification.ShowNotification(IncludeRegionInMapNotification.Value ? currentMap.RegionName : null, currentMap.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
         }
 
         private async Task<HashSet<ContinentFloorRegionMapSector>> RequestSectors(int mapId)

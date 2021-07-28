@@ -6,7 +6,6 @@ using MonoGame.Extended.BitmapFonts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Blish_HUD.GameService;
 using Color = Microsoft.Xna.Framework.Color;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
@@ -101,8 +100,6 @@ namespace Nekres.Regions_Of_Tyria.Controls
         }
 
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds) {
-            if (!GameIntegration.Gw2IsRunning || Header == null || Footer == null) return;
-
             var center = HorizontalAlignment.Center;
             var top = VerticalAlignment.Top;
 
@@ -111,22 +108,28 @@ namespace Nekres.Regions_Of_Tyria.Controls
             int width;
             Rectangle rect;
 
-            text = Header;
-            width = (int)_smallFont.MeasureString(text).Width;
-            height = (int)_smallFont.MeasureString(text).Height;
+            if (!string.IsNullOrEmpty(Header)) {
+                text = Header;
+                width = (int) _smallFont.MeasureString(text).Width;
+                height = (int) _smallFont.MeasureString(text).Height;
 
-            rect = new Rectangle(0, 0, bounds.Width, bounds.Height);
-            spriteBatch.DrawStringOnCtrl(this, text, _smallFont, rect, _brightGold, false, true, _strokeDist, center, top);
+                rect = new Rectangle(0, 0, bounds.Width, bounds.Height);
+                spriteBatch.DrawStringOnCtrl(this, text, _smallFont, rect, _brightGold, false, true, _strokeDist,
+                    center, top);
 
-            rect = new Rectangle((Size.X / 2) - (width / 2) - 1, rect.Y + height + 2, width + 2, _underlineSize + 2);
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, new Color(0,0,0,200));
-            rect = new Rectangle(rect.X + 1, rect.Y + 1, width, _underlineSize);
-            spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, _brightGold);
+                rect = new Rectangle((Size.X / 2) - (width / 2) - 1, rect.Y + height + 2, width + 2,
+                    _underlineSize + 2);
+                spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, new Color(0, 0, 0, 200));
+                rect = new Rectangle(rect.X + 1, rect.Y + 1, width, _underlineSize);
+                spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, _brightGold);
+            }
 
-            text = Footer;
-            height = (int)_smallFont.MeasureString(text).Height;
-            rect = new Rectangle(0, _topMargin + height, bounds.Width, bounds.Height);
-            spriteBatch.DrawStringOnCtrl(this, text, _mediumFont, rect, _brightGold, false, true, _strokeDist, center, top);
+            if (!string.IsNullOrEmpty(Footer)) {
+                text = Footer;
+                height = (int)_smallFont.MeasureString(text).Height;
+                rect = new Rectangle(0, _topMargin + height, bounds.Width, bounds.Height);
+                spriteBatch.DrawStringOnCtrl(this, text, _mediumFont, rect, _brightGold, false, true, _strokeDist, center, top);
+            }
         }
 
         /// <inheritdoc />
