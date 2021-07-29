@@ -82,25 +82,10 @@ namespace Nekres.Regions_Of_Tyria
             var currentMap = await _mapRepository.GetItem(Gw2Mumble.CurrentMap.Id);
 
             // Check for sector change.
-            ContinentFloorRegionMapSector currentSector = null;
-            var overlapCount = 0;
-            foreach (var sector in await _sectorRepository.GetItem(Gw2Mumble.CurrentMap.Id))
-            {
-                var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, currentMap.MapRect, currentMap.ContinentRect).SwapYZ();
-                if (ConvexHullUtil.InBounds(playerLocation.ToPlane(), sector.Bounds))
-                {
-                    overlapCount++;
-                    if (overlapCount == 1)
-                        currentSector = sector;
-                }
-            }
+            var currentSector = await GetSector(currentMap);
 
-            if (overlapCount > 2 || currentSector == null || currentSector.Id == _prevSectorId)
-                return;
-            _prevSectorId = currentSector.Id;
-
-            // Display the name of the area when player enters.
-            MapNotification.ShowNotification(IncludeMapInSectorNotification.Value ? currentMap.Name : null, currentSector.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
+            if (currentSector != null)
+                MapNotification.ShowNotification(IncludeMapInSectorNotification.Value ? currentMap.Name : null, currentSector.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
         }
 
         protected override void OnModuleLoaded(EventArgs e)
@@ -154,7 +139,38 @@ namespace Nekres.Regions_Of_Tyria
 
             _prevMapId = currentMap.Id;
 
-            MapNotification.ShowNotification(IncludeRegionInMapNotification.Value ? currentMap.RegionName : null, currentMap.Name, null, _showDuration, _fadeInDuration, _fadeOutDuration);
+            var header = currentMap.RegionName;
+            var text = currentMap.Name;
+
+            //Some maps consist of just a single sector and hide their actual name in it.
+            if (!string.IsNullOrEmpty(text) && text.Equals(header, StringComparison.InvariantCultureIgnoreCase))
+            {
+                var currentSector = await GetSector(currentMap);
+                if (currentSector != null && !string.IsNullOrEmpty(currentSector.Name))
+                    text = currentSector.Name;
+            }
+
+            MapNotification.ShowNotification(IncludeRegionInMapNotification.Value ? header : null, text, null, _showDuration, _fadeInDuration, _fadeOutDuration);
+        }
+
+        private async Task<ContinentFloorRegionMapSector> GetSector(Map currentMap)
+        {
+            ContinentFloorRegionMapSector currentSector = null;
+            var overlapCount = 0;
+            foreach (var sector in await _sectorRepository.GetItem(Gw2Mumble.CurrentMap.Id))
+            {
+                var playerLocation = Gw2Mumble.RawClient.AvatarPosition.ToContinentCoords(CoordsUnit.Mumble, currentMap.MapRect, currentMap.ContinentRect).SwapYZ();
+                if (ConvexHullUtil.InBounds(playerLocation.ToPlane(), sector.Bounds))
+                {
+                    overlapCount++;
+                    if (overlapCount == 1)
+                        currentSector = sector;
+                }
+            }
+            if (overlapCount > 2 || currentSector == null || currentSector.Id == _prevSectorId)
+                return null;
+            _prevSectorId = currentSector.Id;
+            return currentSector;
         }
 
         private async Task<HashSet<ContinentFloorRegionMapSector>> RequestSectors(int mapId)

@@ -44,10 +44,10 @@ namespace Nekres.Regions_Of_Tyria.Controls
             set => SetProperty(ref _header, value);
         }
 
-        private string _footer;
-        public string Footer {
-            get => _footer;
-            set => SetProperty(ref _footer, value);
+        private string _text;
+        public string Text {
+            get => _text;
+            set => SetProperty(ref _text, value);
         }
 
         private float _showDuration;
@@ -74,9 +74,9 @@ namespace Nekres.Regions_Of_Tyria.Controls
         private Glide.Tween _animFadeLifecycle;
         private int _targetTop;
 
-        private MapNotification(string header, string footer, Texture2D icon = null, float showDuration = 4, float fadeInDuration = 2, float fadeOutDuration = 2) {
+        private MapNotification(string header, string text, Texture2D icon = null, float showDuration = 4, float fadeInDuration = 2, float fadeOutDuration = 2) {
             _header = header;
-            _footer = footer;
+            _text = text;
             _showDuration = showDuration;
             _fadeInDuration = fadeInDuration;
             _fadeOutDuration = fadeOutDuration;
@@ -100,35 +100,26 @@ namespace Nekres.Regions_Of_Tyria.Controls
         }
 
         public override void PaintBeforeChildren(SpriteBatch spriteBatch, Rectangle bounds) {
-            var center = HorizontalAlignment.Center;
-            var top = VerticalAlignment.Top;
-
-            string text;
             int height;
-            int width;
             Rectangle rect;
 
-            if (!string.IsNullOrEmpty(Header)) {
-                text = Header;
-                width = (int) _smallFont.MeasureString(text).Width;
-                height = (int) _smallFont.MeasureString(text).Height;
+            if (!string.IsNullOrEmpty(Header) && !Header.Equals(Text, StringComparison.InvariantCultureIgnoreCase)) {
+                var width = (int)_smallFont.MeasureString(Header).Width;
+                height = (int)_smallFont.MeasureString(Header).Height;
 
                 rect = new Rectangle(0, 0, bounds.Width, bounds.Height);
-                spriteBatch.DrawStringOnCtrl(this, text, _smallFont, rect, _brightGold, false, true, _strokeDist,
-                    center, top);
+                spriteBatch.DrawStringOnCtrl(this, Header, _smallFont, rect, _brightGold, false, true, _strokeDist, HorizontalAlignment.Center, VerticalAlignment.Top);
 
-                rect = new Rectangle((Size.X / 2) - (width / 2) - 1, rect.Y + height + 2, width + 2,
-                    _underlineSize + 2);
+                rect = new Rectangle(Size.X / 2 - width / 2 - 1, rect.Y + height + 2, width + 2, _underlineSize + 2);
                 spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, new Color(0, 0, 0, 200));
                 rect = new Rectangle(rect.X + 1, rect.Y + 1, width, _underlineSize);
                 spriteBatch.DrawOnCtrl(this, ContentService.Textures.Pixel, rect, _brightGold);
             }
 
-            if (!string.IsNullOrEmpty(Footer)) {
-                text = Footer;
-                height = (int)_smallFont.MeasureString(text).Height;
+            if (!string.IsNullOrEmpty(Text)) {
+                height = (int)_smallFont.MeasureString(Text).Height;
                 rect = new Rectangle(0, _topMargin + height, bounds.Width, bounds.Height);
-                spriteBatch.DrawStringOnCtrl(this, text, _mediumFont, rect, _brightGold, false, true, _strokeDist, center, top);
+                spriteBatch.DrawStringOnCtrl(this, Text, _mediumFont, rect, _brightGold, false, true, _strokeDist, HorizontalAlignment.Center, VerticalAlignment.Top);
             }
         }
 
